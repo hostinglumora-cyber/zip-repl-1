@@ -146,3 +146,28 @@
     @apply bg-secondary border border-border rounded px-1.5 py-0.5 text-sm text-primary font-mono;
   }
 }
+
+/* ── Mintlify-style docs content ── */
+@layer components {
+  .docs-h2 {
+    @apply text-xl font-semibold text-foreground mb-3 mt-8 scroll-mt-20;
+  }
+  .docs-h3 {
+    @apply text-base font-semibold text-foreground mb-2 mt-6;
+  }
+  .docs-p {
+    @apply text-[15px] text-muted-foreground leading-7 mb-4;
+  }
+  .docs-link {
+    @apply text-primary underline underline-offset-2 decoration-primary/40 hover:decoration-primary transition;
+  }
+  .docs-content p {
+    @apply text-[15px] text-muted-foreground leading-7 mb-4;
+  }
+  .docs-content a {
+    @apply text-primary underline underline-offset-2 decoration-primary/40 hover:decoration-primary transition;
+  }
+  .docs-content code {
+    @apply bg-secondary border border-border rounded px-1.5 py-0.5 text-sm text-primary font-mono;
+  }
+}
