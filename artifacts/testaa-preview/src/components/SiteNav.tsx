@@ -1,10 +1,19 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Menu, X, Store, Gauge, FileText, ArrowRight, MessageCircle } from "lucide-react";
 import Logo from "@/components/Logo";
 
 export default function SiteNav() {
   const [open, setOpen] = useState(false);
+  const [discordUser, setDiscordUser] = useState(null);
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem("discord_user");
+      if (saved) setDiscordUser(JSON.parse(saved));
+    } catch {
+      window.localStorage.removeItem("discord_user");
+    }
+  }, []);
   const links = [
     { label: "Marketplace", to: "/marketplace", icon: Store },
     { label: "Status", to: "/status", icon: Gauge },
@@ -22,7 +31,14 @@ export default function SiteNav() {
           ))}
         </nav>
          <div className="hidden md:flex items-center gap-2">
-           <Link to="/login" className="text-sm text-muted-foreground hover:text-foreground px-3 py-2 transition inline-flex items-center gap-1.5"><MessageCircle className="w-3.5 h-3.5 text-[#5865F2]" /> Login with Discord</Link>
+           {discordUser ? (
+             <Link to="/dashboard" className="inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm transition hover:bg-secondary">
+               <img src={discordUser.avatarUrl} alt="" className="h-7 w-7 rounded-full ring-2 ring-[#5865F2]/40" />
+               <span className="max-w-28 truncate font-medium">{discordUser.name}</span>
+             </Link>
+           ) : (
+             <Link to="/login" className="text-sm text-muted-foreground hover:text-foreground px-3 py-2 transition inline-flex items-center gap-1.5"><MessageCircle className="w-3.5 h-3.5 text-[#5865F2]" /> Login with Discord</Link>
+           )}
           <Link to="/sell" className="text-sm font-medium bg-primary hover:opacity-90 text-primary-foreground px-4 py-2 rounded-lg transition inline-flex items-center gap-1.5">
              Start Selling <ArrowRight className="w-3.5 h-3.5" />
           </Link>
@@ -39,6 +55,7 @@ export default function SiteNav() {
             </Link>
           ))}
           <Link to="/sell" onClick={() => setOpen(false)} className="block text-center mt-2 bg-primary text-primary-foreground font-medium px-4 py-2.5 rounded-lg">Start Selling</Link>
+           {!discordUser && <Link to="/login" onClick={() => setOpen(false)} className="flex items-center justify-center gap-2 px-3 py-2.5 text-sm text-muted-foreground"><MessageCircle className="w-4 h-4 text-[#5865F2]" /> Login with Discord</Link>}
         </div>
       )}
     </header>
