@@ -1,0 +1,148 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+@import "tailwindcss";
+
+@theme inline {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  --font-body: var(--font-body);
+}
+
+@layer base {
+  :root {
+    --background: 222 12% 10%;
+    --foreground: 220 16% 96%;
+    --card: 222 11% 12.5%;
+    --card-foreground: 220 16% 96%;
+    --popover: 222 11% 13%;
+    --popover-foreground: 220 16% 96%;
+    --primary: 160 70% 42%;
+    --primary-foreground: 222 12% 10%;
+    --secondary: 222 11% 15%;
+    --secondary-foreground: 220 16% 96%;
+    --muted: 222 11% 15.5%;
+    --muted-foreground: 220 8% 58%;
+    --accent: 222 11% 15%;
+    --accent-foreground: 220 16% 96%;
+    --destructive: 0 62% 42%;
+    --destructive-foreground: 220 16% 96%;
+    --border: 222 10% 19%;
+    --input: 222 10% 19%;
+    --ring: 160 70% 42%;
+    --chart-1: 160 70% 42%;
+    --chart-2: 200 70% 55%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+    --radius: 0.625rem;
+    --font-heading: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    --font-body: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    --font-display: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    --sidebar-background: 222 12% 9%;
+    --sidebar-foreground: 220 10% 65%;
+    --sidebar-primary: 160 70% 42%;
+    --sidebar-primary-foreground: 222 12% 10%;
+    --sidebar-accent: 222 11% 14%;
+    --sidebar-accent-foreground: 220 16% 96%;
+    --sidebar-border: 222 10% 18%;
+    --sidebar-ring: 160 70% 42%;
+  }
+
+  .dark {
+    --background: 222 12% 10%;
+    --foreground: 220 16% 96%;
+    --card: 222 11% 12.5%;
+    --card-foreground: 220 16% 96%;
+    --popover: 222 11% 13%;
+    --popover-foreground: 220 16% 96%;
+    --primary: 160 70% 42%;
+    --primary-foreground: 222 12% 10%;
+    --secondary: 222 11% 15%;
+    --secondary-foreground: 220 16% 96%;
+    --muted: 222 11% 15.5%;
+    --muted-foreground: 220 8% 58%;
+    --accent: 222 11% 15%;
+    --accent-foreground: 220 16% 96%;
+    --destructive: 0 62% 42%;
+    --destructive-foreground: 220 16% 96%;
+    --border: 222 10% 19%;
+    --input: 222 10% 19%;
+    --ring: 160 70% 42%;
+    --sidebar-background: 222 12% 9%;
+    --sidebar-foreground: 220 10% 65%;
+    --sidebar-primary: 160 70% 42%;
+    --sidebar-primary-foreground: 222 12% 10%;
+    --sidebar-accent: 222 11% 14%;
+    --sidebar-accent-foreground: 220 16% 96%;
+    --sidebar-border: 222 10% 18%;
+    --sidebar-ring: 160 70% 42%;
+  }
+}
+
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+    outline-color: hsl(var(--ring) / 0.5);
+  }
+
+  body {
+    @apply bg-background text-foreground font-body antialiased;
+  }
+}
+
+@layer components {
+  .filter-chip {
+    @apply px-3 py-1.5 rounded-lg text-sm border border-border text-muted-foreground hover:text-foreground hover:border-primary/40 transition;
+  }
+  .filter-chip.active {
+    @apply bg-primary/10 border-primary text-primary;
+  }
+  .docs-code {
+    @apply bg-secondary border border-border rounded px-1.5 py-0.5 text-sm text-primary font-mono;
+  }
+  .card-surface {
+    @apply bg-card border border-border rounded-xl;
+  }
+}
+
+@layer components {
+  .prose-docs h2 {
+    @apply text-2xl font-bold text-foreground mb-4 mt-10;
+  }
+  .prose-docs h3 {
+    @apply text-lg font-semibold text-foreground mb-3 mt-6;
+  }
+  .prose-docs p {
+    @apply text-muted-foreground leading-relaxed mb-4;
+  }
+  .prose-docs a {
+    @apply text-primary hover:opacity-80 underline underline-offset-2;
+  }
+  .prose-docs ul {
+    @apply space-y-2 mb-4 text-muted-foreground;
+  }
+  .prose-docs li {
+    @apply flex gap-2;
+  }
+  .prose-docs code {
+    @apply bg-secondary border border-border rounded px-1.5 py-0.5 text-sm text-primary font-mono;
+  }
+}

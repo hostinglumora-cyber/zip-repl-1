@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Testaa Website Preview"
+description = "A runnable preview of the Testaa website sourced from its GitHub repository."
+version = "1.0.0"
+id = "artifacts/testaa-preview"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 22201
+
+[services.development]
+run = "pnpm --filter @workspace/testaa-preview run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/testaa-preview", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/testaa-preview/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "22201"
+BASE_PATH = "/"
