@@ -79,7 +79,7 @@ export default function CreateListing() {
   };
 
   const submit = async () => {
-    if (!user) return navigate("/login");
+    if (!user) return navigate(`/login?returnTo=${encodeURIComponent(window.location.pathname)}`);
     setSaving(true);
     try {
       const pt = form.listing_type === "Free" ? "Free" : form.price_type;

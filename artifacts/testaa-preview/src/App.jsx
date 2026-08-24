@@ -63,7 +63,6 @@ const AuthenticatedApp = () => {
       <Route path="/tos" element={<Tos />} />
       <Route path="/login" element={<Login />} />
       <Route path="/auth/discord/callback" element={<DiscordCallback />} />
-      <Route path="//auth/discord/callback" element={<DiscordCallback />} />
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />

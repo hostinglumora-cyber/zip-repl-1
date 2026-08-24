@@ -27,6 +27,24 @@ export const AuthProvider = ({ children }) => {
     setIsLoadingPublicSettings(false);
     setIsLoadingAuth(false);
     setAuthChecked(true);
+    try {
+      const savedDiscordUser = window.localStorage.getItem("discord_user");
+      if (savedDiscordUser) {
+        const profile = JSON.parse(savedDiscordUser);
+        setUser({
+          id: profile.id,
+          display_name: profile.name || profile.username,
+          full_name: profile.name || profile.username,
+          email: profile.email || "",
+          discord_username: profile.username,
+          avatar_url: profile.avatarUrl || null,
+        });
+        setIsAuthenticated(true);
+        return;
+      }
+    } catch {
+      window.localStorage.removeItem("discord_user");
+    }
     if (!appParams.token) {
       setIsAuthenticated(false);
       return;
@@ -129,6 +147,7 @@ export const AuthProvider = ({ children }) => {
   const logout = (shouldRedirect = true) => {
     setUser(null);
     setIsAuthenticated(false);
+    window.localStorage.removeItem("discord_user");
     
     if (shouldRedirect) {
       // Use the SDK's logout method which handles token cleanup and redirect

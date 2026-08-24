@@ -5,13 +5,12 @@ import AuthLayout from "@/components/AuthLayout";
 import { safeReturnTo } from "@/lib/authReturnTo";
 
 const DISCORD_CLIENT_ID = "1378231778292142172";
-const DISCORD_REDIRECT_URI = "https://4f48f28e-43f2-4f64-88d5-92273a0cc41d-00-3kp78x6ma46ab.worf.replit.dev//auth/discord/callback";
 
 function discordAuthorizeUrl(returnTo: string) {
   const params = new URLSearchParams({
     client_id: DISCORD_CLIENT_ID,
     response_type: "code",
-    redirect_uri: DISCORD_REDIRECT_URI,
+    redirect_uri: `${window.location.origin}/auth/discord/callback`,
     scope: "identify guilds",
     state: returnTo,
   });

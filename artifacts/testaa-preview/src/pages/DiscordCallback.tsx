@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, MessageCircle } from "lucide-react";
 import AuthLayout from "@/components/AuthLayout";
+import { safeReturnToValue } from "@/lib/authReturnTo";
 
 export default function DiscordCallback() {
   const [params] = useSearchParams();
@@ -9,6 +10,7 @@ export default function DiscordCallback() {
   const [profileError, setProfileError] = useState("");
   const hasCode = Boolean(params.get("code"));
   const error = params.get("error");
+  const returnTo = safeReturnToValue(params.get("state"));
 
   useEffect(() => {
     if (!hasCode || error) return;
@@ -19,7 +21,7 @@ export default function DiscordCallback() {
       })
       .then((profile) => {
         window.localStorage.setItem("discord_user", JSON.stringify(profile));
-        navigate("/", { replace: true });
+        navigate(returnTo, { replace: true });
       })
       .catch(() => setProfileError("We received the Discord response, but could not load your profile yet."));
   }, [error, hasCode, navigate]);

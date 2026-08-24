@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Menu, X, Store, Gauge, FileText, ArrowRight, MessageCircle } from "lucide-react";
+import { Menu, X, Store, Gauge, FileText, ArrowRight } from "lucide-react";
 import Logo from "@/components/Logo";
 
 export default function SiteNav() {
@@ -37,7 +37,7 @@ export default function SiteNav() {
                <span className="max-w-28 truncate font-medium">{discordUser.name}</span>
              </Link>
            ) : (
-             <Link to="/login" className="text-sm text-muted-foreground hover:text-foreground px-3 py-2 transition inline-flex items-center gap-1.5"><MessageCircle className="w-3.5 h-3.5 text-[#5865F2]" /> Login with Discord</Link>
+              <Link to="/login" className="text-sm text-muted-foreground hover:text-foreground px-3 py-2 transition">Login</Link>
            )}
           <Link to="/sell" className="text-sm font-medium bg-primary hover:opacity-90 text-primary-foreground px-4 py-2 rounded-lg transition inline-flex items-center gap-1.5">
              Start Selling <ArrowRight className="w-3.5 h-3.5" />
@@ -55,7 +55,7 @@ export default function SiteNav() {
             </Link>
           ))}
           <Link to="/sell" onClick={() => setOpen(false)} className="block text-center mt-2 bg-primary text-primary-foreground font-medium px-4 py-2.5 rounded-lg">Start Selling</Link>
-           {!discordUser && <Link to="/login" onClick={() => setOpen(false)} className="flex items-center justify-center gap-2 px-3 py-2.5 text-sm text-muted-foreground"><MessageCircle className="w-4 h-4 text-[#5865F2]" /> Login with Discord</Link>}
+           {!discordUser && <Link to="/login" onClick={() => setOpen(false)} className="flex items-center justify-center px-3 py-2.5 text-sm text-muted-foreground">Login</Link>}
         </div>
       )}
     </header>
