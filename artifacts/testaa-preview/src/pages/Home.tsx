@@ -74,25 +74,17 @@ export default function Home() {
                      {(loading ? [0, 1] : listings.slice(0, 2)).map((item, i) => loading ? (
                       <div key={i} className="aspect-[1.15] animate-pulse rounded-2xl bg-secondary" />
                     ) : <PreviewCard key={item.id} listing={item} />)}
-                     {!loading && listings.length === 0 && [
-                       { title: "Liberty County Sheriff Pack", detail: "LCSO · Uniforms", tone: "from-emerald-500/30 via-teal-500/10 to-slate-900" },
-                       { title: "Metro Response ELS Kit", detail: "Emergency · ELS Pack", tone: "from-blue-500/30 via-indigo-500/10 to-slate-900" },
-                     ].map((item) => (
-                       <Link key={item.title} to="/marketplace" className="group relative aspect-[1.15] overflow-hidden rounded-2xl border border-border bg-secondary/50">
-                         <div className={`absolute inset-0 bg-gradient-to-br ${item.tone}`} />
-                         <div className="absolute inset-0 opacity-40 [background-image:linear-gradient(135deg,transparent_35%,hsl(var(--primary)/.22)_36%,transparent_37%),linear-gradient(45deg,transparent_58%,hsl(var(--foreground)/.08)_59%,transparent_60%)]" />
-                         <div className="relative flex h-full flex-col justify-between p-4">
-                           <span className="ml-auto h-2 w-2 rounded-full bg-primary shadow-[0_0_12px_hsl(var(--primary))]" />
-                           <div>
-                             <Store className="mb-3 h-5 w-5 text-primary/80" />
-                             <p className="text-xs font-bold text-foreground transition group-hover:text-primary">{item.title}</p>
-                             <p className="mt-1 text-[11px] text-muted-foreground">{item.detail}</p>
-                           </div>
+                     {!loading && listings.length === 0 && (
+                       <Link to="/marketplace" className="group col-span-2 flex min-h-44 items-center justify-center rounded-2xl border border-dashed border-border bg-secondary/30 p-5 text-center transition hover:border-primary/50 hover:bg-secondary/50">
+                         <div>
+                           <Store className="mx-auto mb-3 h-7 w-7 text-muted-foreground/40 transition group-hover:text-primary" />
+                           <p className="text-sm font-semibold">Your next listing could be here</p>
+                           <p className="mt-1 text-xs text-muted-foreground">Browse the marketplace or upload an asset to fill the shelf.</p>
                          </div>
                        </Link>
-                     ))}
+                     )}
                   </div>
-                   <div className="flex items-center gap-3 px-3 pb-2 pt-4 text-xs text-muted-foreground"><ShieldCheck className="h-4 w-4 text-primary" /> Two featured assets, ready for your next scene.</div>
+                   <div className="flex items-center gap-3 px-3 pb-2 pt-4 text-xs text-muted-foreground"><ShieldCheck className="h-4 w-4 text-primary" /> Creator uploads, ready for your next scene.</div>
                 </div>
                 <div className="relative mx-auto mt-4 hidden w-fit items-center gap-2 rounded-xl border border-border bg-card px-3 py-2.5 shadow-xl sm:flex">
                   <div className="grid h-8 w-8 place-items-center rounded-lg bg-primary/15 text-primary"><TrendingUp className="h-4 w-4" /></div>
