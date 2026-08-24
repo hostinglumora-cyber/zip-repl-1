@@ -1,15 +1,17 @@
-# [Project name]
+# Liberty Marketplace
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+Liberty Marketplace is a dark-themed marketplace for Liberty County emergency-services assets such as liveries, uniforms, ELS packs, and map templates.
 
 ## Run & Operate
 
 - `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
+- `pnpm --filter @workspace/testaa-preview run dev` — run the website preview
+- `pnpm --filter @workspace/mockup-sandbox run dev` — run the component preview server
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run build` — typecheck + build all packages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
+- Required env: `DATABASE_URL` — Postgres connection string for database-backed API work
 
 ## Stack
 
@@ -22,23 +24,34 @@ _Replace the heading above with the project's name, and this line with one sente
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/testaa-preview` — React + Vite website preview, served at the root preview path
+- `artifacts/api-server` — Express API, including `/api/healthz`
+- `artifacts/mockup-sandbox` — isolated component preview server
+- `attached_assets` — imported image assets
+- `lib/api-spec/openapi.yaml` — API contract source of truth
+- `lib/db/src/schema` — database schema source of truth
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- Keep the imported pnpm workspace and artifact boundaries intact.
+- The website is the primary user-facing preview at `/`; the API is a separate managed service.
+- Vite receives its port and base path from the managed artifact workflow.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+- Browse marketplace listings and filter by emergency-services department.
+- View listing details and public profiles.
+- Provide login, registration, dashboard, selling, documentation, status, privacy, and terms flows.
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+- Preserve the imported structure and stack unless a later request calls for a larger change.
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- Run `pnpm install --frozen-lockfile` after a fresh import when `node_modules` is missing.
+- The current imported frontend has existing TypeScript errors in shared UI/page files, so `pnpm run typecheck` is not clean even though the Vite preview runs.
+- The API health endpoint is `/api/healthz`; a request to `/` intentionally returns 404.
 
 ## Pointers
 
