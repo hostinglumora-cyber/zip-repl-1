@@ -21,8 +21,8 @@ export default function SiteNav() {
             </Link>
           ))}
         </nav>
-        <div className="hidden md:flex items-center gap-2">
-          <Link to="/login" className="text-sm text-muted-foreground hover:text-foreground px-3 py-2 transition inline-flex items-center gap-1.5"><MessageCircle className="w-3.5 h-3.5 text-[#5865F2]" /> Login</Link>
+         <div className="hidden md:flex items-center gap-2">
+           <Link to="/login" className="text-sm text-muted-foreground hover:text-foreground px-3 py-2 transition inline-flex items-center gap-1.5"><MessageCircle className="w-3.5 h-3.5 text-[#5865F2]" /> Login with Discord</Link>
           <Link to="/sell" className="text-sm font-medium bg-primary hover:opacity-90 text-primary-foreground px-4 py-2 rounded-lg transition inline-flex items-center gap-1.5">
              Start Selling <ArrowRight className="w-3.5 h-3.5" />
           </Link>

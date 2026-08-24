@@ -1,134 +1,61 @@
-const db = globalThis.__B44_DB__ || { auth:{ isAuthenticated: async()=>false, me: async()=>null }, entities:new Proxy({}, { get:()=>({ filter:async()=>[], get:async()=>null, create:async()=>({}), update:async()=>({}), delete:async()=>({}) }) }), integrations:{ Core:{ UploadFile:async()=>({ file_url:'' }) } } };
-
-import React, { useState } from "react";
+import React from "react";
 import { Link } from "react-router-dom";
-
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { LogIn, Mail, Lock, Loader2 } from "lucide-react";
+import { ArrowRight, MessageCircle, ShieldCheck } from "lucide-react";
 import AuthLayout from "@/components/AuthLayout";
-import GoogleIcon from "@/components/GoogleIcon";
 import { safeReturnTo } from "@/lib/authReturnTo";
 
+const DISCORD_CLIENT_ID = "1378231778292142172";
+const DISCORD_REDIRECT_URI = "https://4f48f28e-43f2-4f64-88d5-92273a0cc41d-00-3kp78x6ma46ab.worf.replit.dev//auth/discord/callback";
+
+function discordAuthorizeUrl(returnTo: string) {
+  const params = new URLSearchParams({
+    client_id: DISCORD_CLIENT_ID,
+    response_type: "code",
+    redirect_uri: DISCORD_REDIRECT_URI,
+    scope: "identify guilds",
+    state: returnTo,
+  });
+  return `https://discord.com/oauth2/authorize?${params.toString()}`;
+}
+
 export default function Login() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  // Post-login destination (e.g. the MCP OAuth consent page sends users here
-  // with returnTo so the grant flow can resume). Same-origin paths only.
   const returnTo = safeReturnTo();
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
-    try {
-      await db.auth.loginViaEmailPassword(email, password);
-      window.location.href = returnTo;
-    } catch (err) {
-      setError(err.message || "Invalid email or password");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleGoogle = () => {
-    db.auth.loginWithProvider("google", returnTo);
-  };
 
   return (
     <AuthLayout
-      icon={LogIn}
+      icon={MessageCircle}
       title="Welcome back"
-      subtitle="Log in to your account"
+      subtitle="Use your Discord account to enter Liberty Marketplace"
       footer={
-        <>
-          Don't have an account?{" "}
-          <Link
-            to={"/register" + (returnTo !== "/" ? "?returnTo=" + encodeURIComponent(returnTo) : "")}
-            className="text-primary font-medium hover:underline"
-          >
-            Create one
-          </Link>
-        </>
+        <span className="text-muted-foreground">
+          New here? Your Discord profile will create an account automatically.
+        </span>
       }
     >
-      <Button
-        variant="outline"
-        className="w-full h-12 text-sm font-medium mb-6"
-        onClick={handleGoogle}
+      <a
+        href={discordAuthorizeUrl(returnTo)}
+        className="flex h-12 w-full items-center justify-center gap-3 rounded-lg bg-[#5865F2] px-4 text-sm font-semibold text-white shadow-lg shadow-[#5865F2]/20 transition hover:-translate-y-0.5 hover:bg-[#4752C4]"
       >
-        <GoogleIcon className="w-5 h-5 mr-2" />
-        Continue with Google
-      </Button>
+        <MessageCircle className="h-5 w-5" />
+        Continue with Discord
+        <ArrowRight className="h-4 w-4" />
+      </a>
 
-      <div className="relative mb-6">
-        <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-border" />
-        </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-card px-3 text-muted-foreground">or</span>
+      <div className="mt-6 rounded-xl border border-border bg-secondary/50 p-4">
+        <div className="flex items-start gap-3">
+          <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+          <div>
+            <p className="text-sm font-semibold">A safer marketplace</p>
+            <p className="mt-1 text-xs leading-5 text-muted-foreground">
+              Discord identity helps creators and buyers build trust without another password to remember.
+            </p>
+          </div>
         </div>
       </div>
 
-      {error && (
-        <div className="mb-4 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
-          {error}
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
-          <div className="relative">
-            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
-            <Input
-              id="email"
-              type="email"
-              autoComplete="email"
-              autoFocus
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="pl-10 h-12"
-              required
-            />
-          </div>
-        </div>
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="password">Password</Label>
-            <Link to="/forgot-password" className="text-xs text-primary hover:underline">
-              Forgot password?
-            </Link>
-          </div>
-          <div className="relative">
-            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
-            <Input
-              id="password"
-              type="password"
-              autoComplete="current-password"
-              placeholder="â¢â¢â¢â¢â¢â¢â¢â¢"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="pl-10 h-12"
-              required
-            />
-          </div>
-        </div>
-        <Button type="submit" className="w-full h-12 font-medium" disabled={loading}>
-          {loading ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Logging in...
-            </>
-          ) : (
-            "Log in"
-          )}
-        </Button>
-      </form>
+      <Link to="/" className="mt-6 block text-center text-sm text-muted-foreground transition hover:text-foreground">
+        Back to home
+      </Link>
     </AuthLayout>
   );
 }

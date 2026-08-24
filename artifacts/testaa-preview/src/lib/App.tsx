@@ -20,6 +20,7 @@ import DashboardLayout from '@/components/DashboardLayout';
 import Dashboard from '@/pages/Dashboard';
 import Admin from '@/pages/Admin';
 import Login from '@/pages/Login';
+import DiscordCallback from '@/pages/DiscordCallback';
 import Register from '@/pages/Register';
 import ForgotPassword from '@/pages/ForgotPassword';
 import ResetPassword from '@/pages/ResetPassword';
@@ -61,6 +62,7 @@ const AuthenticatedApp = () => {
       <Route path="/privacy" element={<Privacy />} />
       <Route path="/tos" element={<Tos />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/auth/discord/callback" element={<DiscordCallback />} />
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
