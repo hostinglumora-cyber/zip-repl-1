@@ -1,0 +1,42 @@
+# Base44 development environment for the Liberty Marketplace pnpm workspace.
+# The web service (Vite dev server) is the primary preview on host port 3000.
+# A one-shot setup service installs workspace dependencies first; both app
+# services share the bind-mounted node_modules.
+services:
+  setup:
+    image: node:22-slim
+    working_dir: /app
+    volumes:
+      - ./:/app
+    command: sh -c "npm install -g pnpm@10 && pnpm install --frozen-lockfile"
+
+  web:
+    image: node:22-slim
+    working_dir: /app
+    volumes:
+      - ./:/app
+    environment:
+      - PORT=3000
+      - BASE_PATH=/
+      - NODE_ENV=development
+    ports:
+      - "3000:3000"
+    command: sh -c "npm install -g pnpm@10 && pnpm --filter @workspace/testaa-preview run dev"
+    depends_on:
+      setup:
+        condition: service_completed_successfully
+
+  api:
+    image: node:22-slim
+    working_dir: /app
+    volumes:
+      - ./:/app
+    environment:
+      - PORT=5000
+      - NODE_ENV=development
+    ports:
+      - "5000:5000"
+    command: sh -c "npm install -g pnpm@10 && pnpm --filter @workspace/api-server run dev"
+    depends_on:
+      setup:
+        condition: service_completed_successfully
