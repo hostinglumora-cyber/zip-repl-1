@@ -12,10 +12,10 @@ paths = [ "/" ]
 localPort = 22201
 
 [services.development]
-run = "pnpm --filter @workspace/testaa-preview run dev"
+run = "npm exec --yes --package=pnpm@10.15.0 -- pnpm --filter @workspace/testaa-preview run dev"
 
 [services.production]
-build = [ "pnpm", "--filter", "@workspace/testaa-preview", "run", "build" ]
+build = [ "npm", "exec", "--yes", "--package=pnpm@10.15.0", "--", "pnpm", "--filter", "@workspace/testaa-preview", "run", "build" ]
 serve = "static"
 publicDir = "artifacts/testaa-preview/dist/public"
 
