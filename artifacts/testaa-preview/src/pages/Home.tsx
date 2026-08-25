@@ -2,7 +2,7 @@ const db = globalThis.__B44_DB__ || { entities: new Proxy({}, { get: () => ({ fi
 
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, BadgeCheck, BookOpen, Check, ChevronRight, CircleHelp, Heart, Package, ShieldCheck, Sparkles, Store, TrendingUp, Users } from "lucide-react";
+import { ArrowRight, BookOpen, Check, ChevronRight, Package, ShieldCheck, Store, TrendingUp, Users } from "lucide-react";
 import SiteNav from "@/components/SiteNav";
 import { DEPARTMENTS } from "@/lib/departments";
 import { Image } from "@/components/ui/image";
@@ -27,27 +27,23 @@ export default function Home() {
       <SiteNav />
       <main>
         <section className="relative overflow-hidden border-b border-border">
-          <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute -top-48 left-[8%] h-[520px] w-[720px] rounded-full bg-primary/[0.12] blur-[140px]" />
-            <div className="absolute top-20 right-[-10%] h-[460px] w-[520px] rounded-full bg-blue-500/[0.08] blur-[150px]" />
-            <div className="absolute inset-0 bg-[linear-gradient(to_right,hsl(var(--border)/0.12)_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--border)/0.12)_1px,transparent_1px)] bg-[size:64px_64px] [mask-image:linear-gradient(to_bottom,black,transparent_82%)]" />
-          </div>
+          <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_15%_20%,hsl(var(--primary)/.12),transparent_34%),linear-gradient(115deg,transparent_45%,hsl(var(--primary)/.04))]" />
           <div className="relative mx-auto max-w-7xl px-5 pb-20 pt-20 lg:px-8 lg:pb-28 lg:pt-28">
             <div className="grid items-center gap-14 lg:grid-cols-[1.08fr_.92fr]">
               <div>
-                <div className="mb-7 flex flex-wrap gap-2">
-                  <span className="inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary">
-                    <Sparkles className="h-3.5 w-3.5" /> Built for Liberty County
+                <div className="mb-7 flex flex-wrap items-center gap-3">
+                  <span className="inline-flex items-center gap-2 border-l-2 border-primary pl-3 text-xs font-bold uppercase tracking-[0.2em] text-primary">
+                    ER:LC ASSET MARKET
                   </span>
-                  <Link to="/docs" className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card/70 px-3 py-1.5 text-xs text-muted-foreground transition hover:border-primary/30 hover:text-foreground">
-                    <BookOpen className="h-3.5 w-3.5" /> Read the guide <ChevronRight className="h-3 w-3" />
+                  <Link to="/docs" className="inline-flex items-center gap-1.5 text-xs text-muted-foreground transition hover:text-foreground">
+                    How it works <ChevronRight className="h-3 w-3" />
                   </Link>
                 </div>
                 <h1 className="max-w-3xl text-5xl font-extrabold leading-[1.02] tracking-[-0.045em] lg:text-7xl">
-                  Your next <span className="text-primary">scene-ready</span> asset starts here.
+                  Better assets for <span className="text-primary">better scenes.</span>
                 </h1>
                 <p className="mt-6 max-w-xl text-lg leading-8 text-muted-foreground">
-                  Liberty Marketplace is the trusted home for ER:LC liveries, uniforms, ELS packs, and map templates from creators who know the county.
+                  Shop and share the liveries, uniforms, ELS packs, and map templates your department actually needs.
                 </p>
                 <div className="mt-9 flex flex-wrap gap-3">
                   <Link to="/marketplace" className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3.5 font-semibold text-primary-foreground shadow-lg shadow-primary/20 transition hover:-translate-y-0.5 hover:opacity-90">

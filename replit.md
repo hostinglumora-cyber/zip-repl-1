@@ -5,7 +5,7 @@ Liberty Marketplace is a dark-themed marketplace for Liberty County emergency-se
 ## Run & Operate
 
 - `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
-- `pnpm --filter @workspace/testaa-preview run dev` — run the website preview
+- `PORT=5173 BASE_PATH=/ pnpm --filter @workspace/testaa-preview run dev` — run the website preview manually; the managed artifact workflow supplies its own port and base path
 - `pnpm --filter @workspace/mockup-sandbox run dev` — run the component preview server
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run build` — typecheck + build all packages

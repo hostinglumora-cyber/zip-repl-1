@@ -43,13 +43,14 @@ export default function CreateListing() {
   const [codeInput, setCodeInput] = useState("");
   const [bundleInput, setBundleInput] = useState("");
 
-  const update = (patch) => setForm({ ...form, ...patch });
+  const update = (patch) => setForm((current) => ({ ...current, ...patch }));
 
   const toggleDept = (id) => {
     update({ departments: form.departments.includes(id) ? form.departments.filter((d) => d !== id) : [...form.departments, id] });
   };
 
   const handleFiles = async (files) => {
+    if (!files?.length) return;
     if (form.images.length + files.length > 10) { alert("Maximum 10 images."); return; }
     setUploading(true);
     try {
@@ -59,7 +60,7 @@ export default function CreateListing() {
         urls.push(file_url);
       }
       update({ images: [...form.images, ...urls] });
-    } catch (e) { alert("Upload failed."); } finally { setUploading(false); }
+    } catch (e) { alert(e.message || "Upload failed."); } finally { setUploading(false); }
   };
 
   const addCode = () => {
@@ -100,8 +101,9 @@ export default function CreateListing() {
         seller_id: user.id,
         seller_name: user.display_name || user.full_name || user.email,
       });
+      if (!record?.id) throw new Error("The listing was not saved.");
       navigate(`/listing/${record.id}`);
-    } catch (e) { alert("Could not create listing. Please try again."); } finally { setSaving(false); }
+    } catch (e) { alert(e.message || "Could not create listing. Please try again."); } finally { setSaving(false); }
   };
 
   return (
