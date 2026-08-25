@@ -20,17 +20,18 @@ import {
   Check,
   Search,
   BookOpen,
-  Code2,
-  Layers,
-  FileCode,
-  Radio,
   Plus,
+  Users,
+  Flame,
+  UserPlus,
+  UserCheck,
 } from "lucide-react";
 import SiteNav from "@/components/SiteNav";
 import { DEPARTMENTS } from "@/lib/departments";
 import { BRAND } from "@/lib/brand";
 import { MarketplaceCard } from "@/pages/Marketplace";
 import { localDb } from "@/lib/localDb";
+import { useAuth } from "@/lib/AuthContext";
 import { cn } from "@/lib/utils";
 
 const db = (globalThis as any).__B44_DB__ || localDb;
@@ -105,19 +106,48 @@ const PLATFORM_PILLARS = [
 ];
 
 export default function Home() {
+  const { user } = useAuth();
   const [listings, setListings] = useState<any[]>([]);
+  const [creators, setCreators] = useState<any[]>([]);
+  const [creatorTab, setCreatorTab] = useState<"trending" | "new" | "top" | "rising">("trending");
   const [selectedDept, setSelectedDept] = useState<string>("All");
   const [loading, setLoading] = useState(true);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [searchQuery, setSearchQuery] = useState("");
+  const [followedMap, setFollowedMap] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     const query = db?.entities?.Listing?.filter || localDb.entities.Listing.filter;
-    query({ status: "active" }, "-created_date", 24)
-      .then((rows: any[]) => setListings(rows || []))
-      .catch(() => setListings([]))
+    Promise.all([
+      query({ status: "active" }, "-created_date", 24),
+      localDb.getDeduplicatedCreators(),
+    ])
+      .then(([rows, creatorList]: [any[], any[]]) => {
+        setListings(rows || []);
+        setCreators(creatorList || []);
+
+        if (user?.id) {
+          const map: Record<string, boolean> = {};
+          creatorList.forEach((c) => {
+            localDb.isFollowing(user.id, c.username).then((isF) => {
+              map[c.username] = isF;
+            });
+          });
+          setFollowedMap(map);
+        }
+      })
+      .catch(() => {})
       .finally(() => setLoading(false));
-  }, []);
+  }, [user?.id]);
+
+  const handleToggleFollow = async (c: any) => {
+    if (!user) {
+      alert("Please log in to follow creators.");
+      return;
+    }
+    const res = await localDb.toggleFollow(user.id, c);
+    setFollowedMap((prev) => ({ ...prev, [c.username]: res.following }));
+  };
 
   const displayedListings = listings.filter((l) => {
     if (selectedDept !== "All") {
@@ -136,13 +166,27 @@ export default function Home() {
 
   const topListing = listings.length > 0 ? listings[0] : null;
 
+  // Deduplicated creator tabs
+  const tabCreators = (() => {
+    if (creatorTab === "top") {
+      return [...creators].sort((a, b) => (b.sales_count || 0) - (a.sales_count || 0));
+    }
+    if (creatorTab === "new") {
+      return [...creators].sort((a, b) => new Date(b.created_date || 0).getTime() - new Date(a.created_date || 0).getTime());
+    }
+    if (creatorTab === "rising") {
+      return [...creators].sort((a, b) => (b.products_count || 0) - (a.products_count || 0));
+    }
+    return creators; // trending
+  })().slice(0, 6);
+
   return (
     <div className="min-h-screen text-white bg-[#07090E] selection:bg-emerald-500/25 selection:text-emerald-300">
       <SiteNav />
 
       {/* ─── MINTLIFY-INSPIRED HERO SECTION ─── */}
       <section className="relative pt-16 pb-20 lg:pt-24 lg:pb-28 border-b border-white/[0.06] overflow-hidden">
-        {/* Subtle grid lines */}
+        {/* Grid lines */}
         <div
           className="pointer-events-none absolute inset-0 opacity-[0.025]"
           style={{
@@ -163,11 +207,11 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
             
-            {/* Left: Clean Heading & Mintlify-Style Cards */}
+            {/* Left: Clean Heading & Mintlify-Style Action Cards */}
             <div className="lg:col-span-7 space-y-6">
               <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/25 bg-emerald-500/[0.08] px-3.5 py-1 text-xs font-semibold text-emerald-400">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                <span>LibertyX Marketplace</span>
+                <span>LibertyX Marketplace & Creator Ecosystem</span>
               </div>
 
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.08] text-white">
@@ -230,19 +274,19 @@ export default function Home() {
                 </Link>
 
                 <Link
-                  to="/docs"
+                  to="/creators"
                   className="p-3.5 rounded-xl border border-white/[0.06] bg-[#0A0D15]/80 hover:border-emerald-500/30 hover:bg-[#0E1320] transition group"
                 >
                   <div className="flex items-center gap-2 text-xs font-bold text-white mb-0.5 group-hover:text-emerald-400">
-                    <BookOpen className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>Documentation</span>
+                    <Users className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Creators Directory</span>
                   </div>
-                  <p className="text-[11px] text-zinc-400">Guides, escrow & webhooks</p>
+                  <p className="text-[11px] text-zinc-400">Discover verified design studios</p>
                 </Link>
               </div>
             </div>
 
-            {/* Right: Real Top Asset or Interactive Publisher Card */}
+            {/* Right: Dynamic Top Asset or Studio Spotlight */}
             <div className="lg:col-span-5">
               {topListing ? (
                 <div className="rounded-2xl border border-white/[0.09] bg-[#0A0D15] p-6 shadow-2xl space-y-4">
@@ -312,6 +356,123 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* ─── DEDUPLICATED CREATOR DISCOVERY SECTION ─── */}
+      {creators.length > 0 && (
+        <section className="py-16 lg:py-20 px-4 sm:px-6 lg:px-8 border-b border-white/[0.06] bg-[#05070C]">
+          <div className="max-w-7xl mx-auto">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
+              <div>
+                <p className="text-xs font-mono uppercase tracking-wider text-emerald-400 mb-1">
+                  Creator Spotlight
+                </p>
+                <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                  Discover ER:LC Creators
+                </h2>
+              </div>
+
+              {/* Creator Tabs */}
+              <div className="flex items-center gap-1.5 bg-[#0A0D15] p-1 rounded-xl border border-white/[0.06]">
+                {[
+                  { id: "trending", label: "🔥 Trending" },
+                  { id: "new", label: "🆕 New" },
+                  { id: "top", label: "🏆 Top Sellers" },
+                  { id: "rising", label: "⚡ Rising" },
+                ].map((t) => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => setCreatorTab(t.id as any)}
+                    className={cn(
+                      "px-3 py-1 text-xs font-semibold rounded-lg transition",
+                      creatorTab === t.id
+                        ? "bg-emerald-500 text-black font-bold shadow-sm"
+                        : "text-zinc-400 hover:text-white"
+                    )}
+                  >
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {tabCreators.map((c) => {
+                const isF = followedMap[c.username] || false;
+                return (
+                  <div
+                    key={c.username}
+                    className="rounded-2xl border border-white/[0.08] bg-[#0A0D15] p-5 space-y-4 hover:border-emerald-500/35 transition-all flex flex-col justify-between shadow-xl"
+                  >
+                    <div>
+                      <div className="flex items-start justify-between gap-3 mb-2">
+                        <Link to={`/u/${c.username}`} className="flex items-center gap-3 min-w-0">
+                          <div className="w-12 h-12 rounded-2xl overflow-hidden border border-emerald-500/30 bg-black shrink-0">
+                            {c.avatar_url ? (
+                              <img src={c.avatar_url} alt="" className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center font-bold text-white bg-zinc-900">
+                                {c.display_name?.charAt(0).toUpperCase() || "C"}
+                              </div>
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1">
+                              <h3 className="font-bold text-sm text-white truncate">{c.display_name}</h3>
+                              <BadgeCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                            </div>
+                            <span className="text-xs font-mono text-zinc-400 block truncate">@{c.username}</span>
+                          </div>
+                        </Link>
+
+                        <button
+                          type="button"
+                          onClick={() => handleToggleFollow(c)}
+                          className={cn(
+                            "px-3 py-1 rounded-xl text-xs font-bold transition shrink-0",
+                            isF
+                              ? "border border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
+                              : "bg-white/[0.06] hover:bg-emerald-500 hover:text-black text-zinc-200"
+                          )}
+                        >
+                          {isF ? "Following" : "Follow"}
+                        </button>
+                      </div>
+
+                      <p className="text-xs text-zinc-300 line-clamp-2 leading-relaxed">
+                        {c.bio || "Verified ER:LC emergency livery & uniform designer."}
+                      </p>
+
+                      <div className="mt-3 pt-3 border-t border-white/[0.04] grid grid-cols-3 gap-2 text-center text-[11px] font-mono">
+                        <div className="p-1.5 rounded-lg bg-[#07090E]">
+                          <span className="text-zinc-500 block text-[9px]">PRODUCTS</span>
+                          <span className="font-bold text-white">{c.products_count}</span>
+                        </div>
+                        <div className="p-1.5 rounded-lg bg-[#07090E]">
+                          <span className="text-zinc-500 block text-[9px]">RATING</span>
+                          <span className="font-bold text-emerald-400">{c.rating} ★</span>
+                        </div>
+                        <div className="p-1.5 rounded-lg bg-[#07090E]">
+                          <span className="text-zinc-500 block text-[9px]">SALES</span>
+                          <span className="font-bold text-white">{c.sales_count}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <Link
+                      to={`/u/${c.username}`}
+                      className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-white/[0.04] hover:bg-emerald-500 hover:text-black text-xs font-bold text-zinc-200 transition"
+                    >
+                      <Store className="w-3.5 h-3.5" />
+                      <span>View Storefront</span>
+                    </Link>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ─── LIVE MARKETPLACE CATALOG SHOWCASE ─── */}
       <section className="py-16 lg:py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
@@ -616,8 +777,9 @@ export function Footer() {
           <h4 className="text-xs font-bold uppercase tracking-wider text-white mb-3">Creator Studio</h4>
           <ul className="space-y-2 text-xs">
             <li><Link to="/dashboard" className="hover:text-white transition">Overview</Link></li>
+            <li><Link to="/dashboard/storefront" className="hover:text-white transition">Storefront Builder</Link></li>
             <li><Link to="/sell" className="hover:text-white transition">Publish Asset</Link></li>
-            <li><Link to="/docs" className="hover:text-white transition">Documentation</Link></li>
+            <li><Link to="/messages" className="hover:text-white transition">Messages</Link></li>
             <li><Link to="/status" className="hover:text-white transition">System Status</Link></li>
           </ul>
         </div>

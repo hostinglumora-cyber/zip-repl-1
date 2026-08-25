@@ -33,6 +33,12 @@ import {
   Heart,
   Send,
   SlidersHorizontal,
+  HelpCircle,
+  ThumbsUp,
+  Flag,
+  DollarSign,
+  Briefcase,
+  Radio,
 } from "lucide-react";
 
 import SiteNav from "@/components/SiteNav";
@@ -93,8 +99,11 @@ export default function Profile() {
   const [purchases, setPurchases] = useState<any[]>([]);
   const [reviews, setReviews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"all" | "featured" | "bundles" | "free" | "reviews" | "about">("all");
+  const [activeTab, setActiveTab] = useState<
+    "all" | "featured" | "bundles" | "free" | "services" | "reviews" | "about"
+  >("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [reviewSort, setReviewSort] = useState<"newest" | "highest" | "lowest">("newest");
   const [isFollowing, setIsFollowing] = useState(false);
   const [followersCount, setFollowersCount] = useState(0);
   const [copiedUrl, setCopiedUrl] = useState(false);
@@ -102,8 +111,8 @@ export default function Profile() {
   const [newReviewText, setNewReviewText] = useState("");
   const [newReviewRating, setNewReviewRating] = useState(5);
   const [submittingReview, setSubmittingReview] = useState(false);
+  const [helpfulVoted, setHelpfulVoted] = useState<Record<string, boolean>>({});
 
-  // Load Creator Profile & Data
   useEffect(() => {
     async function loadData() {
       setLoading(true);
@@ -116,15 +125,11 @@ export default function Profile() {
         }
 
         setProfile(prof);
-
-        // Update Document Title & SEO
         document.title = `${prof.display_name || prof.username} (@${prof.username}) | LibertyX Creator Storefront`;
 
-        // Load Creator Listings
         const listingQuery = db?.entities?.Listing?.filter || localDb.entities.Listing.filter;
         const allListings: any[] = await listingQuery({ status: "active" }, "-created_date", 100);
         
-        // Filter by creator's username or user_id or seller_name
         const creatorListings = allListings.filter((l) => {
           const matchUser = l.seller_username && l.seller_username.toLowerCase() === prof.username.toLowerCase();
           const matchId = l.seller_id && l.seller_id === prof.user_id;
@@ -133,7 +138,6 @@ export default function Profile() {
         });
         setListings(creatorListings);
 
-        // Load Sales / Completed Orders
         const purchaseQuery = db?.entities?.Purchase?.filter || localDb.entities.Purchase.filter;
         const allPurchases: any[] = await purchaseQuery({}, "-created_date", 100);
         const creatorPurchases = allPurchases.filter(
@@ -141,16 +145,14 @@ export default function Profile() {
         );
         setPurchases(creatorPurchases);
 
-        // Load Reviews
         const reviewQuery = db?.entities?.Review?.filter || localDb.entities.Review.filter;
         const allReviews: any[] = await reviewQuery({}, "-created_date", 100);
         const creatorReviews = allReviews.filter((r) => {
           const matchedListing = creatorListings.some((l) => l.id === r.listing_id);
-          return matchedListing || r.creator_username === prof.username;
+          return matchedListing || r.creator_username?.toLowerCase() === prof.username.toLowerCase();
         });
         setReviews(creatorReviews);
 
-        // Load Follow State
         const fCount = localDb.getFollowersCount(prof.username);
         setFollowersCount(fCount);
 
@@ -158,9 +160,8 @@ export default function Profile() {
           const following = await localDb.isFollowing(user.id, prof.username);
           setIsFollowing(following);
 
-          // Check if user is eligible to leave a verified review
           const hasBought = allPurchases.some(
-            (p) => p.buyer_id === user.id && creatorListings.some((l) => l.id === p.listing_id)
+            (p) => p.buyer_id === user.id && (p.seller_id === prof.user_id || creatorListings.some((l) => l.id === p.listing_id))
           );
           setCanReview(hasBought);
         }
@@ -208,9 +209,12 @@ export default function Profile() {
         creator_id: profile.user_id || profile.id,
         reviewer_id: user.id,
         reviewer_name: user.display_name || user.username || "Verified Buyer",
+        reviewer_username: user.username,
+        reviewer_avatar: user.avatar_url,
         rating: newReviewRating,
         comment: newReviewText.trim(),
         verified_purchase: true,
+        helpful_count: 0,
         created_date: new Date().toISOString(),
       });
       setReviews([rev, ...reviews]);
@@ -220,6 +224,14 @@ export default function Profile() {
     } finally {
       setSubmittingReview(false);
     }
+  };
+
+  const handleHelpful = async (reviewId: string) => {
+    if (!user) return alert("Please log in to vote.");
+    if (helpfulVoted[reviewId]) return;
+    const updated = await localDb.voteReviewHelpful(reviewId, user.id);
+    setReviews((prev) => prev.map((r) => (r.id === reviewId ? updated : r)));
+    setHelpfulVoted((prev) => ({ ...prev, [reviewId]: true }));
   };
 
   if (loading) {
@@ -258,7 +270,6 @@ export default function Profile() {
     );
   }
 
-  // Filter products by tab & search query
   const featuredListings = listings.filter((l) =>
     profile.featured_listing_ids && Array.isArray(profile.featured_listing_ids)
       ? profile.featured_listing_ids.includes(l.id)
@@ -267,6 +278,7 @@ export default function Profile() {
 
   const bundleListings = listings.filter((l) => l.listing_type === "Bundle" || l.category === "Bundles");
   const freeListings = listings.filter((l) => l.price_type === "Free" || !l.price || l.price === 0);
+  const servicesList = profile.services || [];
 
   const activeCatalog = (() => {
     let base = listings;
@@ -287,6 +299,12 @@ export default function Profile() {
     return base;
   })();
 
+  const sortedReviews = [...reviews].sort((a, b) => {
+    if (reviewSort === "highest") return (b.rating || 5) - (a.rating || 5);
+    if (reviewSort === "lowest") return (a.rating || 5) - (b.rating || 5);
+    return new Date(b.created_date || 0).getTime() - new Date(a.created_date || 0).getTime();
+  });
+
   const averageRating =
     reviews.length > 0
       ? (reviews.reduce((sum, r) => sum + (r.rating || 5), 0) / reviews.length).toFixed(1)
@@ -297,6 +315,13 @@ export default function Profile() {
       <div>
         <SiteNav />
 
+        {/* Announcement Strip */}
+        {profile.announcement && (
+          <div className="bg-emerald-500/10 border-b border-emerald-500/20 py-2.5 px-4 text-center text-xs font-semibold text-emerald-300">
+            {profile.announcement}
+          </div>
+        )}
+
         {/* ─── 1. CREATOR FULL-WIDTH BANNER ─── */}
         <div className="relative h-56 sm:h-72 w-full overflow-hidden bg-black/80 border-b border-white/[0.08]">
           <img
@@ -306,15 +331,15 @@ export default function Profile() {
           />
           <div className="absolute inset-0 bg-gradient-to-t from-[#07090E] via-transparent to-black/40" />
 
-          {/* Banner Controls */}
+          {/* Owner Customization shortcut */}
           {isOwner && (
-            <div className="absolute top-4 right-4">
+            <div className="absolute top-4 right-4 flex gap-2">
               <Link
-                to="/dashboard/profile"
+                to="/dashboard/storefront"
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-white/[0.15] bg-black/60 hover:bg-black text-xs font-semibold text-white backdrop-blur-md transition"
               >
                 <Edit3 className="w-3.5 h-3.5" />
-                <span>Customize Storefront</span>
+                <span>Edit Storefront</span>
               </Link>
             </div>
           )}
@@ -343,8 +368,14 @@ export default function Profile() {
                     )}
                   </div>
 
-                  {/* Online indicator */}
-                  <span className="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-[#0A0D15]" />
+                  {/* Status Indicator */}
+                  <span
+                    className={cn(
+                      "absolute bottom-1 right-1 w-4 h-4 rounded-full border-2 border-[#0A0D15]",
+                      profile.status === "closed" ? "bg-rose-500" : profile.status === "away" ? "bg-amber-500" : "bg-emerald-500"
+                    )}
+                    title={profile.status_message || "Active"}
+                  />
                 </div>
 
                 {/* Creator Title & Badges */}
@@ -363,6 +394,12 @@ export default function Profile() {
                     <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-bold text-emerald-400">
                       <BadgeCheck className="w-3.5 h-3.5" /> LibertyX Creator
                     </span>
+
+                    {profile.status_message && (
+                      <span className="text-[10px] font-mono text-zinc-400 bg-white/[0.04] border border-white/[0.06] px-2 py-0.5 rounded">
+                        {profile.status_message}
+                      </span>
+                    )}
                   </div>
 
                   <div className="flex items-center gap-2.5 text-xs text-zinc-400 font-mono">
@@ -413,6 +450,14 @@ export default function Profile() {
                   )}
                 </button>
 
+                <Link
+                  to={`/messages?to=${profile.username}`}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-white/[0.08] bg-white/[0.02] hover:bg-white/[0.06] text-xs font-semibold text-zinc-200 transition"
+                >
+                  <MessageCircle className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Message</span>
+                </Link>
+
                 <button
                   type="button"
                   onClick={handleShare}
@@ -422,18 +467,6 @@ export default function Profile() {
                   {copiedUrl ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Share2 className="w-3.5 h-3.5" />}
                   <span>{copiedUrl ? "Copied" : "Share"}</span>
                 </button>
-
-                {profile.social_links?.discord && (
-                  <a
-                    href={profile.social_links.discord}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-[#5865F2]/30 bg-[#5865F2]/10 hover:bg-[#5865F2]/20 text-xs font-semibold text-[#5865F2] transition"
-                  >
-                    <MessageCircle className="w-3.5 h-3.5" />
-                    <span>Discord</span>
-                  </a>
-                )}
               </div>
             </div>
 
@@ -477,7 +510,8 @@ export default function Profile() {
                 { id: "featured", label: "Featured", count: featuredListings.length },
                 { id: "bundles", label: "Fleet Bundles", count: bundleListings.length },
                 { id: "free", label: "Free Drops", count: freeListings.length },
-                { id: "reviews", label: "Customer Reviews", count: reviews.length },
+                { id: "services", label: "Custom Services", count: servicesList.length },
+                { id: "reviews", label: "Reviews", count: reviews.length },
                 { id: "about", label: "About Creator" },
               ].map((tab) => (
                 <button
@@ -502,7 +536,7 @@ export default function Profile() {
             </div>
 
             {/* Search within Storefront */}
-            {activeTab !== "reviews" && activeTab !== "about" && (
+            {activeTab !== "reviews" && activeTab !== "about" && activeTab !== "services" && (
               <div className="relative sm:w-64">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-500" />
                 <input
@@ -545,17 +579,94 @@ export default function Profile() {
             </div>
           )}
 
+          {/* SERVICES / COMMISSIONS TAB */}
+          {activeTab === "services" && (
+            <div>
+              {servicesList.length === 0 ? (
+                <div className="rounded-2xl border border-white/[0.08] bg-[#0A0D15] p-12 text-center max-w-md mx-auto shadow-xl">
+                  <Briefcase className="w-8 h-8 text-emerald-400 mx-auto mb-2" />
+                  <h3 className="text-base font-bold text-white mb-1">No custom services listed</h3>
+                  <p className="text-xs text-zinc-400 mb-5 leading-relaxed">
+                    This creator is currently only offering pre-packaged catalog assets.
+                  </p>
+                  {isOwner && (
+                    <Link
+                      to="/dashboard/storefront"
+                      className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-4 py-2 text-xs font-bold text-black"
+                    >
+                      Add Services in Storefront Builder
+                    </Link>
+                  )}
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  {servicesList.map((srv: any, i: number) => (
+                    <div
+                      key={srv.id || i}
+                      className="rounded-2xl border border-white/[0.08] bg-[#0A0D15] p-6 space-y-4 shadow-xl flex flex-col justify-between"
+                    >
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded font-bold uppercase">
+                            {srv.category || "Commission"}
+                          </span>
+                          <span className="text-base font-mono font-bold text-white">R$ {srv.price || 0}</span>
+                        </div>
+
+                        <h3 className="text-base font-bold text-white">{srv.title}</h3>
+                        <p className="text-xs text-zinc-300 leading-relaxed">{srv.description}</p>
+
+                        <div className="pt-2 text-xs text-zinc-400 space-y-1">
+                          <div className="flex items-center gap-1.5">
+                            <Clock className="w-3.5 h-3.5 text-zinc-500" />
+                            <span>Turnaround: <strong className="text-white">{srv.delivery_estimate || "24-48 Hours"}</strong></span>
+                          </div>
+                          {srv.requirements && (
+                            <p className="text-[11px] text-zinc-500">Requirements: {srv.requirements}</p>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="pt-3 border-t border-white/[0.04]">
+                        <Link
+                          to={`/messages?to=${profile.username}&listing=custom_service&title=${encodeURIComponent(srv.title)}`}
+                          className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-bold transition shadow-sm"
+                        >
+                          <MessageCircle className="w-3.5 h-3.5" />
+                          <span>Request Commission</span>
+                        </Link>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* REVIEWS TAB CONTENT */}
           {activeTab === "reviews" && (
             <div className="space-y-6 max-w-4xl">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                   <h3 className="text-lg font-bold text-white">Verified Customer Reviews</h3>
                   <p className="text-xs text-zinc-400">Feedback from purchasers with verified escrow deliveries.</p>
                 </div>
-                <div className="flex items-center gap-1.5 text-emerald-400 font-bold text-sm">
-                  <Star className="w-4 h-4 fill-emerald-400" />
-                  <span>{averageRating} ★ Average ({reviews.length})</span>
+                
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-1.5 text-emerald-400 font-bold text-sm">
+                    <Star className="w-4 h-4 fill-emerald-400" />
+                    <span>{averageRating} ★ ({reviews.length})</span>
+                  </div>
+
+                  <select
+                    value={reviewSort}
+                    onChange={(e) => setReviewSort(e.target.value as any)}
+                    className="rounded-xl border border-white/[0.08] bg-[#07090E] px-3 py-1.5 text-xs text-zinc-300 outline-none"
+                  >
+                    <option value="newest">Newest</option>
+                    <option value="highest">Highest Rating</option>
+                    <option value="lowest">Lowest Rating</option>
+                  </select>
                 </div>
               </div>
 
@@ -609,14 +720,14 @@ export default function Profile() {
               )}
 
               {/* Reviews List */}
-              {reviews.length === 0 ? (
+              {sortedReviews.length === 0 ? (
                 <div className="p-10 text-center text-xs text-zinc-500 rounded-2xl border border-white/[0.06] bg-[#0A0D15]">
                   No reviews recorded yet for this creator.
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {reviews.map((r, i) => (
-                    <div key={i} className="rounded-2xl border border-white/[0.06] bg-[#0A0D15] p-4 text-xs space-y-2">
+                  {sortedReviews.map((r, i) => (
+                    <div key={r.id || i} className="rounded-2xl border border-white/[0.06] bg-[#0A0D15] p-4 text-xs space-y-3">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <span className="font-bold text-white">{r.reviewer_name || "Verified Buyer"}</span>
@@ -630,7 +741,32 @@ export default function Profile() {
                           ))}
                         </div>
                       </div>
+
                       <p className="text-zinc-300 leading-relaxed">{r.comment}</p>
+
+                      {/* Creator Reply Display */}
+                      {r.seller_reply && (
+                        <div className="p-3 rounded-xl border border-emerald-500/20 bg-emerald-500/[0.04] space-y-1">
+                          <span className="font-bold text-emerald-400 block text-[11px]">Creator Reply:</span>
+                          <p className="text-zinc-300">{r.seller_reply.text}</p>
+                        </div>
+                      )}
+
+                      {/* Helpful Button */}
+                      <div className="flex items-center justify-between pt-2 border-t border-white/[0.04] text-[11px] text-zinc-500">
+                        <span>{new Date(r.created_date || Date.now()).toLocaleDateString()}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleHelpful(r.id)}
+                          className={cn(
+                            "flex items-center gap-1 text-zinc-400 hover:text-white transition",
+                            helpfulVoted[r.id] && "text-emerald-400"
+                          )}
+                        >
+                          <ThumbsUp className="w-3 h-3" />
+                          <span>Helpful ({r.helpful_count || 0})</span>
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -638,93 +774,110 @@ export default function Profile() {
             </div>
           )}
 
-          {/* ABOUT & SOCIALS TAB */}
+          {/* ABOUT & SOCIALS & FAQS TAB */}
           {activeTab === "about" && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl">
-              <div className="rounded-2xl border border-white/[0.08] bg-[#0A0D15] p-6 space-y-4 shadow-xl">
-                <h3 className="font-bold text-sm text-white">Creator Bio</h3>
-                <p className="text-xs text-zinc-300 leading-relaxed whitespace-pre-line">
-                  {profile.bio || "No extended bio provided."}
-                </p>
+            <div className="space-y-6 max-w-4xl">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="rounded-2xl border border-white/[0.08] bg-[#0A0D15] p-6 space-y-4 shadow-xl">
+                  <h3 className="font-bold text-sm text-white">Creator Bio</h3>
+                  <p className="text-xs text-zinc-300 leading-relaxed whitespace-pre-line">
+                    {profile.bio || "No extended bio provided."}
+                  </p>
 
-                <div className="pt-4 border-t border-white/[0.06] space-y-2 text-xs">
-                  <div className="flex justify-between">
-                    <span className="text-zinc-500 font-mono">LibertyX ID:</span>
-                    <span className="font-mono text-zinc-300">{profile.username}</span>
-                  </div>
-                  {profile.roblox_username && (
+                  <div className="pt-4 border-t border-white/[0.06] space-y-2 text-xs">
                     <div className="flex justify-between">
-                      <span className="text-zinc-500 font-mono">Roblox Account:</span>
-                      <span className="font-mono text-blue-400">{profile.roblox_username}</span>
+                      <span className="text-zinc-500 font-mono">LibertyX Handle:</span>
+                      <span className="font-mono text-zinc-300">@{profile.username}</span>
                     </div>
-                  )}
+                    {profile.roblox_username && (
+                      <div className="flex justify-between">
+                        <span className="text-zinc-500 font-mono">Roblox Account:</span>
+                        <span className="font-mono text-blue-400">@{profile.roblox_username}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-white/[0.08] bg-[#0A0D15] p-6 space-y-4 shadow-xl">
+                  <h3 className="font-bold text-sm text-white">Verified Links</h3>
+                  <div className="space-y-2.5">
+                    {profile.social_links?.discord && (
+                      <a
+                        href={profile.social_links.discord}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex items-center justify-between p-3 rounded-xl border border-white/[0.06] bg-[#07090E] hover:border-[#5865F2]/40 text-xs text-white transition"
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <MessageCircle className="w-4 h-4 text-[#5865F2]" />
+                          <span>Discord Community</span>
+                        </div>
+                        <ExternalLink className="w-3.5 h-3.5 text-zinc-500" />
+                      </a>
+                    )}
+
+                    {profile.social_links?.roblox && (
+                      <a
+                        href={profile.social_links.roblox}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex items-center justify-between p-3 rounded-xl border border-white/[0.06] bg-[#07090E] hover:border-blue-500/40 text-xs text-white transition"
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <Globe className="w-4 h-4 text-blue-400" />
+                          <span>Roblox Profile / Group</span>
+                        </div>
+                        <ExternalLink className="w-3.5 h-3.5 text-zinc-500" />
+                      </a>
+                    )}
+
+                    {profile.social_links?.youtube && (
+                      <a
+                        href={profile.social_links.youtube}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex items-center justify-between p-3 rounded-xl border border-white/[0.06] bg-[#07090E] hover:border-red-500/40 text-xs text-white transition"
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <Youtube className="w-4 h-4 text-red-400" />
+                          <span>YouTube Channel</span>
+                        </div>
+                        <ExternalLink className="w-3.5 h-3.5 text-zinc-500" />
+                      </a>
+                    )}
+
+                    {profile.social_links?.twitter && (
+                      <a
+                        href={profile.social_links.twitter}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex items-center justify-between p-3 rounded-xl border border-white/[0.06] bg-[#07090E] hover:border-zinc-400 text-xs text-white transition"
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <Twitter className="w-4 h-4 text-zinc-300" />
+                          <span>X / Twitter</span>
+                        </div>
+                        <ExternalLink className="w-3.5 h-3.5 text-zinc-500" />
+                      </a>
+                    )}
+                  </div>
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-white/[0.08] bg-[#0A0D15] p-6 space-y-4 shadow-xl">
-                <h3 className="font-bold text-sm text-white">Verified Links</h3>
-                <div className="space-y-2.5">
-                  {profile.social_links?.discord && (
-                    <a
-                      href={profile.social_links.discord}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="flex items-center justify-between p-3 rounded-xl border border-white/[0.06] bg-[#07090E] hover:border-[#5865F2]/40 text-xs text-white transition"
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <MessageCircle className="w-4 h-4 text-[#5865F2]" />
-                        <span>Discord Community</span>
+              {/* Custom FAQs */}
+              {profile.custom_faqs && profile.custom_faqs.length > 0 && (
+                <div className="rounded-2xl border border-white/[0.08] bg-[#0A0D15] p-6 space-y-4 shadow-xl">
+                  <h3 className="font-bold text-sm text-white">Frequently Asked Questions</h3>
+                  <div className="space-y-3">
+                    {profile.custom_faqs.map((faq: any, i: number) => (
+                      <div key={i} className="p-3.5 rounded-xl border border-white/[0.04] bg-[#07090E] space-y-1">
+                        <p className="text-xs font-bold text-white">{faq.q}</p>
+                        <p className="text-xs text-zinc-400">{faq.a}</p>
                       </div>
-                      <ExternalLink className="w-3.5 h-3.5 text-zinc-500" />
-                    </a>
-                  )}
-
-                  {profile.social_links?.roblox && (
-                    <a
-                      href={profile.social_links.roblox}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="flex items-center justify-between p-3 rounded-xl border border-white/[0.06] bg-[#07090E] hover:border-blue-500/40 text-xs text-white transition"
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <Globe className="w-4 h-4 text-blue-400" />
-                        <span>Roblox Profile / Group</span>
-                      </div>
-                      <ExternalLink className="w-3.5 h-3.5 text-zinc-500" />
-                    </a>
-                  )}
-
-                  {profile.social_links?.youtube && (
-                    <a
-                      href={profile.social_links.youtube}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="flex items-center justify-between p-3 rounded-xl border border-white/[0.06] bg-[#07090E] hover:border-red-500/40 text-xs text-white transition"
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <Youtube className="w-4 h-4 text-red-400" />
-                        <span>YouTube Channel</span>
-                      </div>
-                      <ExternalLink className="w-3.5 h-3.5 text-zinc-500" />
-                    </a>
-                  )}
-
-                  {profile.social_links?.twitter && (
-                    <a
-                      href={profile.social_links.twitter}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="flex items-center justify-between p-3 rounded-xl border border-white/[0.06] bg-[#07090E] hover:border-zinc-400 text-xs text-white transition"
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <Twitter className="w-4 h-4 text-zinc-300" />
-                        <span>X / Twitter</span>
-                      </div>
-                      <ExternalLink className="w-3.5 h-3.5 text-zinc-500" />
-                    </a>
-                  )}
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           )}
 

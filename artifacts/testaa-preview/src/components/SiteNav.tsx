@@ -19,6 +19,10 @@ import {
   UserCheck,
   Users,
   Palette,
+  MessageCircle,
+  Heart,
+  Globe,
+  Plus,
 } from "lucide-react";
 import Logo from "@/components/Logo";
 import { cn } from "@/lib/utils";
@@ -84,9 +88,9 @@ export default function SiteNav() {
 
   return (
     <header className="sticky top-0 z-50 backdrop-blur-xl border-b border-white/[0.07] bg-[#07090E]/95 transition-all">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         
-        {/* Left: Brand with breathing room */}
+        {/* Left: Brand */}
         <Link to="/" className="shrink-0 flex items-center gap-2 group py-1">
           <Logo textClass="text-2xl font-black tracking-tight" />
         </Link>
@@ -113,97 +117,157 @@ export default function SiteNav() {
           })}
         </nav>
 
-        {/* Right: User Profile / Login */}
-        <div className="hidden sm:flex items-center gap-3">
+        {/* Right: Messages, Wishlist, User Chip */}
+        <div className="hidden sm:flex items-center gap-2.5">
           {user ? (
-            <div className="relative" ref={dropdownRef}>
-              <button
-                type="button"
-                onClick={() => setUserDropdown(!userDropdown)}
-                className="flex items-center gap-2.5 rounded-2xl border border-white/[0.08] bg-[#0C1018] hover:border-emerald-500/30 p-1.5 pr-3 transition-all group"
+            <>
+              {/* Wishlist Link */}
+              <Link
+                to="/favorites"
+                className="p-2 rounded-xl border border-white/[0.08] bg-[#0A0D15] text-zinc-400 hover:text-rose-400 hover:border-rose-500/30 transition shadow-sm"
+                title="Wishlist"
               >
-                {avatarUrl && !imgErr ? (
-                  <img
-                    src={avatarUrl}
-                    alt=""
-                    onError={() => setImgErr(true)}
-                    className="h-8 w-8 rounded-xl object-cover ring-1 ring-emerald-500/30 group-hover:ring-emerald-400 transition"
-                  />
-                ) : (
-                  <div className="h-8 w-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs font-black ring-1 ring-emerald-500/30">
-                    {initial}
+                <Heart className="w-4 h-4" />
+              </Link>
+
+              {/* Messages Link */}
+              <Link
+                to="/messages"
+                className="p-2 rounded-xl border border-white/[0.08] bg-[#0A0D15] text-zinc-400 hover:text-emerald-400 hover:border-emerald-500/30 transition shadow-sm"
+                title="Direct Messages"
+              >
+                <MessageCircle className="w-4 h-4" />
+              </Link>
+
+              {/* Sleek Profile Chip */}
+              <div className="relative" ref={dropdownRef}>
+                <button
+                  type="button"
+                  onClick={() => setUserDropdown(!userDropdown)}
+                  className="flex items-center gap-2 rounded-2xl border border-white/[0.08] bg-[#0C1018] hover:border-emerald-500/30 p-1.5 pr-2.5 transition-all group"
+                >
+                  {avatarUrl && !imgErr ? (
+                    <img
+                      src={avatarUrl}
+                      alt=""
+                      onError={() => setImgErr(true)}
+                      className="h-7 w-7 rounded-xl object-cover ring-1 ring-emerald-500/30 group-hover:ring-emerald-400 transition"
+                    />
+                  ) : (
+                    <div className="h-7 w-7 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs font-black ring-1 ring-emerald-500/30">
+                      {initial}
+                    </div>
+                  )}
+
+                  <div className="text-left hidden lg:block max-w-[110px]">
+                    <div className="flex items-center gap-1">
+                      <p className="text-xs font-bold text-white leading-tight truncate">{displayName}</p>
+                      {user.roblox_verified && (
+                        <span className="w-2 h-2 rounded-full bg-blue-400" title="Roblox Verified" />
+                      )}
+                    </div>
+                    {displayHandle && (
+                      <p className="text-[9px] text-zinc-400 font-mono leading-tight truncate">{displayHandle}</p>
+                    )}
+                  </div>
+
+                  <ChevronDown className={cn("w-3 h-3 text-zinc-500 transition-transform duration-200 ml-0.5", userDropdown && "rotate-180 text-emerald-400")} />
+                </button>
+
+                {/* Dropdown Menu */}
+                {userDropdown && (
+                  <div className="absolute right-0 mt-2 w-64 rounded-2xl border border-white/[0.08] bg-[#0B0F17] p-2 shadow-2xl backdrop-blur-2xl animate-in fade-in slide-in-from-top-2 duration-150 z-50">
+                    <div className="px-3 py-2.5 border-b border-white/[0.06] mb-1">
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs font-bold text-white truncate">{displayName}</p>
+                        {user.roblox_verified && (
+                          <span className="text-[10px] font-mono text-blue-400 bg-blue-500/10 px-1.5 py-0.2 rounded border border-blue-500/20">
+                            ✓ Roblox
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[10px] text-zinc-400 font-mono truncate">{displayHandle || "Verified Creator"}</p>
+                    </div>
+
+                    <div className="space-y-0.5">
+                      <Link
+                        to="/u/me"
+                        onClick={() => setUserDropdown(false)}
+                        className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-zinc-200 hover:text-white hover:bg-white/[0.05] rounded-xl transition"
+                      >
+                        <Store className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>My Public Storefront</span>
+                      </Link>
+
+                      <Link
+                        to="/dashboard/storefront"
+                        onClick={() => setUserDropdown(false)}
+                        className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-zinc-200 hover:text-white hover:bg-white/[0.05] rounded-xl transition"
+                      >
+                        <Palette className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>Storefront Builder</span>
+                      </Link>
+
+                      <Link
+                        to="/favorites"
+                        onClick={() => setUserDropdown(false)}
+                        className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-zinc-200 hover:text-white hover:bg-white/[0.05] rounded-xl transition"
+                      >
+                        <Heart className="w-3.5 h-3.5 text-rose-400" />
+                        <span>My Wishlist</span>
+                      </Link>
+
+                      <Link
+                        to="/messages"
+                        onClick={() => setUserDropdown(false)}
+                        className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-zinc-200 hover:text-white hover:bg-white/[0.05] rounded-xl transition"
+                      >
+                        <MessageCircle className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>Direct Messages</span>
+                      </Link>
+
+                      <Link
+                        to="/following"
+                        onClick={() => setUserDropdown(false)}
+                        className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-zinc-200 hover:text-white hover:bg-white/[0.05] rounded-xl transition"
+                      >
+                        <Users className="w-3.5 h-3.5 text-zinc-400" />
+                        <span>Followed Creators</span>
+                      </Link>
+
+                      <Link
+                        to="/dashboard"
+                        onClick={() => setUserDropdown(false)}
+                        className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-zinc-200 hover:text-white hover:bg-white/[0.05] rounded-xl transition"
+                      >
+                        <LayoutDashboard className="w-3.5 h-3.5 text-zinc-400" />
+                        <span>Creator Studio</span>
+                      </Link>
+
+                      <Link
+                        to="/sell"
+                        onClick={() => setUserDropdown(false)}
+                        className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-emerald-400 hover:bg-emerald-500/10 rounded-xl transition"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Publish New Asset</span>
+                      </Link>
+                    </div>
+
+                    <div className="pt-1 mt-1 border-t border-white/[0.06]">
+                      <button
+                        type="button"
+                        onClick={handleSignOut}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-red-400 hover:bg-red-500/10 rounded-xl transition text-left"
+                      >
+                        <LogOut className="w-3.5 h-3.5" />
+                        <span>Sign out</span>
+                      </button>
+                    </div>
                   </div>
                 )}
-
-                <div className="text-left hidden md:block max-w-[120px]">
-                  <p className="text-xs font-bold text-white leading-tight truncate">{displayName}</p>
-                  {displayHandle && (
-                    <p className="text-[10px] text-zinc-400 font-mono leading-tight truncate">{displayHandle}</p>
-                  )}
-                </div>
-
-                <ChevronDown className={cn("w-3.5 h-3.5 text-zinc-500 transition-transform duration-200 ml-0.5", userDropdown && "rotate-180 text-emerald-400")} />
-              </button>
-
-              {/* Enhanced Dropdown */}
-              {userDropdown && (
-                <div className="absolute right-0 mt-2 w-60 rounded-2xl border border-white/[0.08] bg-[#0B0F17] p-2 shadow-2xl backdrop-blur-2xl animate-in fade-in slide-in-from-top-2 duration-150 z-50">
-                  <div className="px-3 py-2.5 border-b border-white/[0.06] mb-1">
-                    <p className="text-xs font-bold text-white truncate">{displayName}</p>
-                    <p className="text-[10px] text-zinc-400 font-mono truncate">{displayHandle || "Verified Creator"}</p>
-                  </div>
-
-                  <div className="space-y-0.5">
-                    <Link
-                      to="/u/me"
-                      onClick={() => setUserDropdown(false)}
-                      className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-zinc-200 hover:text-white hover:bg-white/[0.05] rounded-xl transition"
-                    >
-                      <Store className="w-3.5 h-3.5 text-emerald-400" />
-                      <span>My Public Storefront</span>
-                    </Link>
-
-                    <Link
-                      to="/dashboard/profile"
-                      onClick={() => setUserDropdown(false)}
-                      className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-zinc-200 hover:text-white hover:bg-white/[0.05] rounded-xl transition"
-                    >
-                      <Palette className="w-3.5 h-3.5 text-zinc-400" />
-                      <span>Customize Profile</span>
-                    </Link>
-
-                    <Link
-                      to="/following"
-                      onClick={() => setUserDropdown(false)}
-                      className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-zinc-200 hover:text-white hover:bg-white/[0.05] rounded-xl transition"
-                    >
-                      <Users className="w-3.5 h-3.5 text-zinc-400" />
-                      <span>Followed Creators</span>
-                    </Link>
-
-                    <Link
-                      to="/dashboard"
-                      onClick={() => setUserDropdown(false)}
-                      className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-zinc-200 hover:text-white hover:bg-white/[0.05] rounded-xl transition"
-                    >
-                      <LayoutDashboard className="w-3.5 h-3.5 text-zinc-400" />
-                      <span>Creator Studio</span>
-                    </Link>
-                  </div>
-
-                  <div className="pt-1 mt-1 border-t border-white/[0.06]">
-                    <button
-                      type="button"
-                      onClick={handleSignOut}
-                      className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-red-400 hover:bg-red-500/10 rounded-xl transition text-left"
-                    >
-                      <LogOut className="w-3.5 h-3.5" />
-                      <span>Sign out</span>
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
+              </div>
+            </>
           ) : (
             <Link
               to="/login"
@@ -218,16 +282,15 @@ export default function SiteNav() {
         <div className="flex sm:hidden items-center gap-2">
           {user ? (
             <Link to="/u/me" className="p-1">
-              {avatarUrl && !imgErr ? (
-                <img src={avatarUrl} alt="" className="h-7 w-7 rounded-lg object-cover ring-1 ring-emerald-500/40" />
-              ) : (
-                <div className="h-7 w-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs font-bold">
-                  {initial}
-                </div>
-              )}
+              <div className="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs font-black">
+                {initial}
+              </div>
             </Link>
           ) : (
-            <Link to="/login" className="px-3 py-1.5 bg-emerald-500 text-black text-xs font-bold rounded-lg">
+            <Link
+              to="/login"
+              className="text-xs font-bold text-black bg-emerald-500 px-3 py-1.5 rounded-lg"
+            >
               Login
             </Link>
           )}
@@ -235,62 +298,58 @@ export default function SiteNav() {
           <button
             type="button"
             onClick={() => setOpen(!open)}
-            className="p-2 rounded-xl border border-white/[0.08] text-zinc-300 hover:text-white"
+            className="p-2 text-zinc-400 hover:text-white"
           >
-            {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            {open ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
         </div>
+
       </div>
 
       {/* Mobile Drawer */}
       {open && (
-        <div className="sm:hidden border-t border-white/[0.08] px-4 py-4 space-y-1 bg-[#07090E]/98 backdrop-blur-2xl">
+        <div className="sm:hidden border-t border-white/[0.06] bg-[#07090E] px-4 py-4 space-y-2">
           {navLinks.map((link) => (
             <Link
               key={link.to}
               to={link.to}
               onClick={() => setOpen(false)}
-              className="flex items-center gap-3 px-3.5 py-2.5 text-xs font-semibold uppercase tracking-wider rounded-xl text-zinc-300 hover:text-white hover:bg-white/[0.04] transition"
+              className="block px-3 py-2 text-sm font-semibold text-zinc-300 hover:text-white rounded-xl hover:bg-white/[0.03]"
             >
-              <span>{link.label}</span>
+              {link.label}
             </Link>
           ))}
-
           {user && (
-            <div className="pt-2 mt-2 border-t border-white/[0.08] space-y-1">
+            <>
               <Link
-                to="/u/me"
+                to="/messages"
                 onClick={() => setOpen(false)}
-                className="flex items-center gap-3 px-3.5 py-2 text-xs font-semibold text-emerald-400 rounded-xl hover:bg-white/[0.04]"
+                className="block px-3 py-2 text-sm font-semibold text-emerald-400 rounded-xl hover:bg-white/[0.03]"
               >
-                <Store className="w-4 h-4" />
-                <span>My Storefront</span>
+                Messages
               </Link>
               <Link
-                to="/dashboard/profile"
+                to="/favorites"
                 onClick={() => setOpen(false)}
-                className="flex items-center gap-3 px-3.5 py-2 text-xs font-semibold text-zinc-300 rounded-xl hover:bg-white/[0.04]"
+                className="block px-3 py-2 text-sm font-semibold text-rose-400 rounded-xl hover:bg-white/[0.03]"
               >
-                <Palette className="w-4 h-4" />
-                <span>Customize Profile</span>
+                Wishlist
               </Link>
               <Link
-                to="/following"
+                to="/dashboard/storefront"
                 onClick={() => setOpen(false)}
-                className="flex items-center gap-3 px-3.5 py-2 text-xs font-semibold text-zinc-300 rounded-xl hover:bg-white/[0.04]"
+                className="block px-3 py-2 text-sm font-semibold text-emerald-400 rounded-xl hover:bg-white/[0.03]"
               >
-                <Users className="w-4 h-4" />
-                <span>Following</span>
+                Storefront Builder
               </Link>
               <button
                 type="button"
                 onClick={handleSignOut}
-                className="w-full flex items-center gap-3 px-3.5 py-2 text-xs font-semibold text-red-400 rounded-xl hover:bg-red-500/10 text-left"
+                className="w-full text-left px-3 py-2 text-sm font-semibold text-red-400"
               >
-                <LogOut className="w-4 h-4" />
-                <span>Sign out</span>
+                Sign out
               </button>
-            </div>
+            </>
           )}
         </div>
       )}

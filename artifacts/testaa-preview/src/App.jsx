@@ -12,8 +12,11 @@ import CreateListing from "@/pages/CreateListing";
 import ListingDetail from "@/pages/ListingDetail";
 import Profile from "@/pages/Profile";
 import ProfileCustomization from "@/pages/ProfileCustomization";
+import StorefrontBuilder from "@/pages/StorefrontBuilder";
 import Following from "@/pages/Following";
 import CreatorsDirectory from "@/pages/CreatorsDirectory";
+import Messages from "@/pages/Messages";
+import Favorites from "@/pages/Favorites";
 import Status from "@/pages/Status";
 import Docs from "@/pages/Docs";
 import Privacy from "@/pages/Privacy";
@@ -58,11 +61,16 @@ const AuthenticatedApp = () => {
       <Route path="/creator/:username" element={<Profile />} />
       <Route path="/creators" element={<CreatorsDirectory />} />
       <Route path="/following" element={<Following />} />
+      <Route path="/favorites" element={<Favorites />} />
+      
+      {/* Buyer & Seller Messaging */}
+      <Route path="/messages" element={<Messages />} />
       
       {/* Creator Studio & Settings */}
       <Route path="/sell" element={<CreateListing />} />
       <Route path="/dashboard" element={<Dashboard />} />
       <Route path="/dashboard/profile" element={<ProfileCustomization />} />
+      <Route path="/dashboard/storefront" element={<StorefrontBuilder />} />
       
       {/* Infrastructure & Docs */}
       <Route path="/status" element={<Status />} />
@@ -79,6 +87,9 @@ const AuthenticatedApp = () => {
       
       {/* Admin */}
       <Route path="/admin" element={<Admin />} />
+
+      {/* Direct Creator Storefront Root Alias fallback */}
+      <Route path="/:username" element={<Profile />} />
 
       {/* 404 */}
       <Route path="*" element={<PageNotFound />} />

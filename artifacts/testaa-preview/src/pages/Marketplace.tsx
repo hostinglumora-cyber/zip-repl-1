@@ -16,18 +16,43 @@ import {
   SlidersHorizontal,
   X,
   Car,
+  Heart,
+  MessageCircle,
+  Clock,
+  Flame,
+  Zap,
+  Boxes,
+  Users,
+  Compass,
 } from "lucide-react";
 import SiteNav from "@/components/SiteNav";
 import { Footer } from "@/pages/Home";
-import { DEPARTMENTS, CATEGORIES } from "@/lib/departments";
+import { DEPARTMENTS } from "@/lib/departments";
 import { BRAND } from "@/lib/brand";
 import { cn } from "@/lib/utils";
 import PurchaseModal from "@/components/PurchaseModal";
 import { localDb } from "@/lib/localDb";
+import { useAuth } from "@/lib/AuthContext";
 
 const db = (globalThis as any).__B44_DB__ || localDb;
 
 export { Footer };
+
+export const EXTENDED_CATEGORIES = [
+  "Police",
+  "Sheriff",
+  "Fire",
+  "DOT",
+  "Civilian",
+  "Liveries",
+  "Uniforms",
+  "Vehicles",
+  "ELS",
+  "Discord",
+  "Graphics",
+  "Server Packs",
+  "Services",
+];
 
 const SORTS = [
   { id: "new", label: "Newest Drops" },
@@ -37,17 +62,45 @@ const SORTS = [
 ];
 
 export function MarketplaceCard({ listing }: { listing: any }) {
+  const { user } = useAuth();
   const [showPurchase, setShowPurchase] = useState(false);
+  const [isFav, setIsFav] = useState(false);
+
   const isFree = listing.price_type === "Free" || !listing.price || listing.price === 0;
   const priceDisplay = isFree ? "FREE" : `R$ ${listing.price}`;
   const department = listing.departments && listing.departments.length > 0 ? listing.departments[0] : "Police";
+
+  useEffect(() => {
+    if (user?.id && listing?.id) {
+      localDb.isFavorite(user.id, listing.id).then(setIsFav);
+    }
+  }, [user?.id, listing?.id]);
+
+  const handleToggleFav = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!user) {
+      alert("Please log in to save favorites.");
+      return;
+    }
+    const res = await localDb.toggleFavorite(user.id, listing);
+    setIsFav(res.favorited);
+  };
+
+  const handleCardClick = () => {
+    localDb.addRecentlyViewed(listing);
+  };
 
   return (
     <>
       <div className="group rounded-2xl border border-white/[0.08] bg-[#090C12] hover:border-emerald-500/35 hover:bg-[#0D111A] transition-all flex flex-col justify-between overflow-hidden shadow-lg">
         <div>
           {/* Screenshot / Preview */}
-          <Link to={`/listing/${listing.id}`} className="block relative aspect-[16/10] bg-black/60 overflow-hidden">
+          <Link
+            to={`/listing/${listing.id}`}
+            onClick={handleCardClick}
+            className="block relative aspect-[16/10] bg-black/60 overflow-hidden"
+          >
             {listing.images && listing.images.length > 0 ? (
               <img
                 src={listing.images[0]}
@@ -67,6 +120,19 @@ export function MarketplaceCard({ listing }: { listing: any }) {
                 {department}
               </span>
             </div>
+
+            {/* Favorite Wishlist Button */}
+            <button
+              type="button"
+              onClick={handleToggleFav}
+              className={cn(
+                "absolute top-2.5 right-2.5 p-1.5 rounded-lg bg-black/80 backdrop-blur-md transition shadow-md",
+                isFav ? "text-rose-500" : "text-zinc-400 hover:text-white"
+              )}
+              title="Save to favorites"
+            >
+              <Heart className={cn("w-3.5 h-3.5", isFav && "fill-rose-500")} />
+            </button>
 
             {/* Price Tag Pill */}
             <div className="absolute bottom-2.5 right-2.5">
@@ -89,7 +155,7 @@ export function MarketplaceCard({ listing }: { listing: any }) {
               </div>
             </div>
 
-            <Link to={`/listing/${listing.id}`} className="block">
+            <Link to={`/listing/${listing.id}`} onClick={handleCardClick} className="block">
               <h3 className="text-sm font-bold text-white group-hover:text-emerald-400 transition line-clamp-1">
                 {listing.title}
               </h3>
@@ -116,13 +182,23 @@ export function MarketplaceCard({ listing }: { listing: any }) {
             </span>
           </Link>
 
-          <button
-            type="button"
-            onClick={() => setShowPurchase(true)}
-            className="px-3 py-1 rounded-lg bg-white/[0.05] hover:bg-emerald-500 hover:text-black text-xs font-bold text-zinc-200 transition shrink-0"
-          >
-            {isFree ? "Get Free" : "Purchase"}
-          </button>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <Link
+              to={`/messages?to=${encodeURIComponent(listing.seller_username || listing.seller_name || "creator")}&listing=${listing.id}&title=${encodeURIComponent(listing.title)}`}
+              className="p-1.5 rounded-lg border border-white/[0.08] bg-white/[0.02] text-zinc-400 hover:text-white hover:bg-white/[0.06] transition"
+              title="Message Seller"
+            >
+              <MessageCircle className="w-3.5 h-3.5" />
+            </Link>
+
+            <button
+              type="button"
+              onClick={() => setShowPurchase(true)}
+              className="px-3 py-1 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-xs font-bold text-black transition"
+            >
+              {isFree ? "Get Free" : "Purchase"}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -138,8 +214,11 @@ export function MarketplaceCard({ listing }: { listing: any }) {
 export default function Marketplace() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [listings, setListings] = useState<any[]>([]);
+  const [recentlyViewed, setRecentlyViewed] = useState<any[]>([]);
+  const [dedupedCreators, setDedupedCreators] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
+  const [searchMode, setSearchMode] = useState<"products" | "creators">("products");
 
   const dept = searchParams.get("dept") || "";
   const cat = searchParams.get("cat") || "";
@@ -158,9 +237,16 @@ export default function Marketplace() {
 
   useEffect(() => {
     const query = db?.entities?.Listing?.filter || localDb.entities.Listing.filter;
-    query({ status: "active" }, "-created_date", 100)
-      .then((rows: any[]) => setListings(rows || []))
-      .catch(() => setListings([]))
+    Promise.all([
+      query({ status: "active" }, "-created_date", 200),
+      localDb.getDeduplicatedCreators(),
+    ])
+      .then(([rows, creators]: [any[], any[]]) => {
+        setListings(rows || []);
+        setDedupedCreators(creators || []);
+        setRecentlyViewed(localDb.getRecentlyViewed());
+      })
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 
@@ -173,7 +259,7 @@ export default function Marketplace() {
       }
       // Category filter
       if (cat) {
-        const matchesCat = l.category?.toLowerCase() === cat.toLowerCase();
+        const matchesCat = l.category?.toLowerCase() === cat.toLowerCase() || l.departments?.some((d: string) => d.toLowerCase() === cat.toLowerCase());
         if (!matchesCat) return false;
       }
       // Free only
@@ -186,9 +272,10 @@ export default function Marketplace() {
         const q = searchQuery.toLowerCase();
         const inTitle = l.title?.toLowerCase().includes(q);
         const inDesc = l.description?.toLowerCase().includes(q);
-        const inSeller = l.seller_name?.toLowerCase().includes(q);
+        const inSeller = l.seller_name?.toLowerCase().includes(q) || l.seller_username?.toLowerCase().includes(q);
+        const inVehicles = l.vehicle_models?.toLowerCase().includes(q);
         const inCat = l.category?.toLowerCase().includes(q);
-        return inTitle || inDesc || inSeller || inCat;
+        return inTitle || inDesc || inSeller || inVehicles || inCat;
       }
       return true;
     })
@@ -197,6 +284,12 @@ export default function Marketplace() {
       if (sort === "price_desc") return (b.price || 0) - (a.price || 0);
       return new Date(b.created_date || 0).getTime() - new Date(a.created_date || 0).getTime();
     });
+
+  const filteredCreators = dedupedCreators.filter((c) => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    return c.username?.toLowerCase().includes(q) || c.display_name?.toLowerCase().includes(q) || c.bio?.toLowerCase().includes(q);
+  });
 
   return (
     <div className="min-h-screen bg-[#06080C] text-white flex flex-col justify-between selection:bg-emerald-500/25 selection:text-emerald-300">
@@ -210,7 +303,7 @@ export default function Marketplace() {
               <div>
                 <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/[0.06] px-3.5 py-1 text-xs font-semibold text-emerald-400 mb-2.5">
                   <Store className="h-3.5 w-3.5" />
-                  <span>Verified Asset Catalog</span>
+                  <span>Verified Asset Catalog & Ecosystem</span>
                 </div>
 
                 <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-white">
@@ -221,13 +314,21 @@ export default function Marketplace() {
                 </p>
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 flex-wrap">
+                <Link
+                  to="/favorites"
+                  className="inline-flex items-center gap-2 rounded-xl border border-white/[0.08] bg-[#06080C] hover:bg-white/[0.04] px-4 py-3 text-xs font-semibold text-zinc-300 transition"
+                >
+                  <Heart className="w-4 h-4 text-rose-400" />
+                  <span>My Wishlist</span>
+                </Link>
+
                 <Link
                   to="/sell"
                   className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 px-5 py-3 text-xs sm:text-sm font-bold text-black shadow-md shadow-emerald-500/20 transition-all hover:scale-[1.02] shrink-0"
                 >
                   <Plus className="w-4 h-4" />
-                  <span>Publish New Asset</span>
+                  <span>Publish Asset</span>
                 </Link>
               </div>
             </div>
@@ -241,7 +342,7 @@ export default function Marketplace() {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search liveries, Tahoe, Crown Vic, Sheriff, ELS..."
+                  placeholder="Search ER:LC assets, creators, liveries, Tahoe, Crown Vic, ELS..."
                   className="w-full rounded-xl border border-white/[0.08] bg-[#06080C] pl-10 pr-4 py-2.5 text-xs sm:text-sm text-white placeholder:text-zinc-500 outline-none focus:border-emerald-500/50 transition"
                 />
                 {searchQuery && (
@@ -279,14 +380,11 @@ export default function Marketplace() {
                   className="w-full rounded-xl border border-white/[0.08] bg-[#06080C] px-3.5 py-2.5 text-xs sm:text-sm text-zinc-200 outline-none focus:border-emerald-500/50 transition"
                 >
                   <option value="">All Categories</option>
-                  {CATEGORIES.map((c) => {
-                    const catId = typeof c === "string" ? c : c.id;
-                    return (
-                      <option key={catId} value={catId}>
-                        {catId}
-                      </option>
-                    );
-                  })}
+                  {EXTENDED_CATEGORIES.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
                 </select>
               </div>
 
@@ -310,88 +408,208 @@ export default function Marketplace() {
             {/* Quick Pills */}
             <div className="mt-4 flex items-center justify-between flex-wrap gap-2 pt-3 border-t border-white/[0.04]">
               <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="text-[11px] font-mono text-zinc-500 mr-1">Filter:</span>
-                {["", "Police", "Sheriff", "Fire", "DOT"].map((d) => (
+                <span className="text-[11px] font-mono text-zinc-500 mr-1">Categories:</span>
+                {["", "Police", "Sheriff", "Fire", "DOT", "Liveries", "Uniforms", "ELS", "Server Packs"].map((d) => (
                   <button
                     key={d}
                     type="button"
-                    onClick={() => setParam("dept", d || null)}
+                    onClick={() => {
+                      if (["Police", "Sheriff", "Fire", "DOT"].includes(d)) {
+                        setParam("dept", d || null);
+                      } else {
+                        setParam("cat", d || null);
+                      }
+                    }}
                     className={cn(
                       "px-3 py-1 rounded-lg text-xs font-semibold border transition-all",
-                      (dept === d || (!dept && d === ""))
+                      (dept === d || cat === d || (!dept && !cat && d === ""))
                         ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-400"
                         : "border-white/[0.06] bg-white/[0.02] text-zinc-400 hover:text-white"
                     )}
                   >
-                    {d || "All Units"}
+                    {d || "All Catalog"}
                   </button>
                 ))}
               </div>
 
-              <label className="inline-flex items-center gap-2 cursor-pointer text-xs text-zinc-300 font-semibold select-none">
-                <input
-                  type="checkbox"
-                  checked={freeOnly}
-                  onChange={(e) => setParam("free", e.target.checked ? "true" : null)}
-                  className="rounded border-white/[0.1] bg-[#06080C] text-emerald-500 focus:ring-0"
-                />
-                <span>Free Drops Only</span>
-              </label>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-1 bg-[#06080C] border border-white/[0.08] p-0.5 rounded-xl">
+                  <button
+                    type="button"
+                    onClick={() => setSearchMode("products")}
+                    className={cn(
+                      "px-2.5 py-1 text-xs font-semibold rounded-lg transition",
+                      searchMode === "products" ? "bg-emerald-500 text-black font-bold" : "text-zinc-400 hover:text-white"
+                    )}
+                  >
+                    Products
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSearchMode("creators")}
+                    className={cn(
+                      "px-2.5 py-1 text-xs font-semibold rounded-lg transition",
+                      searchMode === "creators" ? "bg-emerald-500 text-black font-bold" : "text-zinc-400 hover:text-white"
+                    )}
+                  >
+                    Creators ({dedupedCreators.length})
+                  </button>
+                </div>
+
+                <label className="inline-flex items-center gap-2 cursor-pointer text-xs text-zinc-300 font-semibold select-none">
+                  <input
+                    type="checkbox"
+                    checked={freeOnly}
+                    onChange={(e) => setParam("free", e.target.checked ? "true" : null)}
+                    className="rounded border-white/[0.1] bg-[#06080C] text-emerald-500 focus:ring-0"
+                  />
+                  <span>Free Only</span>
+                </label>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* ─── MARKETPLACE ASSET GRID ─── */}
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 lg:py-14">
-          <div className="flex items-center justify-between mb-6">
-            <span className="text-xs font-mono text-zinc-400">
-              Showing <strong className="text-white">{filtered.length}</strong> active assets
-            </span>
+        {/* ─── MAIN CATALOG CONTENT ─── */}
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 lg:py-14 space-y-12">
+          
+          {searchMode === "creators" ? (
+            <div>
+              <div className="flex items-center justify-between mb-6">
+                <span className="text-xs font-mono text-zinc-400">
+                  Showing <strong className="text-white">{filteredCreators.length}</strong> verified creators
+                </span>
+              </div>
 
-            {(dept || cat || freeOnly || searchQuery) && (
-              <button
-                type="button"
-                onClick={() => {
-                  setSearchParams(new URLSearchParams());
-                  setSearchQuery("");
-                }}
-                className="text-xs font-bold text-emerald-400 hover:underline inline-flex items-center gap-1"
-              >
-                <X className="w-3.5 h-3.5" />
-                <span>Reset all filters</span>
-              </button>
-            )}
-          </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                {filteredCreators.map((creator) => (
+                  <div
+                    key={creator.username}
+                    className="rounded-2xl border border-white/[0.08] bg-[#0A0D15] p-5 space-y-4 hover:border-emerald-500/35 transition-all flex flex-col justify-between shadow-xl"
+                  >
+                    <div>
+                      <div className="flex items-start justify-between gap-3 mb-3">
+                        <Link to={`/u/${creator.username}`} className="flex items-center gap-3 min-w-0">
+                          <div className="w-12 h-12 rounded-2xl overflow-hidden border border-emerald-500/30 bg-black shrink-0">
+                            {creator.avatar_url ? (
+                              <img src={creator.avatar_url} alt="" className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center font-bold text-white bg-zinc-900">
+                                {(creator.display_name || creator.username || "C").charAt(0).toUpperCase()}
+                              </div>
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1">
+                              <h3 className="font-bold text-sm text-white truncate">{creator.display_name}</h3>
+                              <BadgeCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+                            </div>
+                            <span className="text-xs font-mono text-zinc-400 block truncate">@{creator.username}</span>
+                          </div>
+                        </Link>
+                      </div>
 
-          {loading ? (
-            <div className="py-20 text-center text-xs text-zinc-500 animate-pulse">
-              Loading marketplace assets…
-            </div>
-          ) : filtered.length === 0 ? (
-            <div className="rounded-2xl border border-white/[0.08] bg-[#090C12] p-12 text-center max-w-md mx-auto shadow-xl">
-              <Store className="w-8 h-8 text-zinc-600 mx-auto mb-2" />
-              <h3 className="text-base font-bold text-white mb-1">No assets match your search</h3>
-              <p className="text-xs text-zinc-400 mb-5 leading-relaxed">
-                Try adjusting your search terms, changing the department filter, or resetting all filters.
-              </p>
-              <button
-                type="button"
-                onClick={() => {
-                  setSearchParams(new URLSearchParams());
-                  setSearchQuery("");
-                }}
-                className="px-4 py-2 rounded-xl bg-emerald-500 text-black text-xs font-bold transition hover:bg-emerald-400"
-              >
-                Reset Filters
-              </button>
+                      <p className="text-xs text-zinc-300 line-clamp-2 leading-relaxed">
+                        {creator.bio || "Authentic ER:LC emergency livery designer."}
+                      </p>
+
+                      <div className="mt-3 pt-3 border-t border-white/[0.04] grid grid-cols-3 gap-2 text-center text-[11px] font-mono">
+                        <div className="p-1.5 rounded-lg bg-[#07090E]">
+                          <span className="text-zinc-500 block text-[9px]">PRODUCTS</span>
+                          <span className="font-bold text-white">{creator.products_count}</span>
+                        </div>
+                        <div className="p-1.5 rounded-lg bg-[#07090E]">
+                          <span className="text-zinc-500 block text-[9px]">RATING</span>
+                          <span className="font-bold text-emerald-400">{creator.rating} ★</span>
+                        </div>
+                        <div className="p-1.5 rounded-lg bg-[#07090E]">
+                          <span className="text-zinc-500 block text-[9px]">DELIVERIES</span>
+                          <span className="font-bold text-white">{creator.sales_count}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <Link
+                      to={`/u/${creator.username}`}
+                      className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-white/[0.04] hover:bg-emerald-500 hover:text-black text-xs font-bold text-zinc-200 transition"
+                    >
+                      <Store className="w-3.5 h-3.5" />
+                      <span>View Storefront</span>
+                    </Link>
+                  </div>
+                ))}
+              </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-              {filtered.map((listing) => (
-                <MarketplaceCard key={listing.id} listing={listing} />
-              ))}
+            <div>
+              <div className="flex items-center justify-between mb-6">
+                <span className="text-xs font-mono text-zinc-400">
+                  Showing <strong className="text-white">{filtered.length}</strong> active assets
+                </span>
+
+                {(dept || cat || freeOnly || searchQuery) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearchParams(new URLSearchParams());
+                      setSearchQuery("");
+                    }}
+                    className="text-xs font-bold text-emerald-400 hover:underline inline-flex items-center gap-1"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                    <span>Reset all filters</span>
+                  </button>
+                )}
+              </div>
+
+              {loading ? (
+                <div className="py-20 text-center text-xs text-zinc-500 animate-pulse">
+                  Loading marketplace assets…
+                </div>
+              ) : filtered.length === 0 ? (
+                <div className="rounded-2xl border border-white/[0.08] bg-[#090C12] p-12 text-center max-w-md mx-auto shadow-xl">
+                  <Store className="w-8 h-8 text-zinc-600 mx-auto mb-2" />
+                  <h3 className="text-base font-bold text-white mb-1">No assets match your search</h3>
+                  <p className="text-xs text-zinc-400 mb-5 leading-relaxed">
+                    Try adjusting your search terms or publish the first asset in this category.
+                  </p>
+                  <Link
+                    to="/sell"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-500 text-black text-xs font-bold transition hover:bg-emerald-400"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Publish Asset</span>
+                  </Link>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+                  {filtered.map((listing) => (
+                    <MarketplaceCard key={listing.id} listing={listing} />
+                  ))}
+                </div>
+              )}
             </div>
           )}
+
+          {/* ─── RECENTLY VIEWED RAIL ─── */}
+          {recentlyViewed.length > 0 && (
+            <div className="pt-10 border-t border-white/[0.06] space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-emerald-400" />
+                  <span>Recently Viewed</span>
+                </h3>
+                <span className="text-xs text-zinc-500 font-mono">{recentlyViewed.length} items</span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+                {recentlyViewed.slice(0, 4).map((listing) => (
+                  <MarketplaceCard key={`recent_${listing.id}`} listing={listing} />
+                ))}
+              </div>
+            </div>
+          )}
+
         </main>
       </div>
 
