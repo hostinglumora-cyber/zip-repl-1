@@ -4,24 +4,15 @@ import {
   Store,
   DollarSign,
   Star,
-  TrendingUp,
   Plus,
   ArrowRight,
   ShoppingBag,
-  Package,
   ShieldCheck,
   Sparkles,
   ExternalLink,
-  Tag,
   Trash2,
-  Edit,
-  Layers,
-  Activity,
   CheckCircle2,
-  Clock,
-  User,
   MessageCircle,
-  SlidersHorizontal,
 } from "lucide-react";
 
 import SiteNav from "@/components/SiteNav";
@@ -37,13 +28,13 @@ export default function Dashboard() {
   const [listings, setListings] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"listings" | "orders" | "activity" | "account">("listings");
+  const [activeTab, setActiveTab] = useState<"listings" | "orders" | "settings">("listings");
 
   const activeUser = user || {
     id: "creator_demo",
-    display_name: "Verified Creator",
+    display_name: "Creator",
     username: "creator",
-    email: "creator@libertyx.market",
+    email: "",
   };
 
   useEffect(() => {
@@ -64,7 +55,6 @@ export default function Dashboard() {
 
   const activeListings = listings.filter((l) => l.status === "active");
   const totalCatalogValue = activeListings.reduce((sum, l) => sum + (l.price_type === "Free" ? 0 : Number(l.price) || 0), 0);
-  const totalSalesEarnings = orders.reduce((sum, o) => sum + (Number(o.price) || 0), 0);
 
   const handleDeleteListing = async (id: string) => {
     if (!confirm("Are you sure you want to remove this asset from the marketplace?")) return;
@@ -78,31 +68,31 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-[#06080C] text-white flex flex-col justify-between selection:bg-emerald-500/25 selection:text-emerald-300">
+    <div className="min-h-screen bg-[#07090E] text-white flex flex-col justify-between selection:bg-emerald-500/25 selection:text-emerald-300">
       <div>
         <SiteNav />
 
         {/* ─── CREATOR STUDIO HEADER ─── */}
-        <div className="border-b border-white/[0.06] bg-[#080B10]">
+        <div className="border-b border-white/[0.06] bg-[#0A0D15]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div>
               <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/[0.06] px-3 py-0.5 text-xs font-semibold text-emerald-400 mb-2">
                 <Sparkles className="h-3 w-3" />
-                <span>Creator Studio Workspace</span>
+                <span>Creator Studio</span>
               </div>
 
               <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
-                Welcome back, {activeUser.display_name || activeUser.username || "Creator"}
+                Welcome, {activeUser.display_name || activeUser.username || "Creator"}
               </h1>
               <p className="text-xs sm:text-sm text-zinc-400 mt-1">
-                Manage your ER:LC listings, review escrow orders, and track creator performance.
+                Manage your ER:LC asset catalog, published packages, and escrow transactions.
               </p>
             </div>
 
             <div className="flex items-center gap-3">
               <Link
                 to="/marketplace"
-                className="inline-flex items-center gap-2 border border-white/[0.08] bg-[#06080C] hover:bg-white/[0.04] text-zinc-300 px-4 py-2.5 rounded-xl text-xs font-semibold transition"
+                className="inline-flex items-center gap-2 border border-white/[0.08] bg-[#07090E] hover:bg-white/[0.04] text-zinc-300 px-4 py-2.5 rounded-xl text-xs font-semibold transition"
               >
                 <Store className="w-4 h-4 text-emerald-400" />
                 <span>Marketplace</span>
@@ -119,55 +109,41 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* ─── STUDIO MAIN BODY ─── */}
+        {/* ─── REAL DATA STATS HUD ─── */}
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-10 space-y-8">
           
-          {/* STATS METRICS HUD */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="rounded-2xl border border-white/[0.08] bg-[#0A0D14] p-5">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[11px] font-mono font-bold text-zinc-400 uppercase tracking-wider">Active Listings</span>
-                <Store className="w-4 h-4 text-emerald-400" />
-              </div>
+            <div className="rounded-2xl border border-white/[0.08] bg-[#0A0D15] p-5">
+              <span className="text-[11px] font-mono font-bold text-zinc-500 uppercase tracking-wider block mb-1">Active Listings</span>
               <p className="text-2xl font-mono font-black text-white">{activeListings.length}</p>
-              <p className="text-[10px] text-zinc-500 mt-0.5">Live in catalog</p>
+              <p className="text-[10px] text-zinc-500 mt-0.5">Published assets</p>
             </div>
 
-            <div className="rounded-2xl border border-white/[0.08] bg-[#0A0D14] p-5">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[11px] font-mono font-bold text-zinc-400 uppercase tracking-wider">Catalog Value</span>
-                <DollarSign className="w-4 h-4 text-emerald-400" />
-              </div>
+            <div className="rounded-2xl border border-white/[0.08] bg-[#0A0D15] p-5">
+              <span className="text-[11px] font-mono font-bold text-zinc-500 uppercase tracking-wider block mb-1">Catalog Value</span>
               <p className="text-2xl font-mono font-black text-white">R$ {totalCatalogValue}</p>
-              <p className="text-[10px] text-zinc-500 mt-0.5">Total listed assets</p>
+              <p className="text-[10px] text-zinc-500 mt-0.5">Total inventory listed</p>
             </div>
 
-            <div className="rounded-2xl border border-white/[0.08] bg-[#0A0D14] p-5">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[11px] font-mono font-bold text-zinc-400 uppercase tracking-wider">Completed Orders</span>
-                <ShoppingBag className="w-4 h-4 text-emerald-400" />
-              </div>
+            <div className="rounded-2xl border border-white/[0.08] bg-[#0A0D15] p-5">
+              <span className="text-[11px] font-mono font-bold text-zinc-500 uppercase tracking-wider block mb-1">Completed Orders</span>
               <p className="text-2xl font-mono font-black text-white">{orders.length}</p>
               <p className="text-[10px] text-zinc-500 mt-0.5">Escrow delivered</p>
             </div>
 
-            <div className="rounded-2xl border border-white/[0.08] bg-[#0A0D14] p-5">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[11px] font-mono font-bold text-zinc-400 uppercase tracking-wider">Creator Rating</span>
-                <Star className="w-4 h-4 text-emerald-400" />
-              </div>
-              <p className="text-2xl font-mono font-black text-emerald-400">5.0 ★</p>
-              <p className="text-[10px] text-zinc-500 mt-0.5">Verified status</p>
+            <div className="rounded-2xl border border-white/[0.08] bg-[#0A0D15] p-5">
+              <span className="text-[11px] font-mono font-bold text-zinc-500 uppercase tracking-wider block mb-1">Creator Commission</span>
+              <p className="text-2xl font-mono font-black text-emerald-400">0% Cut</p>
+              <p className="text-[10px] text-zinc-500 mt-0.5">Keep 100% of sales</p>
             </div>
           </div>
 
-          {/* TAB NAVIGATION */}
+          {/* TAB BAR */}
           <div className="flex items-center gap-2 border-b border-white/[0.06] pb-3">
             {[
-              { id: "listings", label: "My Listings", count: activeListings.length },
+              { id: "listings", label: "My Assets", count: activeListings.length },
               { id: "orders", label: "Customer Orders", count: orders.length },
-              { id: "activity", label: "Recent Activity" },
-              { id: "account", label: "Creator Settings" },
+              { id: "settings", label: "Creator Settings" },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -190,32 +166,32 @@ export default function Dashboard() {
             ))}
           </div>
 
-          {/* TAB CONTENT: LISTINGS */}
+          {/* LISTINGS TAB */}
           {activeTab === "listings" && (
-            <div className="rounded-2xl border border-white/[0.08] bg-[#0A0D14] overflow-hidden shadow-xl">
+            <div className="rounded-2xl border border-white/[0.08] bg-[#0A0D15] overflow-hidden shadow-xl">
               <div className="p-5 border-b border-white/[0.06] flex items-center justify-between">
                 <div>
-                  <h3 className="font-bold text-sm text-white">Published Catalog Assets</h3>
-                  <p className="text-xs text-zinc-400">Manage your active ER:LC livery packs and ELS configs.</p>
+                  <h3 className="font-bold text-sm text-white">Your Published Assets</h3>
+                  <p className="text-xs text-zinc-400">Manage your active ER:LC liveries and packs.</p>
                 </div>
                 <Link
                   to="/sell"
                   className="text-xs font-bold text-emerald-400 hover:underline inline-flex items-center gap-1"
                 >
-                  <span>+ Create new listing</span>
+                  <span>+ Add New Asset</span>
                 </Link>
               </div>
 
               {loading ? (
                 <div className="p-10 text-center text-xs text-zinc-500 animate-pulse">
-                  Loading assets…
+                  Loading catalog…
                 </div>
               ) : activeListings.length === 0 ? (
                 <div className="p-14 text-center max-w-sm mx-auto">
                   <Store className="w-10 h-10 text-zinc-600 mx-auto mb-3" />
                   <h4 className="text-base font-bold text-white mb-1">No assets listed yet</h4>
                   <p className="text-xs text-zinc-400 mb-5 leading-relaxed">
-                    Publish your first ER:LC vehicle livery or uniform pack to start selling.
+                    Start building your LibertyX catalog by publishing your first ER:LC asset.
                   </p>
                   <Link
                     to="/sell"
@@ -285,9 +261,9 @@ export default function Dashboard() {
             </div>
           )}
 
-          {/* TAB CONTENT: ORDERS */}
+          {/* ORDERS TAB */}
           {activeTab === "orders" && (
-            <div className="rounded-2xl border border-white/[0.08] bg-[#0A0D14] p-6 shadow-xl space-y-4">
+            <div className="rounded-2xl border border-white/[0.08] bg-[#0A0D15] p-6 shadow-xl space-y-4">
               <div>
                 <h3 className="font-bold text-sm text-white">Customer Escrow Orders</h3>
                 <p className="text-xs text-zinc-400">Automated deliverable keys dispatched to purchasers.</p>
@@ -301,7 +277,7 @@ export default function Dashboard() {
               ) : (
                 <div className="space-y-2.5">
                   {orders.map((o: any, idx: number) => (
-                    <div key={idx} className="p-3.5 rounded-xl border border-white/[0.04] bg-[#06080C] flex items-center justify-between">
+                    <div key={idx} className="p-3.5 rounded-xl border border-white/[0.04] bg-[#07090E] flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
                         <div>
@@ -322,38 +298,11 @@ export default function Dashboard() {
             </div>
           )}
 
-          {/* TAB CONTENT: RECENT ACTIVITY */}
-          {activeTab === "activity" && (
-            <div className="rounded-2xl border border-white/[0.08] bg-[#0A0D14] p-6 shadow-xl space-y-4">
-              <div>
-                <h3 className="font-bold text-sm text-white">Live Activity Log</h3>
-                <p className="text-xs text-zinc-400">Automated escrow events, published drops, and rating audits.</p>
-              </div>
-
-              <div className="space-y-3">
-                <div className="p-3.5 rounded-xl border border-white/[0.04] bg-[#06080C] flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-2.5">
-                    <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                    <span>Scam-Shield Escrow Vault Online & Fully Synchronized</span>
-                  </div>
-                  <span className="text-[10px] font-mono text-zinc-500">Live</span>
-                </div>
-                <div className="p-3.5 rounded-xl border border-white/[0.04] bg-[#06080C] flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-2.5">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                    <span>Verified Creator Trust Rating Audited (5.0 ★)</span>
-                  </div>
-                  <span className="text-[10px] font-mono text-zinc-500">Active</span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* TAB CONTENT: CREATOR SETTINGS */}
-          {activeTab === "account" && (
+          {/* SETTINGS TAB */}
+          {activeTab === "settings" && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div className="rounded-2xl border border-white/[0.08] bg-[#0A0D14] p-6 space-y-4">
-                <h3 className="font-bold text-sm text-white">Creator Verification & Terms</h3>
+              <div className="rounded-2xl border border-white/[0.08] bg-[#0A0D15] p-6 space-y-4">
+                <h3 className="font-bold text-sm text-white">Creator Verification</h3>
                 <p className="text-xs text-zinc-400 leading-relaxed">
                   Your creator account is registered with 0% platform listing fees.
                 </p>
@@ -369,7 +318,7 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-white/[0.08] bg-[#0A0D14] p-6 space-y-4">
+              <div className="rounded-2xl border border-white/[0.08] bg-[#0A0D15] p-6 space-y-4">
                 <h3 className="font-bold text-sm text-white">Discord Community Webhook</h3>
                 <p className="text-xs text-zinc-400 leading-relaxed">
                   Connect your Discord server to automatically broadcast new livery drops.
