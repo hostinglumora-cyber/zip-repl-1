@@ -11,6 +11,9 @@ import Marketplace from "@/pages/Marketplace";
 import CreateListing from "@/pages/CreateListing";
 import ListingDetail from "@/pages/ListingDetail";
 import Profile from "@/pages/Profile";
+import ProfileCustomization from "@/pages/ProfileCustomization";
+import Following from "@/pages/Following";
+import CreatorsDirectory from "@/pages/CreatorsDirectory";
 import Status from "@/pages/Status";
 import Docs from "@/pages/Docs";
 import Privacy from "@/pages/Privacy";
@@ -48,25 +51,42 @@ const AuthenticatedApp = () => {
       <Route path="/" element={<Home />} />
       <Route path="/marketplace" element={<Marketplace />} />
       <Route path="/listing/:id" element={<ListingDetail />} />
+      
+      {/* Creator Storefronts & Profiles */}
+      <Route path="/u/:username" element={<Profile />} />
       <Route path="/u/:id" element={<Profile />} />
+      <Route path="/creator/:username" element={<Profile />} />
+      <Route path="/creators" element={<CreatorsDirectory />} />
+      <Route path="/following" element={<Following />} />
+      
+      {/* Creator Studio & Settings */}
+      <Route path="/sell" element={<CreateListing />} />
+      <Route path="/dashboard" element={<Dashboard />} />
+      <Route path="/dashboard/profile" element={<ProfileCustomization />} />
+      
+      {/* Infrastructure & Docs */}
       <Route path="/status" element={<Status />} />
       <Route path="/docs" element={<Docs />} />
       <Route path="/privacy" element={<Privacy />} />
       <Route path="/tos" element={<Tos />} />
+      
+      {/* Auth */}
       <Route path="/login" element={<Login />} />
       <Route path="/auth/discord/callback" element={<DiscordCallback />} />
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
-      <Route path="/dashboard" element={<Dashboard />} />
-      <Route path="/sell" element={<CreateListing />} />
+      
+      {/* Admin */}
       <Route path="/admin" element={<Admin />} />
+
+      {/* 404 */}
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );
 };
 
-export default function App() {
+function App() {
   return (
     <AuthProvider>
       <QueryClientProvider client={queryClientInstance}>
@@ -79,3 +99,5 @@ export default function App() {
     </AuthProvider>
   );
 }
+
+export default App;

@@ -103,12 +103,18 @@ export function MarketplaceCard({ listing }: { listing: any }) {
 
         {/* Card Footer: Creator & Action */}
         <div className="px-4 py-3 border-t border-white/[0.04] bg-[#07090E] flex items-center justify-between gap-2">
-          <div className="flex items-center gap-1.5 min-w-0">
-            <div className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-black flex items-center justify-center shrink-0">
+          <Link
+            to={`/u/${listing.seller_username || listing.seller_id || "creator"}`}
+            className="flex items-center gap-1.5 min-w-0 hover:text-white transition group/seller"
+            title="View creator storefront"
+          >
+            <div className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-black flex items-center justify-center shrink-0 group-hover/seller:ring-1 group-hover/seller:ring-emerald-400">
               {(listing.seller_name || "C").charAt(0).toUpperCase()}
             </div>
-            <span className="text-xs text-zinc-400 truncate">{listing.seller_name || "Creator"}</span>
-          </div>
+            <span className="text-xs text-zinc-400 group-hover/seller:text-emerald-400 truncate font-medium">
+              {listing.seller_name || "Creator"}
+            </span>
+          </Link>
 
           <button
             type="button"
