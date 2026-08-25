@@ -1,280 +1,633 @@
-import React, { useState, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, CheckCircle2, Upload, AlertCircle, X, Image as ImageIcon } from 'lucide-react';
-import SiteNav from '@/components/SiteNav';
-import { localDb } from '@/lib/localDb';
+import React, { useState, useRef } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import {
+  ArrowLeft,
+  ArrowRight,
+  CheckCircle2,
+  Upload,
+  AlertCircle,
+  X,
+  Image as ImageIcon,
+  Tag,
+  ShieldCheck,
+  Store,
+  DollarSign,
+  Plus,
+  Trash2,
+  FileCode,
+  Sparkles,
+} from "lucide-react";
+import SiteNav from "@/components/SiteNav";
+import { Footer } from "@/pages/Home";
+import { localDb } from "@/lib/localDb";
+import { DEPARTMENTS, CATEGORIES } from "@/lib/departments";
 
-const TYPES = [
-  { id: 'Single', label: 'Single Asset', desc: 'One livery, uniform, or ELS pack' },
-  { id: 'Bundle', label: 'Bundle', desc: 'Multiple assets sold together' },
-  { id: 'Free', label: 'Free Release', desc: 'A completely free community drop' },
-  { id: 'Code', label: 'Digital Code', desc: 'A redeemable access code' },
+const STEPS = [
+  { id: 0, label: "Asset Details" },
+  { id: 1, label: "Category" },
+  { id: 2, label: "Files / Delivery" },
+  { id: 3, label: "Pricing" },
+  { id: 4, label: "Preview" },
+  { id: 5, label: "Publish" },
 ];
 
-const CATEGORIES = ['Liveries', 'Uniforms', 'ELS', 'Map Templates', 'Bundles', 'Other Assets'];
-const DEPTS = ['Police', 'Fire', 'Sheriff', 'DOT'];
-const STEPS = ['Format', 'Details', 'Media', 'Delivery', 'Review'];
-
-const S = {
-  page: { minHeight: '100vh', background: '#050505' },
-  wrap: { maxWidth: 680, margin: '0 auto', padding: '48px 16px' },
-  back: { display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: '0.75rem', color: '#6b7280', marginBottom: 32, textDecoration: 'none' },
-  h1: { fontSize: '1.5rem', fontWeight: 800, color: 'white', marginBottom: 4 },
-  sub: { fontSize: '0.875rem', color: '#6b7280', marginBottom: 40 },
-  stepper: { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 40 },
-  stepCircle: (active, done) => ({
-    height: 28, width: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-    fontSize: '0.6875rem', fontWeight: 700, transition: 'all 0.2s',
-    background: done ? '#10b981' : active ? 'rgba(16,185,129,0.12)' : 'rgba(255,255,255,0.05)',
-    color: done ? 'black' : active ? '#10b981' : '#4b5563',
-    border: active ? '1px solid rgba(16,185,129,0.4)' : '1px solid transparent',
-  }),
-  stepLine: (done) => ({ flex: 1, height: 1, background: done ? 'rgba(16,185,129,0.5)' : 'rgba(255,255,255,0.06)', transition: 'background 0.2s' }),
-  err: { display: 'flex', alignItems: 'center', gap: 12, borderRadius: 12, border: '1px solid rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.07)', padding: '12px 16px', marginBottom: 24 },
-  sectionTitle: { fontSize: '0.875rem', fontWeight: 700, color: 'white', marginBottom: 4 },
-  sectionSub: { fontSize: '0.75rem', color: '#6b7280', marginBottom: 16 },
-  cardBtn: (sel) => ({ textAlign: 'left', borderRadius: 12, border: sel ? '1px solid rgba(16,185,129,0.5)' : '1px solid rgba(255,255,255,0.07)', background: sel ? 'rgba(16,185,129,0.08)' : 'rgba(255,255,255,0.02)', padding: 16, cursor: 'pointer', transition: 'all 0.15s', width: '100%' }),
-  pillBtn: (sel) => ({ borderRadius: 8, border: sel ? '1px solid rgba(16,185,129,0.5)' : '1px solid rgba(255,255,255,0.07)', background: sel ? 'rgba(16,185,129,0.1)' : 'rgba(255,255,255,0.02)', padding: '6px 12px', fontSize: '0.75rem', fontWeight: 500, color: sel ? '#10b981' : '#9ca3af', cursor: 'pointer', transition: 'all 0.15s' }),
-  input: { width: '100%', borderRadius: 12, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.03)', color: 'white', padding: '12px 16px', fontSize: '0.875rem', outline: 'none', boxSizing: 'border-box' },
-  label: { display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'white', marginBottom: 8 },
-  navRow: { display: 'flex', justifyContent: 'space-between', marginTop: 40 },
-  backBtn: (dis) => ({ display: 'flex', alignItems: 'center', gap: 8, borderRadius: 12, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.02)', padding: '10px 20px', fontSize: '0.75rem', fontWeight: 500, color: '#9ca3af', cursor: dis ? 'not-allowed' : 'pointer', opacity: dis ? 0.3 : 1, transition: 'all 0.15s' }),
-  nextBtn: (dis) => ({ display: 'flex', alignItems: 'center', gap: 8, borderRadius: 12, background: '#10b981', padding: '10px 20px', fontSize: '0.75rem', fontWeight: 700, color: 'black', cursor: dis ? 'not-allowed' : 'pointer', border: 'none', opacity: dis ? 0.6 : 1, transition: 'opacity 0.15s' }),
-};
+const FORMAT_TYPES = [
+  { id: "Single", label: "Single Vehicle Livery", desc: "Single vehicle skin for Explorer, Tahoe, Charger, etc." },
+  { id: "Bundle", label: "Agency Fleet Bundle", desc: "Multi-vehicle department pack with matching liveries." },
+  { id: "Uniforms", label: "Uniform & EUP Pack", desc: "Class A/B/C uniforms, vests, duty belts, and badges." },
+  { id: "ELS", label: "ELS & Siren Profile", desc: "Lighting pattern configs, siren soundbanks, stage controls." },
+  { id: "Map", label: "Server Map Template", desc: "Custom roleplay map builds, station layouts, spawn points." },
+  { id: "Code", label: "Digital Access Key", desc: "Redeemable VIP pass, whitelist token, or developer code." },
+];
 
 export default function CreateListing() {
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
-  const [err, setErr] = useState('');
+  const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
   const fileRef = useRef(null);
 
   const [form, setForm] = useState({
-    listing_type: '', category: '', departments: [],
-    title: '', description: '', price_type: 'Robux', price: '',
-    images: [], codes: [''],
+    title: "",
+    description: "",
+    listing_type: "Single",
+    category: "Liveries",
+    departments: ["Police"],
+    price_type: "Robux",
+    price: "150",
+    images: [],
+    imageUrlInput: "",
+    codes: [""],
   });
 
-  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
-  const toggleDept = (d) => set('departments', form.departments.includes(d) ? form.departments.filter(x => x !== d) : [...form.departments, d]);
+  const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
-  const handleFile = (file) => {
-    if (!file || !file.type.startsWith('image/')) return;
-    if (file.size > 4 * 1024 * 1024) { setErr('Images must be 4 MB or smaller.'); return; }
-    set('images', [...form.images, URL.createObjectURL(file)]);
+  const toggleDept = (d) => {
+    set(
+      "departments",
+      form.departments.includes(d)
+        ? form.departments.filter((x) => x !== d)
+        : [...form.departments, d]
+    );
+  };
+
+  const handleFileUpload = (file) => {
+    if (!file || !file.type.startsWith("image/")) return;
+    if (file.size > 5 * 1024 * 1024) {
+      setErr("Images must be 5 MB or smaller.");
+      return;
+    }
+    const url = URL.createObjectURL(file);
+    set("images", [...form.images, url]);
+  };
+
+  const handleAddImageUrl = () => {
+    if (!form.imageUrlInput.trim()) return;
+    set("images", [...form.images, form.imageUrlInput.trim()]);
+    set("imageUrlInput", "");
   };
 
   const canNext = () => {
-    if (step === 0) return !!form.listing_type && !!form.category;
-    if (step === 1) return form.title.trim().length > 3 && form.description.trim().length > 10;
+    if (step === 0) return form.title.trim().length >= 3 && form.description.trim().length >= 5;
+    if (step === 1) return form.departments.length > 0 && !!form.category;
+    if (step === 2) return form.codes.some((c) => c.trim().length > 0);
+    if (step === 3) return form.price_type === "Free" || Number(form.price) >= 0;
     return true;
   };
 
-  const submit = async () => {
-    setBusy(true); setErr('');
+  const handlePublish = async () => {
+    setBusy(true);
+    setErr("");
     try {
-      const saved = window.localStorage.getItem('discord_user');
+      const saved = window.localStorage.getItem("discord_user");
       const user = saved ? JSON.parse(saved) : null;
+
       const payload = {
-        ...form, price: parseFloat(form.price) || 0, status: 'active',
-        seller_name: user?.username || user?.name || 'Creator',
-        seller_id: user?.id || 'guest',
-        codes: form.codes.filter(c => c.trim()),
+        title: form.title.trim(),
+        description: form.description.trim(),
+        listing_type: form.listing_type,
+        category: form.category,
+        departments: form.departments,
+        price_type: form.price_type,
+        price: form.price_type === "Free" ? 0 : parseFloat(form.price) || 0,
+        images: form.images.length > 0 ? form.images : [],
+        codes: form.codes.filter((c) => c.trim()),
+        seller_name: user?.name || user?.username || "Verified Creator",
+        seller_id: user?.id || "creator_local",
+        status: "active",
+        created_date: new Date().toISOString(),
       };
-      const rec = await localDb.entities.Listing.create(payload);
-      if (!rec?.id) throw new Error('Save failed — no ID returned');
+
+      const dbClient = (globalThis).__B44_DB__ || localDb;
+      const rec = await dbClient.entities.Listing.create(payload);
+      if (!rec?.id) throw new Error("Save failed — no record ID returned.");
+
       setDone(true);
-      setTimeout(() => navigate('/dashboard'), 1800);
+      setTimeout(() => navigate("/dashboard"), 1800);
     } catch (e) {
-      setErr(e.message || 'Could not publish. Please try again.');
-    } finally { setBusy(false); }
+      setErr(e.message || "Failed to publish listing. Please try again.");
+    } finally {
+      setBusy(false);
+    }
   };
 
-  if (done) return (
-    <div style={{ minHeight: '100vh', background: '#050505', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{ textAlign: 'center' }}>
-        <CheckCircle2 style={{ height: 64, width: 64, margin: '0 auto 16px', color: '#10b981' }} />
-        <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'white', marginBottom: 8 }}>Listing Published!</h2>
-        <p style={{ fontSize: '0.875rem', color: '#6b7280' }}>Redirecting to your dashboard…</p>
+  if (done) {
+    return (
+      <div className="min-h-screen bg-[#07090E] text-white flex flex-col justify-between">
+        <SiteNav />
+        <div className="max-w-md mx-auto my-auto p-10 text-center rounded-3xl border border-emerald-500/30 bg-[#0B0E16] shadow-2xl">
+          <div className="w-16 h-16 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center justify-center mx-auto mb-4">
+            <CheckCircle2 className="w-8 h-8 animate-pulse" />
+          </div>
+          <h2 className="text-2xl font-bold text-white mb-2">Asset Published!</h2>
+          <p className="text-xs text-zinc-400 mb-4 leading-relaxed">
+            Your listing is live on the marketplace and deliverable keys are vault-locked in Scam-Shield escrow.
+          </p>
+          <p className="text-[11px] font-mono text-emerald-400">Redirecting to Creator Hub…</p>
+        </div>
+        <Footer />
       </div>
-    </div>
-  );
+    );
+  }
 
   return (
-    <div style={S.page}>
-      <SiteNav />
-      <div style={S.wrap}>
-        <Link to="/marketplace" style={S.back}><ArrowLeft style={{ height: 14, width: 14 }} /> Back to Marketplace</Link>
-        <h1 style={S.h1}>Publish an ER:LC Asset</h1>
-        <p style={S.sub}>Upload your liveries, uniform sets, ELS profiles, or map templates.</p>
+    <div className="min-h-screen bg-[#07090E] text-white flex flex-col justify-between selection:bg-emerald-500/25 selection:text-emerald-300">
+      <div>
+        <SiteNav />
 
-        {/* Stepper */}
-        <div style={S.stepper}>
-          {STEPS.map((s, i) => (
-            <React.Fragment key={s}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <div style={S.stepCircle(i === step, i < step)}>{i < step ? '✓' : i + 1}</div>
-                <span style={{ fontSize: '0.75rem', fontWeight: 500, color: i === step ? 'white' : '#6b7280' }}>{s}</span>
-              </div>
-              {i < STEPS.length - 1 && <div style={S.stepLine(i < step)} />}
-            </React.Fragment>
-          ))}
-        </div>
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10 lg:py-14">
+          <Link
+            to="/marketplace"
+            className="inline-flex items-center gap-1.5 text-xs text-zinc-400 hover:text-white transition mb-6"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" /> Back to Marketplace
+          </Link>
 
-        {/* Error */}
-        {err && (
-          <div style={S.err}>
-            <AlertCircle style={{ height: 16, width: 16, color: '#f87171', flexShrink: 0 }} />
-            <p style={{ fontSize: '0.75rem', color: '#fca5a5', flex: 1 }}>{err}</p>
-            <button onClick={() => setErr('')} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><X style={{ height: 16, width: 16, color: '#f87171' }} /></button>
+          {/* Header */}
+          <div className="mb-8">
+            <div className="inline-flex items-center gap-2 rounded-full bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 text-xs font-semibold text-emerald-400 mb-2">
+              <Sparkles className="h-3 w-3" />
+              <span>Asset Publishing Workflow</span>
+            </div>
+            <h1 className="text-3xl font-black text-white tracking-tight">
+              Publish an ER:LC Asset
+            </h1>
+            <p className="text-xs sm:text-sm text-zinc-400 mt-1">
+              Upload your vehicle liveries, uniform packages, ELS siren soundbanks, or map templates.
+            </p>
           </div>
-        )}
 
-        {/* ── STEP 0: Format ── */}
-        {step === 0 && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
-            <div>
-              <p style={S.sectionTitle}>Listing Format</p>
-              <p style={S.sectionSub}>What type of product are you releasing?</p>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                {TYPES.map(t => (
-                  <button key={t.id} onClick={() => set('listing_type', t.id)} style={S.cardBtn(form.listing_type === t.id)}>
-                    <p style={{ fontSize: '0.875rem', fontWeight: 600, color: form.listing_type === t.id ? '#10b981' : 'white', marginBottom: 4 }}>{t.label}</p>
-                    <p style={{ fontSize: '0.75rem', color: '#6b7280' }}>{t.desc}</p>
+          {/* ─── 6-STEP PROGRESS BAR ─── */}
+          <div className="flex items-center gap-2 mb-10 overflow-x-auto pb-2">
+            {STEPS.map((s, idx) => {
+              const isPast = idx < step;
+              const isCurrent = idx === step;
+              return (
+                <React.Fragment key={s.id}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (isPast) setStep(idx);
+                    }}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all shrink-0 ${
+                      isCurrent
+                        ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-400 shadow-sm"
+                        : isPast
+                        ? "border-emerald-500/20 bg-black/40 text-emerald-300/80 cursor-pointer"
+                        : "border-white/[0.06] bg-white/[0.02] text-zinc-500 cursor-not-allowed"
+                    }`}
+                  >
+                    <span
+                      className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-mono font-bold ${
+                        isPast
+                          ? "bg-emerald-500 text-black"
+                          : isCurrent
+                          ? "bg-emerald-500/20 text-emerald-400"
+                          : "bg-white/[0.08] text-zinc-500"
+                      }`}
+                    >
+                      {isPast ? "✓" : idx + 1}
+                    </span>
+                    <span>{s.label}</span>
                   </button>
-                ))}
-              </div>
-            </div>
-            <div>
-              <p style={{ ...S.sectionTitle, marginBottom: 12 }}>Asset Category</p>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                {CATEGORIES.map(c => <button key={c} onClick={() => set('category', c)} style={S.pillBtn(form.category === c)}>{c}</button>)}
-              </div>
-            </div>
-            <div>
-              <p style={{ ...S.sectionTitle, marginBottom: 12 }}>Departments</p>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                {DEPTS.map(d => <button key={d} onClick={() => toggleDept(d)} style={S.pillBtn(form.departments.includes(d))}>{d}</button>)}
-              </div>
-            </div>
+                  {idx < STEPS.length - 1 && <div className="w-3 h-px bg-white/[0.1] shrink-0" />}
+                </React.Fragment>
+              );
+            })}
           </div>
-        )}
 
-        {/* ── STEP 1: Details ── */}
-        {step === 1 && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-            <div>
-              <label style={S.label}>Listing Title *</label>
-              <input value={form.title} onChange={e => set('title', e.target.value)} placeholder="e.g. River City Police Ghost Fleet Pack" style={S.input} />
+          {/* Error Message */}
+          {err && (
+            <div className="flex items-center gap-3 p-4 rounded-2xl border border-red-500/30 bg-red-500/10 text-red-300 text-xs mb-6">
+              <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+              <p className="flex-1">{err}</p>
+              <button onClick={() => setErr("")}>
+                <X className="w-4 h-4 text-red-400" />
+              </button>
             </div>
-            <div>
-              <label style={S.label}>Description *</label>
-              <textarea value={form.description} onChange={e => set('description', e.target.value)} rows={5} placeholder="Describe your asset — vehicle models, livery details, what's included..." style={{ ...S.input, resize: 'vertical' }} />
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+          )}
+
+          {/* ─── STEP 0: ASSET DETAILS ─── */}
+          {step === 0 && (
+            <div className="rounded-3xl border border-white/[0.08] bg-[#0A0D15] p-6 sm:p-8 space-y-6 shadow-xl">
               <div>
-                <label style={S.label}>Price Type</label>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  {['Free', 'Robux'].map(pt => (
-                    <button key={pt} onClick={() => set('price_type', pt)} style={{ flex: 1, borderRadius: 12, border: form.price_type === pt ? '1px solid rgba(16,185,129,0.5)' : '1px solid rgba(255,255,255,0.07)', background: form.price_type === pt ? 'rgba(16,185,129,0.08)' : 'rgba(255,255,255,0.02)', padding: 10, fontSize: '0.75rem', fontWeight: 600, color: form.price_type === pt ? '#10b981' : '#9ca3af', cursor: 'pointer', transition: 'all 0.15s' }}>{pt}</button>
+                <label className="block text-xs font-bold text-zinc-300 uppercase tracking-wider mb-2 font-mono">
+                  Asset Title *
+                </label>
+                <input
+                  type="text"
+                  value={form.title}
+                  onChange={(e) => set("title", e.target.value)}
+                  placeholder="e.g. 2024 State Police Ghost Slicktop Fleet Pack"
+                  className="w-full rounded-2xl border border-white/[0.1] bg-[#07090E] px-4 py-3 text-sm text-white placeholder:text-zinc-500 outline-none focus:border-emerald-500/50 transition"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-zinc-300 uppercase tracking-wider mb-2 font-mono">
+                  Description & Vehicle Breakdown *
+                </label>
+                <textarea
+                  rows={5}
+                  value={form.description}
+                  onChange={(e) => set("description", e.target.value)}
+                  placeholder="Detail what is included: vehicle models (Tahoe, Crown Vic, Explorer), livery 4K templates, ELS lighting patterns, installation notes..."
+                  className="w-full rounded-2xl border border-white/[0.1] bg-[#07090E] px-4 py-3 text-sm text-white placeholder:text-zinc-500 outline-none focus:border-emerald-500/50 transition resize-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-zinc-300 uppercase tracking-wider mb-3 font-mono">
+                  Asset Format Type
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {FORMAT_TYPES.map((t) => (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => set("listing_type", t.id)}
+                      className={`p-4 rounded-2xl border text-left transition-all ${
+                        form.listing_type === t.id
+                          ? "border-emerald-500/50 bg-emerald-500/10 text-white shadow-sm"
+                          : "border-white/[0.06] bg-[#07090E] text-zinc-400 hover:border-white/[0.12] hover:text-white"
+                      }`}
+                    >
+                      <p className="text-xs font-bold text-white mb-1">{t.label}</p>
+                      <p className="text-[11px] text-zinc-400 leading-snug">{t.desc}</p>
+                    </button>
                   ))}
                 </div>
               </div>
-              {form.price_type === 'Robux' && (
-                <div>
-                  <label style={S.label}>Price (R$)</label>
-                  <input type="number" min="0" value={form.price} onChange={e => set('price', e.target.value)} placeholder="150" style={S.input} />
-                </div>
-              )}
             </div>
-          </div>
-        )}
+          )}
 
-        {/* ── STEP 2: Media ── */}
-        {step === 2 && (
-          <div>
-            <p style={S.sectionTitle}>Preview Images</p>
-            <p style={S.sectionSub}>Upload screenshots of your asset. Max 4 MB per image.</p>
-            <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={e => { if (e.target.files[0]) handleFile(e.target.files[0]); e.target.value = ''; }} />
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12 }}>
-              {form.images.map((src, i) => (
-                <div key={i} style={{ position: 'relative', aspectRatio: '16/9', borderRadius: 12, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)' }}>
-                  <img src={src} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  <button onClick={() => set('images', form.images.filter((_, j) => j !== i))} style={{ position: 'absolute', top: 6, right: 6, height: 20, width: 20, borderRadius: '50%', background: 'rgba(0,0,0,0.75)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <X style={{ height: 12, width: 12, color: 'white' }} />
+          {/* ─── STEP 1: CATEGORY & DEPARTMENTS ─── */}
+          {step === 1 && (
+            <div className="rounded-3xl border border-white/[0.08] bg-[#0A0D15] p-6 sm:p-8 space-y-6 shadow-xl">
+              <div>
+                <label className="block text-xs font-bold text-zinc-300 uppercase tracking-wider mb-3 font-mono">
+                  Asset Category *
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {CATEGORIES.map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => set("category", c)}
+                      className={`px-4 py-2 rounded-xl text-xs font-semibold border transition-all ${
+                        form.category === c
+                          ? "bg-emerald-500 text-black font-bold border-emerald-400 shadow-sm"
+                          : "border-white/[0.08] bg-[#07090E] text-zinc-300 hover:text-white"
+                      }`}
+                    >
+                      {c}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-zinc-300 uppercase tracking-wider mb-3 font-mono">
+                  Department Classification * (Select all that apply)
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {DEPARTMENTS.map((d) => {
+                    const isSelected = form.departments.includes(d.id);
+                    return (
+                      <button
+                        key={d.id}
+                        type="button"
+                        onClick={() => toggleDept(d.id)}
+                        className={`p-4 rounded-2xl border text-center transition-all ${
+                          isSelected
+                            ? "border-emerald-500/50 bg-emerald-500/10 text-white shadow-sm"
+                            : "border-white/[0.06] bg-[#07090E] text-zinc-400 hover:border-white/[0.12] hover:text-white"
+                        }`}
+                      >
+                        <div className="h-10 w-full flex items-center justify-center mb-2">
+                          <img src={d.logo} alt={d.name} className="h-8 w-auto object-contain" />
+                        </div>
+                        <p className="text-xs font-bold text-white">{d.name}</p>
+                        <span className="text-[10px] font-mono text-emerald-400 mt-1 block">
+                          {isSelected ? "● Selected" : "Tap to select"}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ─── STEP 2: FILES & ESCROW CODES ─── */}
+          {step === 2 && (
+            <div className="rounded-3xl border border-white/[0.08] bg-[#0A0D15] p-6 sm:p-8 space-y-6 shadow-xl">
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-xs font-bold text-zinc-300 uppercase tracking-wider font-mono">
+                    Preview Media (Images)
+                  </label>
+                  <span className="text-[11px] text-zinc-500">Max 5 MB per image</span>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+                  {form.images.map((src, i) => (
+                    <div
+                      key={i}
+                      className="relative aspect-video rounded-xl overflow-hidden border border-white/[0.1] bg-black group"
+                    >
+                      <img src={src} alt="" className="w-full h-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => set("images", form.images.filter((_, j) => j !== i))}
+                        className="absolute top-1 right-1 p-1 rounded-lg bg-black/80 text-white hover:text-red-400 transition"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+
+                  <input
+                    ref={fileRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files[0]) {
+                        handleFileUpload(e.target.files[0]);
+                      }
+                      e.target.value = "";
+                    }}
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() => fileRef.current && fileRef.current.click()}
+                    className="aspect-video rounded-xl border border-dashed border-white/[0.15] bg-[#07090E] hover:bg-white/[0.03] hover:border-emerald-500/40 text-zinc-400 hover:text-white flex flex-col items-center justify-center gap-1 transition"
+                  >
+                    <Upload className="w-5 h-5 text-emerald-400" />
+                    <span className="text-[10px] font-bold">Upload Screenshot</span>
                   </button>
                 </div>
-              ))}
-              {form.images.length < 6 && (
-                <button onClick={() => fileRef.current && fileRef.current.click()} style={{ aspectRatio: '16/9', borderRadius: 12, border: '2px dashed rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.01)', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, color: '#6b7280', transition: 'all 0.15s' }}>
-                  <ImageIcon style={{ height: 24, width: 24 }} />
-                  <span style={{ fontSize: '0.7rem' }}>Add image</span>
-                </button>
-              )}
-            </div>
-          </div>
-        )}
 
-        {/* ── STEP 3: Codes ── */}
-        {step === 3 && (
-          <div>
-            <p style={S.sectionTitle}>Delivery Codes</p>
-            <p style={S.sectionSub}>Enter Roblox Asset ID, Pastebin URL, or Drive link. Vault-locked until purchase.</p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {form.codes.map((c, i) => (
-                <div key={i} style={{ display: 'flex', gap: 8 }}>
-                  <input value={c} onChange={e => { const nc = [...form.codes]; nc[i] = e.target.value; set('codes', nc); }} placeholder={`Code ${i + 1} — rbxassetid://12345678 or URL`} style={{ ...S.input, flex: 1 }} />
-                  {form.codes.length > 1 && (
-                    <button onClick={() => set('codes', form.codes.filter((_, j) => j !== i))} style={{ borderRadius: 12, border: '1px solid rgba(255,255,255,0.07)', background: 'rgba(255,255,255,0.02)', padding: '10px 14px', cursor: 'pointer' }}>
-                      <X style={{ height: 16, width: 16, color: '#6b7280' }} />
-                    </button>
-                  )}
+                <div className="flex gap-2">
+                  <input
+                    type="url"
+                    value={form.imageUrlInput}
+                    onChange={(e) => set("imageUrlInput", e.target.value)}
+                    placeholder="Or paste image URL (https://imgur.com/...)"
+                    className="flex-1 rounded-xl border border-white/[0.1] bg-[#07090E] px-4 py-2 text-xs text-white placeholder:text-zinc-500 outline-none focus:border-emerald-500/50"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddImageUrl}
+                    className="px-4 py-2 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] text-xs font-semibold text-white transition"
+                  >
+                    Add URL
+                  </button>
                 </div>
-              ))}
-              {form.codes.length < 10 && (
-                <button onClick={() => set('codes', [...form.codes, ''])} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 500, color: '#10b981', textAlign: 'left', marginTop: 4 }}>+ Add another code</button>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* ── STEP 4: Review ── */}
-        {step === 4 && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <p style={{ ...S.sectionTitle, marginBottom: 8 }}>Review & Publish</p>
-            {[
-              ['Format', form.listing_type], ['Category', form.category],
-              ['Departments', form.departments.join(', ') || 'None'],
-              ['Title', form.title],
-              ['Price', form.price_type === 'Free' ? 'Free' : `R$${form.price}`],
-              ['Images', `${form.images.length} uploaded`],
-              ['Codes', `${form.codes.filter(c => c.trim()).length} entered`],
-            ].map(([label, val]) => (
-              <div key={label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderRadius: 12, border: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)', padding: '12px 16px' }}>
-                <span style={{ fontSize: '0.75rem', color: '#6b7280' }}>{label}</span>
-                <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'white' }}>{val || '—'}</span>
               </div>
-            ))}
-          </div>
-        )}
 
-        {/* Nav */}
-        <div style={S.navRow}>
-          <button onClick={() => step > 0 && setStep(step - 1)} disabled={step === 0} style={S.backBtn(step === 0)}>
-            <ArrowLeft style={{ height: 14, width: 14 }} /> Back
-          </button>
-          {step < STEPS.length - 1 ? (
-            <button onClick={() => { if (canNext()) { setErr(''); setStep(step + 1); } else setErr('Please complete all required fields first.'); }} style={S.nextBtn(false)}>
-              Next Step <ArrowRight style={{ height: 14, width: 14 }} />
-            </button>
-          ) : (
-            <button onClick={submit} disabled={busy} style={S.nextBtn(busy)}>
-              {busy ? 'Publishing…' : 'Publish Listing'}
-            </button>
+              {/* Escrow Delivery Codes Vault */}
+              <div className="pt-4 border-t border-white/[0.06]">
+                <div className="flex items-center gap-2 mb-1">
+                  <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                  <label className="text-xs font-bold text-zinc-300 uppercase tracking-wider font-mono">
+                    Scam-Shield Escrow Delivery Keys *
+                  </label>
+                </div>
+                <p className="text-xs text-zinc-400 mb-4 leading-relaxed">
+                  Enter Roblox Asset IDs, Pastebin tokens, Google Drive links, or direct redeemable keys. These are vault-locked until payment clearance.
+                </p>
+
+                <div className="space-y-3">
+                  {form.codes.map((code, idx) => (
+                    <div key={idx} className="flex gap-2">
+                      <input
+                        type="text"
+                        value={code}
+                        onChange={(e) => {
+                          const next = [...form.codes];
+                          next[idx] = e.target.value;
+                          set("codes", next);
+                        }}
+                        placeholder={`Deliverable Key #${idx + 1} (e.g. rbxassetid://12345678 or https://drive.google.com/...)`}
+                        className="flex-1 rounded-xl border border-white/[0.1] bg-[#07090E] px-4 py-2.5 text-xs text-white placeholder:text-zinc-500 outline-none focus:border-emerald-500/50 font-mono"
+                      />
+                      {form.codes.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => set("codes", form.codes.filter((_, j) => j !== idx))}
+                          className="p-2.5 rounded-xl border border-red-500/20 bg-red-500/5 text-red-400 hover:bg-red-500/10 transition"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+
+                  <button
+                    type="button"
+                    onClick={() => set("codes", [...form.codes, ""])}
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-400 hover:underline pt-1"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Add Another Deliverable Code</span>
+                  </button>
+                </div>
+              </div>
+            </div>
           )}
+
+          {/* ─── STEP 3: PRICING ─── */}
+          {step === 3 && (
+            <div className="rounded-3xl border border-white/[0.08] bg-[#0A0D15] p-6 sm:p-8 space-y-6 shadow-xl">
+              <div>
+                <label className="block text-xs font-bold text-zinc-300 uppercase tracking-wider mb-3 font-mono">
+                  Price Configuration *
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => set("price_type", "Free")}
+                    className={`p-4 rounded-2xl border text-left transition-all ${
+                      form.price_type === "Free"
+                        ? "border-emerald-500/50 bg-emerald-500/10 text-white shadow-sm"
+                        : "border-white/[0.06] bg-[#07090E] text-zinc-400 hover:text-white"
+                    }`}
+                  >
+                    <p className="text-xs font-bold text-white mb-1">Free Release</p>
+                    <p className="text-[11px] text-zinc-400">Available to all ER:LC creators for free download.</p>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => set("price_type", "Robux")}
+                    className={`p-4 rounded-2xl border text-left transition-all ${
+                      form.price_type === "Robux"
+                        ? "border-emerald-500/50 bg-emerald-500/10 text-white shadow-sm"
+                        : "border-white/[0.06] bg-[#07090E] text-zinc-400 hover:text-white"
+                    }`}
+                  >
+                    <p className="text-xs font-bold text-white mb-1">Robux Pricing</p>
+                    <p className="text-[11px] text-zinc-400">Price in Robux (R$). You keep 100% of the sale.</p>
+                  </button>
+                </div>
+              </div>
+
+              {form.price_type === "Robux" && (
+                <div>
+                  <label className="block text-xs font-bold text-zinc-300 uppercase tracking-wider mb-2 font-mono">
+                    Price in Robux (R$) *
+                  </label>
+                  <div className="relative max-w-xs">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xs font-mono font-bold text-emerald-400">
+                      R$
+                    </span>
+                    <input
+                      type="number"
+                      min="1"
+                      value={form.price}
+                      onChange={(e) => set("price", e.target.value)}
+                      placeholder="150"
+                      className="w-full rounded-2xl border border-white/[0.1] bg-[#07090E] pl-11 pr-4 py-3 text-sm text-white font-mono font-bold outline-none focus:border-emerald-500/50"
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div className="p-4 rounded-2xl border border-emerald-500/20 bg-emerald-500/5 flex items-start gap-3">
+                <ShieldCheck className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
+                <div className="text-xs text-zinc-300 leading-relaxed">
+                  <strong>0% Platform Commission:</strong> LibertyX does not take any listing cut. All proceeds are directly disbursed to your creator account upon verified escrow release.
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ─── STEP 4: PREVIEW ─── */}
+          {step === 4 && (
+            <div className="rounded-3xl border border-white/[0.08] bg-[#0A0D15] p-6 sm:p-8 space-y-6 shadow-xl">
+              <div>
+                <h3 className="text-lg font-bold text-white mb-1">Listing Preview</h3>
+                <p className="text-xs text-zinc-400">Review how your listing appears in the marketplace before publishing.</p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="p-4 rounded-2xl border border-white/[0.06] bg-[#07090E] space-y-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-md">
+                      {form.departments.join(", ") || "General"}
+                    </span>
+                    <span className="text-xs font-mono text-zinc-400">{form.category}</span>
+                  </div>
+
+                  <h4 className="text-base font-bold text-white">{form.title || "Untitled Asset"}</h4>
+                  <p className="text-xs text-zinc-400 leading-relaxed line-clamp-3">{form.description}</p>
+                  
+                  <div className="pt-2 border-t border-white/[0.06] flex items-center justify-between text-xs">
+                    <span className="text-zinc-500">Price:</span>
+                    <span className="font-mono font-extrabold text-emerald-400">
+                      {form.price_type === "Free" ? "FREE" : `R$ ${form.price}`}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-2xl border border-white/[0.06] bg-[#07090E] space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-mono text-zinc-400">Escrow Keys:</span>
+                    <span className="text-xs font-mono font-bold text-emerald-400">{form.codes.filter(c => c.trim()).length} Keys Vaulted</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-mono text-zinc-400">Screenshots:</span>
+                    <span className="text-xs font-mono font-bold text-white">{form.images.length} Uploaded</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-mono text-zinc-400">Platform Cut:</span>
+                    <span className="text-xs font-mono font-bold text-emerald-400">0% Commission</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ─── STEP 5: PUBLISH CONFIRMATION ─── */}
+          {step === 5 && (
+            <div className="rounded-3xl border border-white/[0.08] bg-[#0A0D15] p-6 sm:p-8 space-y-6 text-center shadow-xl">
+              <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto mb-4">
+                <Store className="w-8 h-8" />
+              </div>
+              <h3 className="text-2xl font-black text-white">Ready to Go Live?</h3>
+              <p className="text-xs sm:text-sm text-zinc-400 max-w-md mx-auto leading-relaxed">
+                By publishing, your asset becomes instantly discoverable on LibertyX Marketplace with automated Scam-Shield escrow key delivery.
+              </p>
+
+              <button
+                type="button"
+                onClick={handlePublish}
+                disabled={busy}
+                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-black font-bold px-8 py-4 text-sm shadow-xl shadow-emerald-500/20 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+              >
+                <Sparkles className="w-4 h-4" />
+                <span>{busy ? "Publishing to Marketplace…" : "Confirm & Publish Asset"}</span>
+              </button>
+            </div>
+          )}
+
+          {/* ─── NAVIGATION BUTTONS ─── */}
+          <div className="mt-8 flex items-center justify-between">
+            <button
+              type="button"
+              onClick={() => step > 0 && setStep(step - 1)}
+              disabled={step === 0 || busy}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-white/[0.1] bg-white/[0.02] text-xs font-semibold text-zinc-300 hover:text-white hover:bg-white/[0.06] transition disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" /> Back
+            </button>
+
+            {step < STEPS.length - 1 ? (
+              <button
+                type="button"
+                onClick={() => {
+                  if (canNext()) {
+                    setErr("");
+                    setStep(step + 1);
+                  } else {
+                    setErr("Please complete all required fields before proceeding.");
+                  }
+                }}
+                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-bold shadow-md transition hover:scale-[1.02] active:scale-[0.98]"
+              >
+                <span>Next Step</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            ) : null}
+          </div>
         </div>
       </div>
+
+      <Footer />
     </div>
   );
 }

@@ -1,90 +1,99 @@
 const LISTINGS_KEY = "liberty_marketplace_listings";
+const PURCHASES_KEY = "liberty_marketplace_purchases";
+const REVIEWS_KEY = "liberty_marketplace_reviews";
 
 const canUseStorage = () =>
   typeof window !== "undefined" && typeof window.localStorage !== "undefined";
 
-function readListings() {
-  if (!canUseStorage()) return [];
-  try {
-    const value = JSON.parse(window.localStorage.getItem(LISTINGS_KEY) || "[]");
-    return Array.isArray(value) ? value : [];
-  } catch {
-    return [];
+function createEntityStore(storageKey: string, idPrefix: string) {
+  function read() {
+    if (!canUseStorage()) return [];
+    try {
+      const value = JSON.parse(window.localStorage.getItem(storageKey) || "[]");
+      return Array.isArray(value) ? value : [];
+    } catch {
+      return [];
+    }
   }
-}
 
-function writeListings(listings) {
-  if (canUseStorage()) {
-    window.localStorage.setItem(LISTINGS_KEY, JSON.stringify(listings));
+  function write(items: any[]) {
+    if (canUseStorage()) {
+      window.localStorage.setItem(storageKey, JSON.stringify(items));
+    }
   }
+
+  function matchesFilters(item: any, filters: any = {}) {
+    return Object.entries(filters).every(([key, value]) => {
+      if (value === undefined || value === null || value === "") return true;
+      if (Array.isArray(item[key])) return item[key].includes(value);
+      return item[key] === value;
+    });
+  }
+
+  function sortItems(items: any[], sort: string = "-created_date") {
+    const descending = sort.startsWith("-");
+    const key = descending ? sort.slice(1) : sort;
+    return [...items].sort((a, b) => {
+      const left = a[key] || "";
+      const right = b[key] || "";
+      return (left > right ? 1 : left < right ? -1 : 0) * (descending ? -1 : 1);
+    });
+  }
+
+  return {
+    async filter(filters: any = {}, sort: string = "-created_date", limit?: number) {
+      const filtered = sortItems(
+        read().filter((item) => matchesFilters(item, filters)),
+        sort
+      );
+      return typeof limit === "number" ? filtered.slice(0, limit) : filtered;
+    },
+    async get(id: string) {
+      const item = read().find((item) => item.id === id);
+      if (!item) throw new Error("Not found");
+      return item;
+    },
+    async create(input: any) {
+      const item = {
+        ...input,
+        id: `${idPrefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+        created_date: new Date().toISOString(),
+      };
+      write([item, ...read()]);
+      return item;
+    },
+    async update(id: string, input: any) {
+      const items = read();
+      const index = items.findIndex((item) => item.id === id);
+      if (index < 0) throw new Error("Not found");
+      items[index] = { ...items[index], ...input, updated_date: new Date().toISOString() };
+      write(items);
+      return items[index];
+    },
+    async delete(id: string) {
+      const items = read().filter((item) => item.id !== id);
+      write(items);
+      return { success: true };
+    },
+  };
 }
 
-function matchesFilters(listing, filters = {}) {
-  return Object.entries(filters).every(([key, value]) => {
-    if (value === undefined || value === null || value === "") return true;
-    if (Array.isArray(listing[key])) return listing[key].includes(value);
-    return listing[key] === value;
-  });
-}
-
-function sortListings(listings, sort = "-created_date") {
-  const descending = sort.startsWith("-");
-  const key = descending ? sort.slice(1) : sort;
-  return [...listings].sort((a, b) => {
-    const left = a[key] || "";
-    const right = b[key] || "";
-    return (left > right ? 1 : left < right ? -1 : 0) * (descending ? -1 : 1);
-  });
-}
-
-function readFileAsDataUrl(file) {
+function readFileAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     if (!file || !file.type?.startsWith("image/")) {
       reject(new Error("Please choose an image file."));
       return;
     }
-    if (file.size > 4 * 1024 * 1024) {
-      reject(new Error("Images must be 4 MB or smaller."));
+    if (file.size > 5 * 1024 * 1024) {
+      reject(new Error("Images must be 5 MB or smaller."));
       return;
     }
     const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
+    reader.onload = () => resolve(reader.result as string);
     reader.onerror = () => reject(new Error("Could not read this image."));
     reader.readAsDataURL(file);
   });
 }
-
-const listingEntity = {
-  async filter(filters, sort, limit) {
-    const filtered = sortListings(
-      readListings().filter((listing) => matchesFilters(listing, filters)),
-      sort,
-    );
-    return typeof limit === "number" ? filtered.slice(0, limit) : filtered;
-  },
-  async get(id) {
-    const listing = readListings().find((item) => item.id === id);
-    if (!listing) throw new Error("Listing not found");
-    return listing;
-  },
-  async create(input) {
-    const listing = {
-      ...input,
-      id: `listing_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-      created_date: new Date().toISOString(),
-    };
-    writeListings([listing, ...readListings()]);
-    return listing;
-  },
-  async update(id, input) {
-    const listings = readListings();
-    const index = listings.findIndex((listing) => listing.id === id);
-    if (index < 0) throw new Error("Listing not found");
-    listings[index] = { ...listings[index], ...input, updated_date: new Date().toISOString() };
-    writeListings(listings);
-    return listings[index];
-  },
-};
 
 export const localDb = {
   auth: {
@@ -108,14 +117,19 @@ export const localDb = {
     logout() {
       if (canUseStorage()) window.localStorage.removeItem("discord_user");
     },
-    redirectToLogin(returnTo) {
+    redirectToLogin(returnTo?: string) {
       window.location.href = `/login?returnTo=${encodeURIComponent(returnTo || "/")}`;
     },
   },
-  entities: { Listing: listingEntity },
+  entities: {
+    Listing: createEntityStore(LISTINGS_KEY, "listing"),
+    Purchase: createEntityStore(PURCHASES_KEY, "purchase"),
+    Review: createEntityStore(REVIEWS_KEY, "review"),
+    User: createEntityStore("liberty_marketplace_users", "user"),
+  },
   integrations: {
     Core: {
-      UploadFile: async ({ file }) => ({ file_url: await readFileAsDataUrl(file) }),
+      UploadFile: async ({ file }: { file: File }) => ({ file_url: await readFileAsDataUrl(file) }),
     },
   },
 };

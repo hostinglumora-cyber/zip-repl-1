@@ -3,12 +3,31 @@ const db = (globalThis as any).__B44_DB__ || { entities: new Proxy({}, { get: ()
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
-  House, PanelBottom, Library, Gem, Settings, LogIn, LogOut,
-  CloudCog, MessageCircle, Palette, ChevronLeft, ChevronRight,
-  ArrowRight, ShieldCheck, Zap, Boxes, Lock, BadgeCheck,
-  Upload, Compass, Sparkles, Terminal, ChevronDown, User, Shield,
-  Layers, Search, CheckCircle2, AlertTriangle, Activity
+  ArrowRight,
+  ShieldCheck,
+  Zap,
+  Boxes,
+  MessageCircle,
+  ArrowUpRight,
+  ChevronDown,
+  Lock,
+  Upload,
+  BadgeCheck,
+  Flame,
+  Shield,
+  Car,
+  Truck,
+  Sparkles,
+  Compass,
+  Layers,
+  Star,
+  Tag,
+  CheckCircle2,
+  ExternalLink,
+  ChevronRight,
+  Store,
 } from "lucide-react";
+import SiteNav from "@/components/SiteNav";
 import { DEPARTMENTS } from "@/lib/departments";
 import { BRAND } from "@/lib/brand";
 import { MarketplaceCard } from "@/pages/Marketplace";
@@ -19,530 +38,520 @@ export { MarketplaceCard as ListingCard };
 const FAQS = [
   {
     id: "escrow",
-    q: "How does Scam-Shield escrow protect buyers & creators?",
-    a: "When a creator publishes an asset, deliverable keys (Roblox asset IDs, template files, Pastebin hashes, Drive links) are securely vault-locked. The instant payment completes, the release protocol delivers the key to the buyer with an unalterable receipt and proof of provenance.",
+    q: "How does the Scam-Shield escrow protocol work?",
+    a: "When a creator publishes an asset, deliverable keys (Roblox asset IDs, livery files, Pastebin hashes, Google Drive links) are securely vault-locked. As soon as a transaction clears, the release protocol delivers the key to the buyer with an unalterable receipt and proof of provenance.",
   },
   {
     id: "fees",
-    q: "What are the marketplace commission & listing fees?",
-    a: "LibertyX operates on a strict 0% listing fee model. Creators keep 100% of their earnings on free releases and Robux-priced drops alike.",
+    q: "Are there any listing or platform commission fees?",
+    a: "No. LibertyX operates on a strict 0% listing fee model. Creators keep 100% of their earnings on both free community releases and Robux-priced packs.",
   },
   {
     id: "verified",
     q: "How do creators earn the Verified Creator badge?",
-    a: "Link your verified Roblox developer identity and execute 5 successful scam-free escrow deliveries with positive buyer feedback. Badging is audited and applied automatically.",
+    a: "Verified Creator status is awarded to creators with a proven track record of 5+ verified scam-free escrow fulfillments and positive customer feedback. Badging is audited and granted automatically to creator profiles and listings.",
   },
   {
     id: "bundles",
-    q: "Can I bundle multi-vehicle liveries and ELS profiles together?",
-    a: "Yes. The Creator Studio includes a multi-asset bundle generator allowing you to link liveries for Tahoe, Crown Vic, Charger, and Explorer alongside custom siren soundbanks and ELS scripts in a single package.",
+    q: "Can I bundle multi-vehicle fleet liveries and ELS profiles together?",
+    a: "Yes. The Creator Studio includes a multi-asset bundle generator allowing you to link liveries for Tahoe, Crown Vic, Charger, and Explorer alongside custom siren soundbanks and ELS configs in a single package with multi-code delivery.",
+  },
+  {
+    id: "delivery",
+    q: "How fast are digital asset keys delivered after purchase?",
+    a: "Delivery is instant and automated. Deliverable keys unlock directly into your buyer dashboard and transaction receipt in under 2 seconds after checkout.",
   },
 ];
 
 const FEATURES = [
   {
     icon: ShieldCheck,
-    tag: "SECURITY ENGINE",
-    title: "Scam-Shield Escrow Vault",
-    desc: "Asset IDs and files are encrypted in isolated vaults until checkout is verified. Zero DM trust required.",
+    tag: "SECURITY PROTOCOL",
+    title: "Scam-Shield Escrow",
+    desc: "Digital deliverable keys are encrypted inside an isolated vault. No direct message handoffs or lost file links.",
   },
   {
     icon: Zap,
-    tag: "AUTOMATED FULFILLMENT",
-    title: "Instant Code Release",
-    desc: "Roblox asset keys unlock into the buyer's inventory in under two seconds post-transaction.",
+    tag: "SUB-2S LATENCY",
+    title: "Instant Code Delivery",
+    desc: "Roblox asset IDs and download links unlock into the buyer's inventory instantly upon payment clearance.",
   },
   {
     icon: BadgeCheck,
-    tag: "TRUST ARCHITECTURE",
+    tag: "REPUTATION ENGINE",
     title: "Verified Creator System",
-    desc: "Automated reputation tracking, community ratings, and anti-scam seller history.",
+    desc: "Community ratings, verified ER:LC track records, and tamper-proof seller provenance for peace of mind.",
   },
   {
     icon: Boxes,
-    tag: "STUDIO PROTOCOL",
+    tag: "STUDIO TOOLS",
     title: "Fleet Bundle Generator",
-    desc: "Package entire agency fleets, liveries, ELS scripts, and uniform assets into discounted bundles.",
+    desc: "Package entire agency fleets, liveries, ELS configs, and uniform assets into discounted multi-tier bundles.",
   },
   {
     icon: MessageCircle,
-    tag: "DISCORD INTEGRATION",
-    title: "Live Webhook Drops",
-    desc: "Broadcast newly published liveries and map packs directly to your Discord server in real-time.",
+    tag: "COMMUNITY SYNC",
+    title: "Discord Webhook Drops",
+    desc: "Broadcast newly published liveries, price drops, and updates automatically to your community Discord server.",
   },
   {
     icon: Lock,
-    tag: "ZERO COMMISSIONS",
+    tag: "100% TO CREATORS",
     title: "0% Marketplace Cut",
-    desc: "Keep 100% of every sale. No hidden platform cuts, no monthly developer subscriptions.",
+    desc: "Keep 100% of your earnings. No hidden platform cuts, no monthly developer subscriptions, always free to publish.",
   },
+];
+
+const STATS = [
+  { val: "500+", label: "Verified Creators", sub: "Active ER:LC Designers" },
+  { val: "100%", label: "Escrow Protected", sub: "Zero-Scam Delivery" },
+  { val: "< 2s", label: "Delivery Latency", sub: "Instant Token Release" },
+  { val: "0%", label: "Platform Cut", sub: "Creators Keep 100%" },
 ];
 
 export default function Home() {
   const [listings, setListings] = useState<any[]>([]);
+  const [selectedDept, setSelectedDept] = useState<string>("All");
   const [loading, setLoading] = useState(true);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
-  const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
-    db.entities.Listing.filter({ status: "active" }, "-created_date", 8)
+    db.entities.Listing.filter({ status: "active" }, "-created_date", 20)
       .then((rows: any[]) => setListings(rows || []))
       .catch(() => setListings([]))
       .finally(() => setLoading(false));
-
-    try {
-      const raw = window.localStorage.getItem("discord_user");
-      if (raw) setUser(JSON.parse(raw));
-    } catch {
-      setUser(null);
-    }
   }, []);
 
+  const displayedListings = listings.filter((l) => {
+    if (selectedDept === "All") return true;
+    return l.departments?.some((d: string) => d.toLowerCase() === selectedDept.toLowerCase());
+  }).slice(0, 8);
+
   return (
-    <div className="min-h-screen bg-[#050505] text-white flex">
-      {/* ─── LEFT SIDEBAR (ERMBOT STYLE) ─── */}
-      <aside className="fixed inset-y-0 left-0 z-50 hidden md:flex w-16 flex-col items-center justify-between border-r border-white/[0.08] bg-[#000000] py-4 shadow-2xl">
-        {/* Top Icon Group */}
-        <div className="flex flex-col items-center gap-3">
-          {/* Discord Profile / Login Button */}
-          <Link
-            to={user ? "/dashboard" : "/login"}
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#5865F2] hover:bg-[#4752C4] transition-transform hover:scale-105 shadow-lg shadow-[#5865F2]/20"
-            title={user ? `@${user.username}` : "Login with Discord"}
-          >
-            {user?.avatarUrl ? (
-              <img src={user.avatarUrl} alt="" className="h-11 w-11 rounded-full object-cover" />
-            ) : (
-              <svg className="h-6 w-6 text-white" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/>
-              </svg>
-            )}
-          </Link>
+    <div className="min-h-screen text-white bg-[#07090E] selection:bg-emerald-500/25 selection:text-emerald-300">
+      <SiteNav />
 
-          <div className="h-px w-8 bg-white/[0.08] my-1" />
+      {/* ─── HERO SECTION ─── */}
+      <section className="relative pt-16 pb-20 lg:pt-24 lg:pb-28 border-b border-white/[0.06] overflow-hidden">
+        {/* Subtle geometric grid background */}
+        <div
+          className="pointer-events-none absolute inset-0 opacity-[0.03]"
+          style={{
+            backgroundImage: `linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)`,
+            backgroundSize: "40px 40px",
+          }}
+        />
 
-          {/* Navigation Icon Rail */}
-          <Link
-            to="/"
-            className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/[0.12] text-white border border-white/10 transition"
-            title="Home"
-          >
-            <House className="h-5 w-5 text-white" />
-          </Link>
+        {/* Ambient Top Glow (Subtle & Refined) */}
+        <div
+          className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 w-3/4 max-w-3xl h-64 opacity-15"
+          style={{
+            background: "radial-gradient(ellipse at 50% 0%, rgba(16, 185, 129, 0.45) 0%, transparent 70%)",
+            filter: "blur(60px)",
+          }}
+        />
 
-          <Link
-            to="/marketplace"
-            className="flex h-10 w-10 items-center justify-center rounded-xl text-zinc-400 hover:text-white hover:bg-white/[0.05] transition"
-            title="Marketplace"
-          >
-            <PanelBottom className="h-5 w-5" />
-          </Link>
-
-          <Link
-            to="/docs"
-            className="flex h-10 w-10 items-center justify-center rounded-xl text-zinc-400 hover:text-white hover:bg-white/[0.05] transition"
-            title="Documentation"
-          >
-            <Library className="h-5 w-5" />
-          </Link>
-
-          <Link
-            to="/sell"
-            className="flex h-10 w-10 items-center justify-center rounded-xl text-zinc-400 hover:text-emerald-400 hover:bg-emerald-500/10 transition"
-            title="Creator Studio"
-          >
-            <Gem className="h-5 w-5" />
-          </Link>
-        </div>
-
-        {/* Bottom Utility Icon Group */}
-        <div className="flex flex-col items-center gap-2.5">
-          <Link
-            to="/status"
-            className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/[0.08] text-zinc-400 hover:text-emerald-400 hover:bg-white/[0.05] transition"
-            title="System Status"
-          >
-            <CloudCog className="h-4.5 w-4.5" />
-          </Link>
-
-          <a
-            href="https://discord.gg/YYqFdVp5Fw"
-            target="_blank"
-            rel="noreferrer"
-            className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/[0.08] text-zinc-400 hover:text-[#5865F2] hover:bg-white/[0.05] transition"
-            title="Discord Community"
-          >
-            <MessageCircle className="h-4.5 w-4.5" />
-          </a>
-
-          <Link
-            to={user ? "/dashboard" : "/login"}
-            className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/[0.08] text-zinc-400 hover:text-white hover:bg-white/[0.05] transition"
-            title={user ? "Dashboard Settings" : "Login"}
-          >
-            <Settings className="h-4.5 w-4.5" />
-          </Link>
-
-          {user && (
-            <button
-              onClick={() => {
-                window.localStorage.removeItem("discord_user");
-                setUser(null);
-                window.location.reload();
-              }}
-              className="flex h-9 w-9 items-center justify-center rounded-lg border border-red-500/20 text-red-400 hover:bg-red-500/10 transition"
-              title="Logout"
-            >
-              <LogOut className="h-4.5 w-4.5" />
-            </button>
-          )}
-        </div>
-      </aside>
-
-      {/* ─── MAIN CONTENT AREA (Offset for Left Rail) ─── */}
-      <div className="flex-1 md:pl-16 flex flex-col min-w-0">
-        
-        {/* ─── TOP BREADCRUMB BAR (ERMBOT STYLE) ─── */}
-        <header className="sticky top-0 z-40 h-14 border-b border-white/[0.08] bg-[#000000]/90 backdrop-blur-xl px-4 sm:px-8 flex items-center justify-between">
-          <div className="flex items-center gap-3 text-xs sm:text-sm font-medium text-zinc-400">
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => window.history.back()}
-                className="h-7 w-7 rounded-lg border border-white/[0.08] flex items-center justify-center text-zinc-400 hover:text-white hover:bg-white/[0.05] transition"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </button>
-              <button
-                onClick={() => window.history.forward()}
-                className="h-7 w-7 rounded-lg border border-white/[0.08] flex items-center justify-center text-zinc-400 hover:text-white hover:bg-white/[0.05] transition"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </button>
-            </div>
-
-            <span className="h-4 w-px bg-white/[0.1]" />
-
-            <div className="flex items-center gap-2 text-white font-bold">
-              <span>Home</span>
-            </div>
+        <div className="relative mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 text-center">
+          {/* Eyebrow Badge */}
+          <div className="inline-flex items-center gap-2.5 rounded-full border border-emerald-500/25 bg-emerald-500/[0.08] px-4 py-1.5 text-xs font-semibold text-emerald-400 mb-8 backdrop-blur-md">
+            <span className="flex h-2 w-2 relative">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            <span className="font-mono uppercase tracking-wider text-[11px]">ER:LC Marketplace 2.0</span>
+            <span className="h-3 w-px bg-emerald-500/30" />
+            <span className="text-zinc-300">Scam-Shield Escrow</span>
           </div>
 
-          <div className="flex items-center gap-3">
+          {/* Main Headline */}
+          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight leading-[1.08] text-white">
+            The verified marketplace for{" "}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-emerald-500">
+              ER:LC liveries, ELS & assets.
+            </span>
+          </h1>
+
+          {/* Subtitle */}
+          <p className="mx-auto mt-6 max-w-2xl text-base sm:text-lg text-zinc-400 leading-relaxed font-normal">
+            Discover high-detail fleet packs, custom uniform sets, ELS configurations, and server map templates. Backed by instant escrow delivery and zero platform fees.
+          </p>
+
+          {/* Action CTAs */}
+          <div className="mt-9 flex flex-wrap items-center justify-center gap-4">
             <Link
               to="/marketplace"
-              className="hidden sm:inline-flex items-center gap-2 px-4 py-1.5 rounded-xl border border-white/[0.08] bg-white/[0.03] text-xs font-semibold text-zinc-300 hover:text-white hover:bg-white/[0.08] transition"
+              className="inline-flex items-center gap-2.5 rounded-2xl bg-emerald-500 hover:bg-emerald-400 px-8 py-4 text-sm sm:text-base font-bold text-black shadow-lg shadow-emerald-500/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
             >
-              <PanelBottom className="w-3.5 h-3.5 text-emerald-400" />
-              Marketplace
+              <Compass className="w-5 h-5" />
+              <span>Explore Marketplace</span>
+              <ArrowRight className="w-4 h-4" />
             </Link>
 
             <Link
-              to="/docs"
-              className="hidden sm:inline-flex items-center gap-2 px-4 py-1.5 rounded-xl border border-white/[0.08] bg-white/[0.03] text-xs font-semibold text-zinc-300 hover:text-white hover:bg-white/[0.08] transition"
+              to="/sell"
+              className="inline-flex items-center gap-2 rounded-2xl border border-white/[0.12] bg-[#0E121B] hover:bg-[#131924] hover:border-emerald-500/30 px-8 py-4 text-sm sm:text-base font-semibold text-white transition-all shadow-md"
             >
-              <Library className="w-3.5 h-3.5 text-emerald-400" />
-              Documentation
+              <Upload className="w-4 h-4 text-emerald-400" />
+              <span>Publish Asset</span>
             </Link>
-
-            {user ? (
-              <Link
-                to="/dashboard"
-                className="inline-flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-1.5 text-xs font-bold text-emerald-300 hover:bg-emerald-500/20 transition"
-              >
-                <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                @{user.username || user.name}
-              </Link>
-            ) : (
-              <Link
-                to="/login"
-                className="inline-flex items-center gap-2 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] border border-white/[0.1] px-4 py-1.5 text-xs font-bold text-white transition"
-              >
-                <LogIn className="w-3.5 h-3.5 text-emerald-400" />
-                Login
-              </Link>
-            )}
           </div>
-        </header>
 
-        {/* ─── HERO SECTION ─── */}
-        <section className="relative px-4 sm:px-6 lg:px-8 pt-16 pb-20 text-center overflow-hidden">
-          
-          {/* Subtle Ambient Vignette (No bright neon blobs) */}
-          <div
-            className="pointer-events-none absolute inset-0 opacity-[0.03]"
-            style={{
-              backgroundImage: "radial-gradient(#ffffff 1px, transparent 1px)",
-              backgroundSize: "32px 32px",
-            }}
-          />
+          {/* Metric Bar */}
+          <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-3 max-w-4xl mx-auto">
+            {STATS.map((s, idx) => (
+              <div
+                key={idx}
+                className="rounded-2xl border border-white/[0.07] bg-[#0B0E15]/80 p-4 text-left backdrop-blur-md hover:border-emerald-500/30 transition"
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xl sm:text-2xl font-black font-mono text-emerald-400">{s.val}</span>
+                  <span className="text-[10px] font-mono text-zinc-500">0{idx + 1}</span>
+                </div>
+                <p className="text-xs font-bold text-white leading-tight">{s.label}</p>
+                <p className="text-[11px] text-zinc-500 leading-tight mt-0.5">{s.sub}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
-          <div className="relative max-w-5xl mx-auto">
-            {/* Shimmer Eyebrow Pill */}
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.03] px-4 py-1.5 text-xs text-zinc-300 mb-8 backdrop-blur-md">
-              <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Introducing Scam-Shield Escrow</span>
-              <ArrowRight className="w-3 h-3 text-zinc-500" />
+      {/* ─── LIVE MARKETPLACE SHOWCASE (BROUGHT UP HIGH) ─── */}
+      <section className="py-16 lg:py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8 pb-4 border-b border-white/[0.07]">
+          <div>
+            <div className="inline-flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-emerald-400 mb-1.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              Live Catalog
             </div>
+            <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+              Featured Community Releases
+            </h2>
+          </div>
 
-            {/* Giant Bold Headline */}
-            <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-white leading-[1.08]">
-              The next-gen platform <br />
-              <span className="text-white">to build your roleplay server.</span>
-            </h1>
+          <div className="flex items-center gap-2 flex-wrap">
+            {["All", "Police", "Sheriff", "Fire", "DOT"].map((dept) => (
+              <button
+                key={dept}
+                type="button"
+                onClick={() => setSelectedDept(dept)}
+                className={cn(
+                  "px-3.5 py-1.5 text-xs font-semibold rounded-xl border transition-all",
+                  selectedDept === dept
+                    ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-400 shadow-sm"
+                    : "border-white/[0.08] bg-white/[0.02] text-zinc-400 hover:text-white hover:bg-white/[0.05]"
+                )}
+              >
+                {dept === "All" ? "All Departments" : dept}
+              </button>
+            ))}
 
-            {/* Sub-headline */}
-            <p className="mx-auto mt-6 max-w-2xl text-base sm:text-lg text-zinc-400 leading-relaxed">
-              Discover authentic ER:LC liveries, ELS configs, uniform sets, and server map templates. <br />
-              <span className="text-zinc-300 font-medium">Fast, Safe, and Secure.</span>
+            <Link
+              to="/marketplace"
+              className="inline-flex items-center gap-1 text-xs font-bold text-emerald-400 hover:underline ml-2"
+            >
+              <span>View All</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+        </div>
+
+        {/* Listings Grid or Empty State */}
+        {!loading && displayedListings.length === 0 ? (
+          <div className="rounded-3xl border border-white/[0.08] bg-[#0A0E15] p-12 sm:p-16 text-center max-w-2xl mx-auto shadow-xl">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 mx-auto mb-5 shadow-inner">
+              <Store className="h-8 w-8" />
+            </div>
+            <h3 className="text-xl font-bold text-white mb-2">No assets found in this department</h3>
+            <p className="text-xs sm:text-sm text-zinc-400 mb-6 max-w-md mx-auto leading-relaxed">
+              Be the first creator to upload a verified livery, ELS profile, or server map pack for this department.
             </p>
-
-            {/* Centered Shimmer Button (ERM Style) */}
-            <div className="mt-8 flex justify-center">
-              <Link
-                to="/marketplace"
-                className="group relative inline-flex items-center justify-center rounded-full border border-white/20 bg-black px-8 py-3.5 text-base font-bold text-white shadow-2xl transition-all hover:scale-105 active:scale-95 hover:border-emerald-500/50"
-                style={{
-                  boxShadow: "0 0 35px -5px rgba(16, 185, 129, 0.25)",
-                }}
-              >
-                <span className="relative z-10 flex items-center gap-2.5">
-                  <Compass className="w-5 h-5 text-emerald-400" />
-                  Explore Marketplace
-                </span>
-                <div className="absolute inset-0 rounded-full bg-gradient-to-r from-emerald-500/10 via-emerald-500/20 to-emerald-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-              </Link>
-            </div>
-
-            {/* ─── REALISTIC PANEL MOCKUP (ERMBOT STYLE) ─── */}
-            <div className="relative mt-16 max-w-5xl mx-auto rounded-2xl border border-white/[0.12] bg-[#0A0D12] shadow-2xl overflow-hidden text-left">
-              {/* Mock Window Top Bar */}
-              <div className="flex items-center justify-between border-b border-white/[0.08] bg-[#07090E] px-4 py-3 text-xs text-zinc-400">
-                <div className="flex items-center gap-2">
-                  <div className="flex gap-1.5">
-                    <span className="w-3 h-3 rounded-full bg-red-500/80" />
-                    <span className="w-3 h-3 rounded-full bg-yellow-500/80" />
-                    <span className="w-3 h-3 rounded-full bg-green-500/80" />
-                  </div>
-                  <span className="text-zinc-600 font-mono">|</span>
-                  <span className="font-mono text-zinc-400">Home / LibertyX / Panel</span>
-                </div>
-
-                <div className="flex items-center gap-2 font-mono text-[11px] text-emerald-400">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  ESCROW ACTIVE
-                </div>
-              </div>
-
-              {/* Mock Dashboard Interior */}
-              <div className="p-6 sm:p-8 grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Panel Column 1: Asset Publisher */}
-                <div className="rounded-xl border border-white/[0.06] bg-black/40 p-5 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold uppercase tracking-wider text-emerald-400 font-mono">Verified Studio</span>
-                    <BadgeCheck className="w-4 h-4 text-emerald-400" />
-                  </div>
-                  <h4 className="text-sm font-bold text-white">Publish ER:LC Asset</h4>
-                  <p className="text-xs text-zinc-400">Upload liveries, ELS soundbanks, uniform templates with automated escrow delivery.</p>
-                  <Link to="/sell" className="inline-flex items-center gap-2 text-xs font-bold text-emerald-400 hover:underline">
-                    Create new listing <ArrowRight className="w-3 h-3" />
-                  </Link>
-                </div>
-
-                {/* Panel Column 2: Escrow Vault Status */}
-                <div className="rounded-xl border border-white/[0.06] bg-black/40 p-5 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold uppercase tracking-wider text-emerald-400 font-mono">Security Telemetry</span>
-                    <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                  </div>
-                  <h4 className="text-sm font-bold text-white">Scam-Shield Escrow</h4>
-                  <div className="space-y-2 text-xs text-zinc-400">
-                    <div className="flex justify-between"><span>Token Keys:</span><span className="text-white font-mono">Encrypted</span></div>
-                    <div className="flex justify-between"><span>Release Latency:</span><span className="text-emerald-400 font-mono">&lt; 1.8s</span></div>
-                    <div className="flex justify-between"><span>Listing Fees:</span><span className="text-emerald-400 font-mono">0% Free</span></div>
-                  </div>
-                </div>
-
-                {/* Panel Column 3: Live Verification */}
-                <div className="rounded-xl border border-white/[0.06] bg-black/40 p-5 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold uppercase tracking-wider text-emerald-400 font-mono">Community Pulse</span>
-                    <Activity className="w-4 h-4 text-emerald-400" />
-                  </div>
-                  <h4 className="text-sm font-bold text-white">500+ ER:LC Creators</h4>
-                  <p className="text-xs text-zinc-400">Join top department livery artists and server founders sharing verified work.</p>
-                  <a href="https://discord.gg/YYqFdVp5Fw" target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-xs font-bold text-[#5865F2] hover:underline">
-                    <MessageCircle className="w-3.5 h-3.5" /> Join Creator Discord
-                  </a>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ─── LIVE MARKETPLACE RELEASES ─── */}
-        <section className="py-16 px-4 sm:px-8 max-w-6xl mx-auto w-full">
-          <div className="flex items-center justify-between mb-8 pb-4 border-b border-white/[0.08]">
-            <div>
-              <p className="text-xs font-mono uppercase tracking-widest text-emerald-400 mb-1">Authentic Drops</p>
-              <h2 className="text-2xl font-black text-white">Latest Releases</h2>
-            </div>
-            <Link to="/marketplace" className="text-xs font-bold text-emerald-400 hover:underline flex items-center gap-1">
-              Browse all <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
-
-          {!loading && listings.length === 0 ? (
-            <div className="rounded-2xl border border-white/[0.08] bg-[#0A0D12] p-12 text-center">
-              <Layers className="h-10 w-10 text-emerald-400 mx-auto mb-4" />
-              <h3 className="text-lg font-bold text-white mb-2">No listings yet</h3>
-              <p className="text-xs text-zinc-400 mb-6 max-w-sm mx-auto">
-                Be the first to publish an authentic ER:LC livery, uniform pack, or ELS configuration.
-              </p>
+            <div className="flex flex-wrap items-center justify-center gap-3">
               <Link
                 to="/sell"
-                className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-5 py-2.5 text-xs font-bold text-black hover:bg-emerald-400 transition"
+                className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 px-6 py-2.5 text-xs sm:text-sm font-bold text-black transition shadow-lg shadow-emerald-500/20"
               >
-                <Upload className="w-4 h-4" /> Publish First Asset
+                <Upload className="w-4 h-4" />
+                <span>Publish First Asset</span>
               </Link>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {listings.map((l) => (
-                <MarketplaceCard key={l.id} listing={l} />
-              ))}
-            </div>
-          )}
-        </section>
-
-        {/* ─── FEATURES ─── */}
-        <section className="py-20 px-4 sm:px-8 border-t border-white/[0.08] bg-[#000000]">
-          <div className="max-w-6xl mx-auto">
-            <div className="text-center max-w-xl mx-auto mb-14">
-              <p className="text-xs font-mono uppercase tracking-widest text-emerald-400 mb-2">Built for ER:LC</p>
-              <h2 className="text-3xl font-black text-white">Why LibertyX is built different.</h2>
-              <p className="mt-2 text-sm text-zinc-400">Everything designed for high-standard emergency response roleplay communities.</p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {FEATURES.map((f, i) => {
-                const Icon = f.icon;
-                return (
-                  <div
-                    key={i}
-                    className="rounded-2xl border border-white/[0.08] bg-[#0A0D12] p-6 hover:border-emerald-500/30 transition-all"
-                  >
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-400 mb-4 border border-emerald-500/20">
-                      <Icon className="h-5 w-5" />
-                    </div>
-                    <span className="text-[10px] font-mono font-bold text-zinc-500 uppercase tracking-widest">{f.tag}</span>
-                    <h3 className="text-base font-bold text-white mt-1 mb-1.5">{f.title}</h3>
-                    <p className="text-xs text-zinc-400 leading-relaxed">{f.desc}</p>
-                  </div>
-                );
-              })}
+              <button
+                type="button"
+                onClick={() => setSelectedDept("All")}
+                className="inline-flex items-center gap-2 rounded-xl border border-white/[0.1] bg-white/[0.03] hover:bg-white/[0.08] px-5 py-2.5 text-xs sm:text-sm font-semibold text-zinc-300 hover:text-white transition"
+              >
+                Reset Filter
+              </button>
             </div>
           </div>
-        </section>
-
-        {/* ─── DEPARTMENT DIRECTORY ─── */}
-        <section className="py-20 px-4 sm:px-8 border-t border-white/[0.08] bg-[#050505]">
-          <div className="max-w-6xl mx-auto">
-            <div className="flex items-center justify-between mb-10 pb-4 border-b border-white/[0.08]">
-              <div>
-                <p className="text-xs font-mono uppercase tracking-widest text-emerald-400 mb-1">Agency Classification</p>
-                <h2 className="text-2xl font-black text-white">ER:LC Units. Every department. Every role.</h2>
-              </div>
-              <Link to="/marketplace" className="text-xs font-bold text-emerald-400 hover:underline flex items-center gap-1">
-                Browse all <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {DEPARTMENTS.map((dept) => (
-                <Link
-                  key={dept.id}
-                  to={`/marketplace?dept=${dept.id}`}
-                  className="group rounded-2xl border border-white/[0.08] bg-[#0A0D12] p-5 hover:border-emerald-500/40 transition-all flex flex-col justify-between"
-                >
-                  <div>
-                    <div className="h-20 w-full rounded-xl bg-black/50 border border-white/[0.04] p-3 flex items-center justify-center mb-4">
-                      <img src={dept.logo} alt={dept.name} className="max-h-14 w-auto object-contain group-hover:scale-105 transition-transform" />
-                    </div>
-                    <span className="text-[10px] font-mono font-bold text-emerald-400 uppercase">{dept.short} UNIT</span>
-                    <h3 className="text-sm font-bold text-white mt-1 mb-1">{dept.name}</h3>
-                    <p className="text-xs text-zinc-400 leading-relaxed line-clamp-2">{dept.blurb}</p>
-                  </div>
-                  <div className="mt-4 pt-3 border-t border-white/[0.04] flex items-center justify-between text-xs font-semibold text-zinc-400 group-hover:text-emerald-400">
-                    <span>Inspect</span>
-                    <ArrowRight className="w-3 h-3" />
-                  </div>
-                </Link>
-              ))}
-            </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {displayedListings.map((listing) => (
+              <MarketplaceCard key={listing.id} listing={listing} />
+            ))}
           </div>
-        </section>
+        )}
+      </section>
 
-        {/* ─── FAQ ─── */}
-        <section className="py-20 px-4 sm:px-8 border-t border-white/[0.08] max-w-4xl mx-auto w-full">
-          <div className="text-center mb-12">
-            <p className="text-xs font-mono uppercase tracking-widest text-emerald-400 mb-2">Knowledge Base</p>
-            <h2 className="text-3xl font-black text-white">Common Questions</h2>
+      {/* ─── WHY LIBERTYX IS BUILT DIFFERENT (REDESIGNED) ─── */}
+      <section className="py-20 lg:py-28 px-4 sm:px-6 lg:px-8 border-t border-white/[0.06] bg-[#0A0D14]">
+        <div className="max-w-7xl mx-auto">
+          <div className="max-w-3xl mb-16">
+            <div className="inline-flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-emerald-400 mb-2">
+              <Sparkles className="w-3.5 h-3.5" />
+              Engine Architecture
+            </div>
+            <h2 className="text-3xl sm:text-5xl font-black text-white tracking-tight">
+              Why LibertyX is built different.
+            </h2>
+            <p className="mt-3 text-base text-zinc-400 leading-relaxed">
+              Engineered exclusively for Emergency Response: Liberty County roleplay servers, asset creators, and department leaders.
+            </p>
           </div>
 
-          <div className="space-y-3">
-            {FAQS.map((faq, idx) => {
-              const isOpen = openFaq === idx;
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {FEATURES.map((f, i) => {
+              const Icon = f.icon;
               return (
                 <div
-                  key={faq.id}
-                  className={`rounded-2xl border transition-all overflow-hidden ${
-                    isOpen ? "border-emerald-500/30 bg-[#0A0D12]" : "border-white/[0.08] bg-[#050505]"
-                  }`}
+                  key={i}
+                  className="rounded-3xl border border-white/[0.08] bg-[#07090E] p-7 flex flex-col justify-between hover:border-emerald-500/35 hover:bg-[#0C1017] transition-all group shadow-md"
                 >
-                  <button
-                    onClick={() => setOpenFaq(isOpen ? null : idx)}
-                    className="flex w-full items-center justify-between px-6 py-4 text-left text-sm font-bold text-white"
-                  >
-                    <span>{faq.q}</span>
-                    <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? "rotate-180 text-emerald-400" : "text-zinc-500"}`} />
-                  </button>
-                  {isOpen && (
-                    <div className="px-6 pb-4 pt-1 text-xs text-zinc-400 leading-relaxed border-t border-white/[0.04]">
-                      {faq.a}
+                  <div>
+                    <div className="flex items-center justify-between mb-5">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-400 group-hover:scale-105 transition-transform shadow-inner">
+                        <Icon className="h-6 w-6" />
+                      </div>
+                      <span className="text-[10px] font-mono font-bold tracking-widest text-zinc-500 uppercase">
+                        {f.tag}
+                      </span>
                     </div>
-                  )}
+
+                    <h3 className="text-lg font-bold text-white mb-2 tracking-tight">
+                      {f.title}
+                    </h3>
+                    <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
+                      {f.desc}
+                    </p>
+                  </div>
+
+                  <div className="mt-6 pt-4 border-t border-white/[0.04] flex items-center justify-between text-xs text-zinc-500 group-hover:text-emerald-400 transition-colors font-medium">
+                    <span>Verified Protocol</span>
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400/70" />
+                  </div>
                 </div>
               );
             })}
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* ─── FOOTER ─── */}
-        <Footer />
+      {/* ─── DEPARTMENT UNITS DIRECTORY ─── */}
+      <section className="py-20 px-4 sm:px-6 lg:px-8 border-t border-white/[0.06] bg-[#07090E]">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-12">
+            <div>
+              <div className="inline-flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-emerald-400 mb-1.5">
+                <Shield className="w-3.5 h-3.5" />
+                Department Categories
+              </div>
+              <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
+                ER:LC Units — Every department. Every role.
+              </h2>
+            </div>
+            <Link
+              to="/marketplace"
+              className="inline-flex items-center gap-1.5 text-sm font-bold text-emerald-400 hover:underline"
+            >
+              Browse all departments <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
 
-      </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {DEPARTMENTS.map((dept) => (
+              <Link
+                key={dept.id}
+                to={`/marketplace?dept=${dept.id}`}
+                className="rounded-3xl border border-white/[0.08] bg-[#0B0F17] p-6 hover:border-emerald-500/40 hover:bg-[#0E1420] transition-all group flex flex-col justify-between shadow-md"
+              >
+                <div>
+                  <div className="h-24 w-full rounded-2xl bg-black/40 border border-white/[0.04] p-4 flex items-center justify-center mb-5 group-hover:border-emerald-500/20 transition-colors">
+                    <img
+                      src={dept.logo}
+                      alt={dept.name}
+                      className="max-h-16 w-auto object-contain transition-transform group-hover:scale-105"
+                    />
+                  </div>
+
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-md">
+                    {dept.short} UNIT
+                  </span>
+
+                  <h3 className="text-base font-bold text-white mt-2.5 mb-1.5">
+                    {dept.name}
+                  </h3>
+                  <p className="text-xs text-zinc-400 leading-relaxed line-clamp-2">
+                    {dept.blurb}
+                  </p>
+                </div>
+
+                <div className="mt-6 pt-4 border-t border-white/[0.04] flex items-center justify-between text-xs font-semibold text-zinc-400 group-hover:text-emerald-400 transition-colors">
+                  <span>Explore {dept.short} Liveries</span>
+                  <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── FAQ SECTION ─── */}
+      <section className="py-20 lg:py-24 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
+        <div className="text-center mb-12">
+          <div className="inline-flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-emerald-400 mb-2">
+            <Sparkles className="w-3.5 h-3.5" />
+            Knowledge Base
+          </div>
+          <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
+            Frequently Asked Questions
+          </h2>
+          <p className="mt-2 text-sm text-zinc-400">
+            Everything you need to know about transactions, escrow release, and badging.
+          </p>
+        </div>
+
+        <div className="space-y-3">
+          {FAQS.map((faq, idx) => {
+            const isOpen = openFaq === idx;
+            return (
+              <div
+                key={faq.id}
+                className={cn(
+                  "rounded-2xl border transition-all overflow-hidden",
+                  isOpen
+                    ? "border-emerald-500/35 bg-[#0C111A] shadow-md"
+                    : "border-white/[0.06] bg-[#090C12] hover:border-white/[0.12]"
+                )}
+              >
+                <button
+                  type="button"
+                  onClick={() => setOpenFaq(isOpen ? null : idx)}
+                  className="flex w-full items-center justify-between px-6 py-5 text-left text-sm sm:text-base font-bold text-white transition"
+                >
+                  <span>{faq.q}</span>
+                  <ChevronDown
+                    className={cn(
+                      "w-5 h-5 shrink-0 transition-transform duration-200 ml-4",
+                      isOpen ? "rotate-180 text-emerald-400" : "text-zinc-500"
+                    )}
+                  />
+                </button>
+
+                {isOpen && (
+                  <div className="px-6 pb-5 pt-1 border-t border-white/[0.04] text-xs sm:text-sm text-zinc-400 leading-relaxed">
+                    {faq.a}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* ─── CREATOR BANNER ─── */}
+      <section className="pb-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        <div className="rounded-3xl border border-emerald-500/20 bg-gradient-to-r from-[#0C1217] via-[#090D14] to-[#07090E] p-8 sm:p-12 relative overflow-hidden flex flex-col md:flex-row items-start md:items-center justify-between gap-8 shadow-2xl">
+          <div className="max-w-xl">
+            <span className="text-[11px] font-mono font-bold uppercase tracking-widest text-emerald-400">
+              Developer Onboarding
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-black text-white mt-1.5 mb-2">
+              Ready to launch your ER:LC studio?
+            </h2>
+            <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
+              Create an account in 30 seconds via Discord, upload your livery packages, and receive automated escrow payments with 0% fees.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap gap-3 shrink-0">
+            <Link
+              to="/sell"
+              className="rounded-xl bg-emerald-500 hover:bg-emerald-400 px-6 py-3.5 text-xs sm:text-sm font-bold text-black transition shadow-lg shadow-emerald-500/20"
+            >
+              Open Creator Studio
+            </Link>
+            <a
+              href={BRAND.discordUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="rounded-xl border border-white/[0.12] bg-white/[0.04] hover:bg-white/[0.08] px-6 py-3.5 text-xs sm:text-sm font-semibold text-white transition flex items-center gap-2"
+            >
+              <MessageCircle className="w-4 h-4 text-[#5865F2]" />
+              Join Discord Community
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <Footer />
     </div>
   );
 }
 
 export function Footer() {
   return (
-    <footer className="border-t border-white/[0.08] bg-[#000000] py-12 px-4 sm:px-8 text-zinc-400 text-xs">
-      <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6">
-        <div>
-          <span className="text-xl font-black text-white">Liberty <span className="text-emerald-400">X</span></span>
-          <p className="mt-1 text-zinc-500">The scam-protected marketplace for ER:LC creators.</p>
+    <footer className="border-t border-white/[0.07] bg-[#05060A] text-zinc-400">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 grid grid-cols-2 md:grid-cols-5 gap-8">
+        <div className="col-span-2">
+          <Link to="/" className="inline-block mb-3">
+            <span className="text-2xl font-black text-white">
+              Liberty<span className="text-emerald-400">X</span>
+            </span>
+          </Link>
+          <p className="text-xs text-zinc-400 max-w-sm leading-relaxed mb-4">
+            The modern, scam-protected marketplace built for Emergency Response: Liberty County creators, designers, and community servers.
+          </p>
+          <a
+            href="https://discord.gg/YYqFdVp5Fw"
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-2 text-xs font-semibold text-emerald-400 hover:underline"
+          >
+            <MessageCircle className="w-4 h-4 text-[#5865F2]" />
+            Join 500+ creators on Discord <ArrowUpRight className="w-3.5 h-3.5" />
+          </a>
         </div>
-        <div className="flex items-center gap-6">
-          <Link to="/marketplace" className="hover:text-white transition">Marketplace</Link>
-          <Link to="/docs" className="hover:text-white transition">Documentation</Link>
-          <Link to="/status" className="hover:text-white transition">Status</Link>
-          <Link to="/privacy" className="hover:text-white transition">Privacy</Link>
-          <Link to="/tos" className="hover:text-white transition">Terms</Link>
+
+        <div>
+          <h4 className="text-xs font-bold uppercase tracking-wider text-white mb-4">Marketplace</h4>
+          <ul className="space-y-2.5 text-xs">
+            <li><Link to="/marketplace" className="hover:text-white transition">Browse All Drops</Link></li>
+            <li><Link to="/marketplace?dept=Police" className="hover:text-white transition">Police Liveries</Link></li>
+            <li><Link to="/marketplace?dept=Sheriff" className="hover:text-white transition">Sheriff Fleet</Link></li>
+            <li><Link to="/marketplace?dept=Fire" className="hover:text-white transition">Fire & Rescue</Link></li>
+            <li><Link to="/marketplace?dept=DOT" className="hover:text-white transition">DOT & Transit</Link></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 className="text-xs font-bold uppercase tracking-wider text-white mb-4">Creator Hub</h4>
+          <ul className="space-y-2.5 text-xs">
+            <li><Link to="/dashboard" className="hover:text-white transition">Creator Dashboard</Link></li>
+            <li><Link to="/sell" className="hover:text-white transition">Publish New Asset</Link></li>
+            <li><Link to="/docs" className="hover:text-white transition">Documentation</Link></li>
+            <li><Link to="/status" className="hover:text-white transition">System Status</Link></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 className="text-xs font-bold uppercase tracking-wider text-white mb-4">Legal</h4>
+          <ul className="space-y-2.5 text-xs">
+            <li><Link to="/privacy" className="hover:text-white transition">Privacy Policy</Link></li>
+            <li><Link to="/tos" className="hover:text-white transition">Terms of Service</Link></li>
+          </ul>
         </div>
       </div>
-      <div className="max-w-6xl mx-auto mt-8 pt-6 border-t border-white/[0.06] text-center text-zinc-600">
-        © {new Date().getFullYear()} LibertyX Marketplace. Not affiliated with Roblox Corporation.
+
+      <div className="border-t border-white/[0.06] py-6 text-center text-xs text-zinc-500">
+        © {new Date().getFullYear()} LibertyX Marketplace. Not affiliated with Roblox Corporation or Emergency Response: Liberty County.
       </div>
     </footer>
   );
