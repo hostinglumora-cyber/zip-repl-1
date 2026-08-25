@@ -26,83 +26,79 @@ interface ServiceStatus {
 
 const INITIAL_SERVICES: ServiceStatus[] = [
   {
-    name: "Marketplace Core API",
+    name: "Marketplace Catalog",
+    category: "Core Services",
+    status: "operational",
+    uptime: "99.99%",
+    latency: 32,
+    description: "Search, filter, and asset catalog indexing services.",
+  },
+  {
+    name: "REST API & Query Gateway",
     category: "API & Backend",
     status: "operational",
     uptime: "99.99%",
-    latency: 38,
-    description: "Search, filter, and asset catalog indexing services.",
+    latency: 28,
+    description: "High-performance edge GraphQL and REST endpoints.",
   },
   {
     name: "Authentication & Discord OAuth",
     category: "Identity",
     status: "operational",
-    uptime: "99.99%",
-    latency: 52,
-    description: "Session tokens, Discord login callback, and Roblox verification.",
+    uptime: "100%",
+    latency: 45,
+    description: "Discord OAuth token verification and creator sessions.",
   },
   {
-    name: "Scam-Shield Escrow Vault",
-    category: "Security",
+    name: "Payments & Escrow Engine",
+    category: "Transactions",
     status: "operational",
     uptime: "100%",
-    latency: 24,
-    description: "Encrypted deliverable storage and automated code dispatch.",
+    latency: 22,
+    description: "Automated Robux transaction verification and settlement.",
   },
   {
-    name: "Asset Media CDN",
+    name: "Asset Delivery Vault",
     category: "Storage",
     status: "operational",
-    uptime: "99.96%",
-    latency: 68,
-    description: "High-speed livery screenshots and showcase photo distribution.",
+    uptime: "99.98%",
+    latency: 18,
+    description: "Encrypted deliverable code storage and instant token dispatch.",
+  },
+  {
+    name: "Database Clusters",
+    category: "Infrastructure",
+    status: "operational",
+    uptime: "99.99%",
+    latency: 14,
+    description: "Distributed PostgreSQL listings database and real-time replicas.",
   },
   {
     name: "Discord Webhook Relays",
     category: "Integrations",
     status: "operational",
-    uptime: "99.98%",
-    latency: 41,
-    description: "Instant purchase notifications and community bot feeds.",
-  },
-  {
-    name: "Realtime WebSocket Gateway",
-    category: "Realtime",
-    status: "operational",
     uptime: "99.97%",
-    latency: 18,
-    description: "Live order notifications, escrow status, and balance updates.",
+    latency: 38,
+    description: "Community drop notifications and automated server alerts.",
   },
 ];
 
 const INCIDENTS = [
   {
-    date: "Aug 22, 2026 - 18:30 UTC",
-    title: "Scheduled Database Indexing Optimization",
+    date: "Aug 24, 2026 — 20:00 UTC",
+    title: "Database Indexing & Edge Caching Optimization",
     status: "Resolved",
-    type: "maintenance",
-    impact: "None",
-    description: "Applied marketplace search indexing improvements. Zero downtime observed across all nodes.",
+    duration: "12m",
+    description: "Applied global query indexing improvements. Zero downtime observed across all marketplace nodes.",
   },
   {
-    date: "Aug 15, 2026 - 04:12 UTC",
+    date: "Aug 18, 2026 — 14:15 UTC",
     title: "Discord Webhook Rate-Limit Resolution",
     status: "Resolved",
-    type: "resolved",
-    impact: "Minor",
-    description: "Temporary delay in Discord drop notifications resolved via backoff queue processing.",
+    duration: "8m",
+    description: "Upgraded webhook dispatch queue with automatic exponential backoff.",
   },
 ];
-
-function MetricCard({ title, value, subtitle }: { title: string; value: string; subtitle: string }) {
-  return (
-    <div className="rounded-2xl border border-white/[0.08] bg-[#0A0D15] p-5">
-      <p className="text-xs font-mono font-bold uppercase tracking-wider text-zinc-400 mb-1">{title}</p>
-      <p className="text-2xl sm:text-3xl font-black font-mono text-white mb-0.5">{value}</p>
-      <p className="text-[11px] text-zinc-500">{subtitle}</p>
-    </div>
-  );
-}
 
 export default function Status() {
   const [services, setServices] = useState<ServiceStatus[]>(INITIAL_SERVICES);
@@ -115,93 +111,116 @@ export default function Status() {
       setServices((prev) =>
         prev.map((s) => ({
           ...s,
-          latency: Math.max(15, s.latency + Math.floor(Math.random() * 9 - 4)),
+          latency: Math.max(12, s.latency + Math.floor(Math.random() * 7 - 3)),
         }))
       );
       setLastRefreshed(new Date().toLocaleTimeString());
       setRefreshing(false);
-    }, 400);
+    }, 350);
   };
 
   return (
-    <div className="min-h-screen bg-[#07090E] text-white flex flex-col justify-between selection:bg-emerald-500/25 selection:text-emerald-300">
+    <div className="min-h-screen bg-[#06080C] text-white flex flex-col justify-between selection:bg-emerald-500/25 selection:text-emerald-300">
       <div>
         <SiteNav />
 
-        <main className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
-          {/* Header Status Card */}
-          <div className="mb-12 rounded-3xl border border-white/[0.08] bg-[#0A0D15] p-8 text-center shadow-2xl relative overflow-hidden">
-            <div className="inline-flex items-center gap-2.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 px-4 py-1.5 text-xs font-semibold text-emerald-400 mb-6">
+        {/* ─── STATUS HEADER ─── */}
+        <div className="border-b border-white/[0.06] bg-[#080B10]">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 lg:py-14 text-center">
+            <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/25 bg-emerald-500/[0.08] px-4 py-1 text-xs font-semibold text-emerald-400 mb-4">
               <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
               <span>All LibertyX Systems Operational</span>
             </div>
 
-            <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-white mb-3">
-              System Status
+            <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-white mb-2">
+              System Infrastructure Status
             </h1>
-            <p className="text-sm text-zinc-400 max-w-xl mx-auto mb-6 leading-relaxed">
-              Real-time performance metrics, service uptime, and incident logs for LibertyX Marketplace.
+            <p className="text-xs sm:text-sm text-zinc-400 max-w-lg mx-auto">
+              Real-time service health, uptime history, and latency metrics across all core nodes.
             </p>
 
-            <div className="flex items-center justify-center gap-4 text-xs text-zinc-400">
+            <div className="mt-5 flex items-center justify-center gap-3 text-xs text-zinc-500 font-mono">
               <span>Last checked: {lastRefreshed}</span>
-              <span className="h-3 w-px bg-white/10" />
+              <span>•</span>
               <button
                 type="button"
                 onClick={handleRefresh}
                 className="inline-flex items-center gap-1.5 text-emerald-400 hover:underline font-semibold"
               >
                 <RefreshCw className={`h-3 w-3 ${refreshing ? "animate-spin" : ""}`} />
-                <span>Refresh status</span>
+                <span>Refresh</span>
               </button>
             </div>
           </div>
+        </div>
 
-          {/* Key Metrics Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
-            <MetricCard title="Overall Uptime" value="99.99%" subtitle="Last 90 days" />
-            <MetricCard title="Avg API Latency" value="38 ms" subtitle="Global edge" />
-            <MetricCard title="Escrow Release" value="< 1.2s" subtitle="Automated code dispatch" />
-            <MetricCard title="Security Status" value="Nominal" subtitle="0 active threats" />
-          </div>
-
-          {/* Core Services List */}
-          <div className="mb-12">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold tracking-tight text-white flex items-center gap-2">
-                <Server className="h-4 w-4 text-emerald-400" />
-                <span>Monitored Core Services</span>
-              </h2>
-              <span className="text-xs text-zinc-500 font-mono">6 monitored nodes</span>
+        {/* ─── MAIN STATUS BODY ─── */}
+        <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 lg:py-14 space-y-10">
+          
+          {/* Global Key Metrics */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+            <div className="rounded-xl border border-white/[0.08] bg-[#0A0D14] p-4">
+              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-zinc-500 block mb-1">Overall Uptime</span>
+              <span className="text-2xl font-black font-mono text-white">99.99%</span>
+              <span className="text-[10px] text-zinc-500 block mt-0.5">Last 90 days</span>
             </div>
 
-            <div className="space-y-3">
+            <div className="rounded-xl border border-white/[0.08] bg-[#0A0D14] p-4">
+              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-zinc-500 block mb-1">Average Latency</span>
+              <span className="text-2xl font-black font-mono text-white">24 ms</span>
+              <span className="text-[10px] text-zinc-500 block mt-0.5">Global edge nodes</span>
+            </div>
+
+            <div className="rounded-xl border border-white/[0.08] bg-[#0A0D14] p-4">
+              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-zinc-500 block mb-1">Escrow Delivery</span>
+              <span className="text-2xl font-black font-mono text-emerald-400">&lt; 1.2s</span>
+              <span className="text-[10px] text-zinc-500 block mt-0.5">Automated dispatch</span>
+            </div>
+
+            <div className="rounded-xl border border-white/[0.08] bg-[#0A0D14] p-4">
+              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-zinc-500 block mb-1">Security Health</span>
+              <span className="text-2xl font-black font-mono text-emerald-400">100%</span>
+              <span className="text-[10px] text-zinc-500 block mt-0.5">0 Active threats</span>
+            </div>
+          </div>
+
+          {/* Core Monitored Services */}
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-base font-bold text-white flex items-center gap-2">
+                <Server className="h-4 w-4 text-emerald-400" />
+                <span>Monitored Core Infrastructure</span>
+              </h2>
+              <span className="text-xs text-zinc-500 font-mono">7 services online</span>
+            </div>
+
+            <div className="rounded-2xl border border-white/[0.08] bg-[#0A0D14] overflow-hidden divide-y divide-white/[0.04] shadow-xl">
               {services.map((svc) => (
                 <div
                   key={svc.name}
-                  className="rounded-2xl border border-white/[0.08] bg-[#0A0D15] p-4 sm:p-5 hover:border-emerald-500/30 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                  className="p-4 sm:p-4.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-white/[0.01] transition"
                 >
                   <div>
-                    <div className="flex items-center gap-2.5 mb-1">
+                    <div className="flex items-center gap-2 mb-0.5">
                       <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
-                      <span className="font-bold text-sm text-white">{svc.name}</span>
-                      <span className="text-[10px] uppercase font-mono font-bold text-zinc-400 bg-white/[0.05] px-2 py-0.5 rounded border border-white/[0.06]">
+                      <span className="font-bold text-xs sm:text-sm text-white">{svc.name}</span>
+                      <span className="text-[9px] uppercase font-mono font-bold text-zinc-400 bg-white/[0.04] px-2 py-0.2 rounded border border-white/[0.06]">
                         {svc.category}
                       </span>
                     </div>
-                    <p className="text-xs text-zinc-400">{svc.description}</p>
+                    <p className="text-xs text-zinc-400 ml-6">{svc.description}</p>
                   </div>
 
-                  <div className="flex items-center gap-6 text-xs text-zinc-400 shrink-0 self-end sm:self-center">
+                  <div className="flex items-center gap-5 text-xs text-zinc-400 shrink-0 ml-6 sm:ml-0">
                     <div className="text-right">
-                      <span className="text-white font-mono font-bold">{svc.latency}ms</span>
-                      <span className="block text-[10px] text-zinc-500">Latency</span>
+                      <span className="text-white font-mono font-bold text-xs">{svc.latency}ms</span>
+                      <span className="block text-[9px] text-zinc-500">Latency</span>
                     </div>
                     <div className="text-right">
-                      <span className="text-white font-mono font-bold">{svc.uptime}</span>
-                      <span className="block text-[10px] text-zinc-500">Uptime</span>
+                      <span className="text-white font-mono font-bold text-xs">{svc.uptime}</span>
+                      <span className="block text-[9px] text-zinc-500">Uptime</span>
                     </div>
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 text-[11px] font-bold text-emerald-400">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 text-[10px] font-bold text-emerald-400 font-mono">
                       Operational
                     </span>
                   </div>
@@ -210,28 +229,29 @@ export default function Status() {
             </div>
           </div>
 
-          {/* Past Incidents */}
+          {/* Incident Timeline */}
           <div>
-            <h2 className="text-lg font-bold tracking-tight text-white mb-4 flex items-center gap-2">
+            <h2 className="text-base font-bold text-white mb-4 flex items-center gap-2">
               <Clock className="h-4 w-4 text-emerald-400" />
-              <span>Incident & Maintenance Log</span>
+              <span>Past Incidents & Maintenance</span>
             </h2>
 
             <div className="space-y-3">
               {INCIDENTS.map((inc, i) => (
-                <div key={i} className="rounded-2xl border border-white/[0.06] bg-[#0A0D15] p-5">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-mono text-zinc-500">{inc.date}</span>
-                    <span className="text-[10px] font-mono font-bold uppercase text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded">
-                      {inc.status}
+                <div key={i} className="rounded-xl border border-white/[0.06] bg-[#0A0D14] p-4 text-xs">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="font-mono text-zinc-500">{inc.date}</span>
+                    <span className="text-[10px] font-mono font-bold uppercase text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.2 rounded">
+                      {inc.status} • {inc.duration}
                     </span>
                   </div>
-                  <h4 className="text-sm font-bold text-white mb-1">{inc.title}</h4>
-                  <p className="text-xs text-zinc-400 leading-relaxed">{inc.description}</p>
+                  <h4 className="font-bold text-white text-xs sm:text-sm mb-1">{inc.title}</h4>
+                  <p className="text-zinc-400 leading-relaxed">{inc.description}</p>
                 </div>
               ))}
             </div>
           </div>
+
         </main>
       </div>
 

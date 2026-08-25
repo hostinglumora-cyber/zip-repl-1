@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Loader2, AlertCircle, CheckCircle2, Shield } from "lucide-react";
+import { ArrowLeft, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
 import { safeReturnToValue } from "@/lib/authReturnTo";
 
 export default function DiscordCallback() {
@@ -60,7 +60,7 @@ export default function DiscordCallback() {
           setStatus("success");
           setTimeout(() => {
             window.location.replace(returnTo);
-          }, 800);
+          }, 600);
         })
         .catch((err) => {
           console.warn("Direct token fetch error, generating session from token:", err);
@@ -78,7 +78,7 @@ export default function DiscordCallback() {
           setStatus("success");
           setTimeout(() => {
             window.location.replace(returnTo);
-          }, 800);
+          }, 600);
         });
       return;
     }
@@ -99,7 +99,7 @@ export default function DiscordCallback() {
       setStatus("success");
       setTimeout(() => {
         window.location.replace(returnTo);
-      }, 800);
+      }, 600);
       return;
     }
 
@@ -110,18 +110,18 @@ export default function DiscordCallback() {
 
   if (status === "error") {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4 bg-[#050505] text-white">
-        <div className="w-full max-w-md rounded-2xl border border-white/[0.08] bg-[#0c0c0c] p-8 text-center shadow-2xl">
-          <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 mb-5">
-            <AlertCircle className="h-7 w-7" />
+      <div className="min-h-screen flex items-center justify-center px-4 bg-[#06080C] text-white">
+        <div className="w-full max-w-sm rounded-2xl border border-white/[0.08] bg-[#0A0D14] p-8 text-center shadow-2xl">
+          <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 mb-4">
+            <AlertCircle className="h-6 w-6" />
           </div>
-          <h1 className="text-xl font-bold mb-2">Sign-in Encountered an Issue</h1>
-          <p className="text-sm text-zinc-400 mb-6 leading-relaxed">
+          <h1 className="text-lg font-bold mb-2">Sign-in Error</h1>
+          <p className="text-xs text-zinc-400 mb-6 leading-relaxed">
             {errorMessage || "Discord did not return a valid session."}
           </p>
           <Link
             to="/login"
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 px-6 py-3 text-sm font-bold text-black transition"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 px-5 py-2.5 text-xs font-bold text-black transition"
           >
             <ArrowLeft className="h-4 w-4" /> Back to Login
           </Link>
@@ -132,29 +132,26 @@ export default function DiscordCallback() {
 
   if (status === "success") {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4 bg-[#050505] text-white">
-        <div className="w-full max-w-md rounded-2xl border border-emerald-500/20 bg-[#0c0c0c] p-8 text-center shadow-2xl">
-          <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 mb-5">
-            <CheckCircle2 className="h-8 w-8 animate-pulse" />
+      <div className="min-h-screen flex items-center justify-center px-4 bg-[#06080C] text-white">
+        <div className="w-full max-w-sm rounded-2xl border border-emerald-500/20 bg-[#0A0D14] p-8 text-center shadow-2xl">
+          <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 mb-4">
+            <CheckCircle2 className="h-6 w-6 animate-pulse" />
           </div>
-          <h1 className="text-xl font-extrabold mb-1">Welcome, @{userData?.username || "creator"}!</h1>
-          <p className="text-sm text-zinc-400 mb-4">Your Discord identity has been verified.</p>
-          <div className="inline-flex items-center gap-2 text-xs text-emerald-400 font-mono">
-            <Shield className="h-3.5 w-3.5" /> Scam-Shield Protected Session
-          </div>
+          <h1 className="text-lg font-bold mb-1">Welcome, @{userData?.username || "creator"}</h1>
+          <p className="text-xs text-zinc-400">Redirecting to Creator Studio…</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 bg-[#050505] text-white">
-      <div className="w-full max-w-md rounded-2xl border border-white/[0.08] bg-[#0c0c0c] p-8 text-center shadow-2xl">
-        <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 mb-5">
-          <Loader2 className="h-8 w-8 animate-spin" />
+    <div className="min-h-screen flex items-center justify-center px-4 bg-[#06080C] text-white">
+      <div className="w-full max-w-sm rounded-2xl border border-white/[0.08] bg-[#0A0D14] p-8 text-center shadow-2xl">
+        <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 mb-4">
+          <Loader2 className="h-6 w-6 animate-spin" />
         </div>
-        <h1 className="text-xl font-bold mb-2">Connecting Discord…</h1>
-        <p className="text-sm text-zinc-400">Verifying your avatar, username, and creator credentials.</p>
+        <h1 className="text-lg font-bold mb-1">Connecting Discord…</h1>
+        <p className="text-xs text-zinc-400">Verifying your creator credentials.</p>
       </div>
     </div>
   );
