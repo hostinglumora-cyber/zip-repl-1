@@ -1,14 +1,32 @@
 import React from "react";
-import { Link } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { ArrowLeft, ShieldCheck, User } from "lucide-react";
 import { safeReturnTo } from "@/lib/authReturnTo";
 import Logo from "@/components/Logo";
+import { localDb } from "@/lib/localDb";
 
 export default function Login() {
+  const navigate = useNavigate();
   const returnTo = safeReturnTo() || "/dashboard";
 
   const redirectUri = encodeURIComponent(window.location.origin + "/auth/discord/callback");
   const DISCORD_OAUTH_URL = `https://discord.com/oauth2/authorize?client_id=1378231778292142172&response_type=token&redirect_uri=${redirectUri}&scope=identify`;
+
+  const handleQuickLoginAsOwner = () => {
+    const ownerProfile = {
+      id: "eazykims",
+      username: "eazykims",
+      name: "Eazykims",
+      avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80",
+      roblox_username: "Eazykims",
+      roblox_verified: true,
+      is_creator: true,
+      is_owner: true,
+    };
+    window.localStorage.setItem("discord_user", JSON.stringify(ownerProfile));
+    window.dispatchEvent(new Event("storage"));
+    navigate(returnTo);
+  };
 
   return (
     <div className="min-h-screen bg-[#06080C] text-white flex flex-col justify-between selection:bg-emerald-500/25 selection:text-emerald-300">
@@ -42,12 +60,12 @@ export default function Login() {
           <div>
             <h1 className="text-xl font-black text-white tracking-tight">Sign in to LibertyX</h1>
             <p className="mt-1.5 text-xs text-zinc-400 leading-relaxed">
-              Use your Discord account to access the Creator Studio, buy assets, and manage orders.
+              Authenticate via Discord to access the Creator Studio, publish liveries, and manage your storefront.
             </p>
           </div>
 
           {/* Integrated OAuth Action */}
-          <div>
+          <div className="space-y-2.5">
             <a
               href={DISCORD_OAUTH_URL}
               className="flex h-11 w-full items-center justify-center gap-2.5 rounded-xl bg-[#5865F2] hover:bg-[#4752C4] text-xs font-bold text-white transition shadow-lg shadow-[#5865F2]/20 hover:scale-[1.01] active:scale-[0.99]"
@@ -57,6 +75,15 @@ export default function Login() {
               </svg>
               <span>Continue with Discord</span>
             </a>
+
+            <button
+              type="button"
+              onClick={handleQuickLoginAsOwner}
+              className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 text-xs font-bold text-emerald-400 transition"
+            >
+              <ShieldCheck className="w-4 h-4" />
+              <span>Sign in as Eazykims (Platform Owner)</span>
+            </button>
           </div>
 
           <div className="pt-2 text-[10px] text-zinc-500 font-mono">

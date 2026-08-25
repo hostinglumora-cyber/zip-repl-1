@@ -100,7 +100,9 @@ function createEntityStore(storageKey: string, idPrefix: string, initialSeed: an
       return typeof limit === "number" ? filtered.slice(0, limit) : filtered;
     },
     async get(id: string) {
-      const item = read().find((item) => item.id === id || item.username?.toLowerCase() === id.toLowerCase());
+      const item = read().find(
+        (item) => item.id === id || item.username?.toLowerCase() === id.toLowerCase()
+      );
       if (!item) throw new Error("Not found");
       return item;
     },
@@ -115,7 +117,9 @@ function createEntityStore(storageKey: string, idPrefix: string, initialSeed: an
     },
     async update(id: string, input: any) {
       const items = read();
-      const index = items.findIndex((item) => item.id === id || item.username?.toLowerCase() === id.toLowerCase());
+      const index = items.findIndex(
+        (item) => item.id === id || item.username?.toLowerCase() === id.toLowerCase()
+      );
       if (index < 0) {
         const newItem = {
           ...input,
@@ -131,7 +135,9 @@ function createEntityStore(storageKey: string, idPrefix: string, initialSeed: an
       return items[index];
     },
     async delete(id: string) {
-      const items = read().filter((item) => item.id !== id && item.username?.toLowerCase() !== id.toLowerCase());
+      const items = read().filter(
+        (item) => item.id !== id && item.username?.toLowerCase() !== id.toLowerCase()
+      );
       write(items);
       return { success: true };
     },
@@ -199,30 +205,35 @@ export const localDb = {
       if (!saved) return null;
       const profile = JSON.parse(saved);
       
-      // Determine staff role if any
+      const uName = (profile.username || profile.name || "").toLowerCase();
+      const uId = (profile.id || "").toLowerCase();
+
+      // Check staff roles from staff store
       const staffList = staffStore.getAll();
       const staffRecord = staffList.find(
         (s) =>
-          s.user_id === profile.id ||
-          s.username?.toLowerCase() === profile.username?.toLowerCase() ||
-          (profile.username?.toLowerCase() === "eazykims" && s.role === "owner")
+          s.user_id?.toLowerCase() === uId ||
+          s.username?.toLowerCase() === uName ||
+          s.user_id?.toLowerCase() === uName
       );
 
-      const role = staffRecord?.role || (profile.username?.toLowerCase() === "eazykims" ? "owner" : "user");
+      // Primary Owner is always Eazykims
+      const isPrimaryOwner = uName === "eazykims" || uId === "eazykims" || profile.is_owner;
+      const role = isPrimaryOwner ? "owner" : (staffRecord?.role || "user");
 
       return {
-        id: profile.id,
-        display_name: profile.name || profile.username,
-        full_name: profile.name || profile.username,
+        id: profile.id || uName || "user_local",
+        display_name: profile.name || profile.username || "User",
+        full_name: profile.name || profile.username || "User",
         email: profile.email || "",
-        discord_username: profile.username,
-        username: profile.username,
-        avatar_url: profile.avatarUrl || null,
-        avatarUrl: profile.avatarUrl || null,
+        discord_username: profile.username || "user",
+        username: profile.username || "user",
+        avatar_url: profile.avatarUrl || profile.avatar_url || null,
+        avatarUrl: profile.avatarUrl || profile.avatar_url || null,
         roblox_username: profile.roblox_username || "",
         roblox_avatar: profile.roblox_avatar || "",
-        roblox_verified: profile.roblox_verified || false,
-        is_creator: profile.is_creator || true,
+        roblox_verified: Boolean(profile.roblox_verified || profile.roblox_username),
+        is_creator: Boolean(profile.is_creator !== false),
         role,
       };
     },
@@ -258,39 +269,42 @@ export const localDb = {
     },
   },
 
-  // ─── CANONICAL CREATOR PROFILE RESOLUTION ───
+  // ─── ROBUST CANONICAL CREATOR PROFILE RESOLUTION ───
   async getCreatorProfile(usernameOrId: string) {
     if (!usernameOrId) return null;
     const term = usernameOrId.trim().toLowerCase();
-    const all = profilesStore.getAll();
     
-    // Direct match by username, user_id, or profile id
+    // 1. Direct search in CreatorProfile store
+    const all = profilesStore.getAll();
     const found = all.find(
-      (p) => p.username?.toLowerCase() === term || p.id?.toLowerCase() === term || p.user_id?.toLowerCase() === term
+      (p) =>
+        p.username?.toLowerCase() === term ||
+        p.id?.toLowerCase() === term ||
+        p.user_id?.toLowerCase() === term
     );
     if (found) return found;
 
-    // Check if term matches current session
+    // 2. Check if matches current authenticated session
     const currentRaw = canUseStorage() ? window.localStorage.getItem("discord_user") : null;
     const currentUser = currentRaw ? JSON.parse(currentRaw) : null;
     if (
       currentUser &&
-      (currentUser.username?.toLowerCase() === term ||
+      (term === "me" ||
+        currentUser.username?.toLowerCase() === term ||
         currentUser.id?.toLowerCase() === term ||
-        term === "me" ||
-        term === (currentUser.name || "").toLowerCase())
+        currentUser.name?.toLowerCase() === term)
     ) {
-      const canonicalUsername = currentUser.username || "creator";
-      return {
-        id: `profile_${currentUser.id || canonicalUsername}`,
-        user_id: currentUser.id || canonicalUsername,
-        username: canonicalUsername,
+      const canonUser = currentUser.username || currentUser.name || "creator";
+      const newProf = {
+        id: `profile_${currentUser.id || canonUser}`,
+        user_id: currentUser.id || canonUser,
+        username: canonUser,
         display_name: currentUser.name || currentUser.username || "Creator",
         roblox_username: currentUser.roblox_username || "",
         roblox_avatar: currentUser.roblox_avatar || "",
-        roblox_verified: currentUser.roblox_verified || false,
+        roblox_verified: Boolean(currentUser.roblox_verified || currentUser.roblox_username),
         bio: "ER:LC emergency liveries, uniform packages & server assets.",
-        avatar_url: currentUser.avatarUrl || null,
+        avatar_url: currentUser.avatarUrl || currentUser.avatar_url || null,
         banner_url: "",
         accent_color: "emerald",
         theme_bg: "obsidian",
@@ -311,6 +325,43 @@ export const localDb = {
         featured_listing_ids: [],
         created_date: currentUser.created_date || new Date().toISOString(),
       };
+      // Save so it resolves for others
+      await profilesStore.create(newProf);
+      return newProf;
+    }
+
+    // 3. Check if seller exists in Listings store
+    const allListings = listingsStore.getAll();
+    const sellerListing = allListings.find(
+      (l) =>
+        l.seller_username?.toLowerCase() === term ||
+        l.seller_id?.toLowerCase() === term ||
+        l.seller_name?.toLowerCase() === term
+    );
+    if (sellerListing) {
+      const generatedProf = {
+        id: `profile_${sellerListing.seller_id || sellerListing.seller_username || term}`,
+        user_id: sellerListing.seller_id || sellerListing.seller_username || term,
+        username: sellerListing.seller_username || term,
+        display_name: sellerListing.seller_name || sellerListing.seller_username || term,
+        roblox_username: "",
+        roblox_verified: false,
+        bio: "ER:LC emergency livery & uniform designer.",
+        avatar_url: sellerListing.images?.[0] || null,
+        banner_url: "",
+        accent_color: "emerald",
+        status: "open",
+        status_message: "Accepting custom commissions",
+        badges: ["LibertyX Creator"],
+        social_links: {},
+        services: [],
+        gallery_images: [],
+        custom_faqs: [],
+        featured_listing_ids: [],
+        created_date: sellerListing.created_date || new Date().toISOString(),
+      };
+      await profilesStore.create(generatedProf);
+      return generatedProf;
     }
 
     return null;
@@ -319,7 +370,12 @@ export const localDb = {
   async saveCreatorProfile(profileData: any) {
     const username = profileData.username?.trim().toLowerCase();
     if (!username) throw new Error("Username is required.");
-    if (RESERVED_USERNAMES.includes(username) && profileData.user_id !== "eazykims" && profileData.user_id !== "admin") {
+    if (
+      RESERVED_USERNAMES.includes(username) &&
+      profileData.user_id !== "eazykims" &&
+      profileData.username !== "eazykims" &&
+      profileData.user_id !== "admin"
+    ) {
       throw new Error("This username is reserved by LibertyX.");
     }
     const all = profilesStore.getAll();
@@ -334,22 +390,21 @@ export const localDb = {
     return await profilesStore.update(id, profileData);
   },
 
-  // ─── STRICT DEDUPLICATION: 1 USER = 1 CREATOR ───
+  // ─── STRICT 1-TO-1 CREATOR AGGREGATION ───
   async getDeduplicatedCreators() {
     const allListings = listingsStore.getAll();
     const allProfiles = profilesStore.getAll();
     const allPurchases = purchasesStore.getAll();
     const allReviews = reviewsStore.getAll();
 
-    // Map keyed by canonical unique user_id or canonical username
     const creatorMap: Record<string, any> = {};
 
-    // 1. Ingest registered creator profiles first
+    // 1. Registered creator profiles
     allProfiles.forEach((p) => {
       if (p.username) {
-        const canonicalKey = (p.user_id || p.username).toLowerCase();
-        creatorMap[canonicalKey] = {
-          user_id: p.user_id || p.id,
+        const key = p.username.toLowerCase();
+        creatorMap[key] = {
+          user_id: p.user_id || p.id || key,
           username: p.username,
           display_name: p.display_name || p.username,
           avatar_url: p.avatar_url || null,
@@ -365,24 +420,14 @@ export const localDb = {
       }
     });
 
-    // 2. Ingest listing sellers (merging by user_id or username)
+    // 2. Aggregate active listings
     allListings.forEach((l) => {
-      const sellerKey = (l.seller_id || l.seller_username || l.seller_name || "creator").toLowerCase();
-      // Check if we already have this user under their username
-      const existingKey = Object.keys(creatorMap).find(
-        (k) =>
-          k === sellerKey ||
-          creatorMap[k].username?.toLowerCase() === (l.seller_username || "").toLowerCase() ||
-          creatorMap[k].user_id?.toLowerCase() === (l.seller_id || "").toLowerCase()
-      );
-
-      const targetKey = existingKey || sellerKey;
-
-      if (!creatorMap[targetKey]) {
-        creatorMap[targetKey] = {
-          user_id: l.seller_id || l.seller_username || sellerKey,
-          username: l.seller_username || l.seller_name || "creator",
-          display_name: l.seller_name || l.seller_username || "Creator",
+      const u = (l.seller_username || l.seller_name || "creator").toLowerCase();
+      if (!creatorMap[u]) {
+        creatorMap[u] = {
+          user_id: l.seller_id || u,
+          username: l.seller_username || u,
+          display_name: l.seller_name || u,
           avatar_url: l.images?.[0] || null,
           bio: "ER:LC emergency livery designer.",
           roblox_username: l.roblox_asset_id ? "Verified" : "",
@@ -394,41 +439,28 @@ export const localDb = {
           created_date: l.created_date || new Date().toISOString(),
         };
       }
-
       if (l.status === "active") {
-        creatorMap[targetKey].products_count += 1;
+        creatorMap[u].products_count += 1;
       }
     });
 
-    // 3. Attach real completed sales
+    // 3. Real sales count
     allPurchases.forEach((p) => {
-      const sKey = (p.seller_id || p.seller_username || "").toLowerCase();
-      const match = Object.keys(creatorMap).find(
-        (k) =>
-          k === sKey ||
-          creatorMap[k].username?.toLowerCase() === sKey ||
-          creatorMap[k].user_id?.toLowerCase() === sKey
-      );
-      if (match) {
-        creatorMap[match].sales_count += 1;
+      const u = (p.seller_username || "").toLowerCase();
+      if (u && creatorMap[u]) {
+        creatorMap[u].sales_count += 1;
       }
     });
 
-    // 4. Attach real customer review ratings
+    // 4. Real customer reviews
     allReviews.forEach((r) => {
-      const cKey = (r.creator_username || r.creator_id || "").toLowerCase();
-      const match = Object.keys(creatorMap).find(
-        (k) =>
-          k === cKey ||
-          creatorMap[k].username?.toLowerCase() === cKey ||
-          creatorMap[k].user_id?.toLowerCase() === cKey
-      );
-      if (match && r.rating) {
-        creatorMap[match].ratings.push(Number(r.rating));
+      const u = (r.creator_username || "").toLowerCase();
+      if (u && creatorMap[u] && r.rating) {
+        creatorMap[u].ratings.push(Number(r.rating));
       }
     });
 
-    // Calculate real rating averages (if 0 reviews, rating is null / not faked)
+    // Output real metrics (no fakes)
     return Object.values(creatorMap).map((c) => {
       const avg =
         c.ratings.length > 0
@@ -438,7 +470,7 @@ export const localDb = {
     });
   },
 
-  // ─── ADMIN & STAFF ROLES ───
+  // ─── ADMIN & STAFF SYSTEM ───
   async getStaffList() {
     return staffStore.getAll();
   },
@@ -452,7 +484,7 @@ export const localDb = {
       username: targetUsername.toLowerCase(),
       display_name: targetUsername,
       role,
-      added_by: actor.username || "eazykims",
+      added_by: actor?.username || "eazykims",
       created_date: new Date().toISOString(),
     });
 
@@ -470,7 +502,6 @@ export const localDb = {
     return { success: true };
   },
 
-  // ─── IMMUTABLE ADMIN AUDIT LOGS ───
   async addAuditLog(actor: any, action: string, target: string, details: string, reason: string) {
     return await auditLogsStore.create({
       actor_id: actor?.id || "eazykims",
@@ -479,7 +510,7 @@ export const localDb = {
       action,
       target,
       details,
-      reason: reason || "Standard moderation policy enforcement",
+      reason: reason || "Administrative action",
       timestamp: new Date().toISOString(),
       created_date: new Date().toISOString(),
     });
@@ -489,15 +520,19 @@ export const localDb = {
     return auditLogsStore.getAll().sort((a, b) => new Date(b.created_date).getTime() - new Date(a.created_date).getTime());
   },
 
-  // ─── COMMUNITY HOSTING PRODUCT ($12.99/mo) ───
+  // ─── COMMUNITY HOSTING ($12.99/mo) ───
   async getHostingServers(userId: string) {
     return hostingServersStore.getAll().filter((s) => s.user_id === userId || userId === "eazykims");
   },
 
-  async createHostingServer(userId: string, serverName: string, plan: string = "Standard ER:LC Community ($12.99/mo)") {
+  async createHostingServer(userId: string, serverName: string, plan: string = "LibertyX Community Node ($12.99/mo)") {
     const id = `host_${Date.now()}`;
-    const nextBill = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-    
+    const nextBill = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+
     const server = await hostingServersStore.create({
       id,
       user_id: userId,
@@ -507,8 +542,8 @@ export const localDb = {
       price: "$12.99",
       billing_period: "Monthly",
       next_billing_date: nextBill,
-      cpu_usage: 14,
-      memory_usage_mb: 284,
+      cpu_usage: 12,
+      memory_usage_mb: 268,
       memory_limit_mb: 2048,
       uptime: "14d 6h 22m",
       env_vars: {
@@ -517,10 +552,10 @@ export const localDb = {
         COMMAND_PREFIX: "!",
       },
       logs: [
-        `[${new Date().toLocaleTimeString()}] [System] LibertyX Community Bot Node initialized.`,
+        `[${new Date().toLocaleTimeString()}] [System] LibertyX Community Bot Node provisioned.`,
         `[${new Date().toLocaleTimeString()}] [ER:LC] Connected to Emergency Response: Liberty County server API.`,
-        `[${new Date().toLocaleTimeString()}] [Discord] Gateway connection established (18ms heartbeat).`,
-        `[${new Date().toLocaleTimeString()}] [Status] Server operational and listening for server join logs.`,
+        `[${new Date().toLocaleTimeString()}] [Discord] Gateway connection established (16ms heartbeat).`,
+        `[${new Date().toLocaleTimeString()}] [Status] Server container online and healthy.`,
       ],
       created_date: new Date().toISOString(),
     });
@@ -607,7 +642,7 @@ export const localDb = {
     return followersStore.getAll().filter((f) => f.user_id === userId);
   },
 
-  // ─── DIRECT BUYER / SELLER MESSAGING ───
+  // ─── DIRECT MESSAGING ───
   async getConversations(userId: string) {
     if (!userId) return [];
     const all = conversationsStore.getAll();
@@ -810,7 +845,6 @@ export const localDb = {
       results.overall = "degraded";
     }
 
-    // Check active incidents from database
     const activeIncidents = incidentsStore.getAll().filter((i) => i.status !== "Resolved");
     if (activeIncidents.length > 0) {
       results.overall = "degraded";
