@@ -10,10 +10,10 @@ import {
   LogOut,
   LayoutDashboard,
   Sparkles,
-  ExternalLink,
   ChevronDown,
   User,
   ShieldCheck,
+  House,
 } from "lucide-react";
 import Logo from "@/components/Logo";
 import { cn } from "@/lib/utils";
@@ -58,8 +58,8 @@ export default function SiteNav() {
   }, []);
 
   const navLinks = [
+    { to: "/", label: "Home", icon: House },
     { to: "/marketplace", label: "Marketplace", icon: Store },
-    { to: "/sell", label: "Creator Studio", icon: PlusCircle },
     { to: "/docs", label: "Documentation", icon: FileText },
     { to: "/status", label: "Status", icon: Activity },
   ];
@@ -77,54 +77,55 @@ export default function SiteNav() {
   const initial = (displayName.charAt(0) || "C").toUpperCase();
 
   return (
-    <header className="sticky top-0 z-50 backdrop-blur-2xl border-b border-white/[0.07] bg-[#07090E]/90 transition-all">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 flex items-center justify-between">
+    <header className="sticky top-0 z-50 backdrop-blur-xl border-b border-white/[0.08] bg-[#07090E]/90 transition-all">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
         
-        {/* Brand */}
-        <div className="flex items-center gap-8">
-          <Link to="/" className="shrink-0 flex items-center gap-2 group py-1">
-            <Logo textClass="text-2xl sm:text-3xl font-black tracking-tight" />
-            <span className="hidden sm:inline-flex text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-md ml-1">
-              Marketplace
-            </span>
+        {/* Brand with breathing room */}
+        <Link to="/" className="shrink-0 flex items-center gap-2 group py-1">
+          <Logo textClass="text-2xl sm:text-3xl font-black tracking-tight" />
+        </Link>
+
+        {/* Global Nav Links */}
+        <nav className="hidden md:flex items-center gap-1 sm:gap-2">
+          {navLinks.map((link) => {
+            const isActive =
+              link.to === "/"
+                ? location.pathname === "/"
+                : location.pathname.startsWith(link.to);
+
+            return (
+              <Link
+                key={link.to}
+                to={link.to}
+                className={cn(
+                  "px-4 py-2 text-sm font-semibold rounded-xl transition-all",
+                  isActive
+                    ? "text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 shadow-sm"
+                    : "text-zinc-400 hover:text-white hover:bg-white/[0.04] border border-transparent"
+                )}
+              >
+                {link.label}
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* Right Side: Account Menu / Creator CTA / Login */}
+        <div className="hidden sm:flex items-center gap-4">
+          <Link
+            to="/sell"
+            className="text-xs font-semibold text-zinc-400 hover:text-emerald-400 transition flex items-center gap-1.5 px-3 py-2 rounded-xl hover:bg-white/[0.04]"
+          >
+            <PlusCircle className="w-3.5 h-3.5" />
+            <span>Sell Asset</span>
           </Link>
 
-          {/* Desktop Nav Links */}
-          <nav className="hidden lg:flex items-center gap-1.5">
-            {navLinks.map((link) => {
-              const isActive =
-                link.to === "/"
-                  ? location.pathname === "/"
-                  : location.pathname.startsWith(link.to);
-              const Icon = link.icon;
-
-              return (
-                <Link
-                  key={link.to}
-                  to={link.to}
-                  className={cn(
-                    "px-4 py-2 text-sm font-semibold rounded-xl transition-all flex items-center gap-2",
-                    isActive
-                      ? "text-emerald-400 bg-emerald-500/10 border border-emerald-500/25 shadow-sm"
-                      : "text-zinc-300 hover:text-white hover:bg-white/[0.05] border border-transparent"
-                  )}
-                >
-                  <Icon className={cn("w-4 h-4", isActive ? "text-emerald-400" : "text-zinc-400")} />
-                  <span>{link.label}</span>
-                </Link>
-              );
-            })}
-          </nav>
-        </div>
-
-        {/* Right Side: Account Menu / Login */}
-        <div className="hidden sm:flex items-center gap-3">
           {user ? (
             <div className="relative" ref={dropdownRef}>
               <button
                 type="button"
                 onClick={() => setUserDropdown(!userDropdown)}
-                className="flex items-center gap-2.5 rounded-2xl border border-white/[0.1] bg-[#0E121B] hover:border-emerald-500/40 hover:bg-[#121824] p-1.5 pr-3.5 transition-all shadow-md group"
+                className="flex items-center gap-2.5 rounded-2xl border border-white/[0.1] bg-[#0E131E] hover:border-emerald-500/40 hover:bg-[#131926] p-1.5 pr-3 transition-all shadow-sm group"
               >
                 {avatarUrl && !imgErr ? (
                   <img
@@ -139,31 +140,22 @@ export default function SiteNav() {
                   </div>
                 )}
 
-                <div className="text-left hidden md:block">
-                  <div className="text-xs font-bold text-white flex items-center gap-1 leading-tight">
-                    <span>{displayName}</span>
-                    <ShieldCheck className="w-3 h-3 text-emerald-400 inline" />
-                  </div>
+                <div className="text-left hidden md:block max-w-[120px]">
+                  <p className="text-xs font-bold text-white leading-tight truncate">{displayName}</p>
                   {displayHandle && (
-                    <div className="text-[10px] text-zinc-400 font-mono leading-tight">
-                      {displayHandle}
-                    </div>
+                    <p className="text-[10px] text-zinc-400 font-mono leading-tight truncate">{displayHandle}</p>
                   )}
                 </div>
 
-                <ChevronDown className={cn("w-3.5 h-3.5 text-zinc-400 transition-transform duration-200 ml-1", userDropdown && "rotate-180 text-emerald-400")} />
+                <ChevronDown className={cn("w-3.5 h-3.5 text-zinc-400 transition-transform duration-200 ml-0.5", userDropdown && "rotate-180 text-emerald-400")} />
               </button>
 
               {/* Account Dropdown Menu */}
               {userDropdown && (
-                <div className="absolute right-0 mt-2 w-64 rounded-2xl border border-white/[0.1] bg-[#0C1017] p-2 shadow-2xl backdrop-blur-2xl animate-in fade-in slide-in-from-top-2 duration-150 z-50">
+                <div className="absolute right-0 mt-2 w-60 rounded-2xl border border-white/[0.1] bg-[#0C1017] p-2 shadow-2xl backdrop-blur-2xl animate-in fade-in slide-in-from-top-2 duration-150 z-50">
                   <div className="px-3.5 py-3 border-b border-white/[0.06] mb-1.5">
-                    <p className="text-xs font-bold text-white leading-none">{displayName}</p>
-                    <p className="text-[11px] text-zinc-400 font-mono mt-1">{displayHandle || "Verified Creator"}</p>
-                    <div className="inline-flex items-center gap-1.5 mt-2 text-[10px] font-mono uppercase tracking-wider text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-md">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                      Scam-Shield Escrow
-                    </div>
+                    <p className="text-xs font-bold text-white leading-none truncate">{displayName}</p>
+                    <p className="text-[11px] text-zinc-400 font-mono mt-1 truncate">{displayHandle || "Verified Creator"}</p>
                   </div>
 
                   <div className="space-y-0.5">
@@ -182,16 +174,16 @@ export default function SiteNav() {
                       className="flex items-center gap-2.5 px-3.5 py-2.5 text-xs font-semibold text-zinc-200 hover:text-white hover:bg-white/[0.06] rounded-xl transition"
                     >
                       <PlusCircle className="w-4 h-4 text-emerald-400" />
-                      <span>Publish Asset</span>
+                      <span>Publish New Asset</span>
                     </Link>
 
                     <Link
-                      to="/marketplace"
+                      to="/u/me"
                       onClick={() => setUserDropdown(false)}
                       className="flex items-center gap-2.5 px-3.5 py-2.5 text-xs font-semibold text-zinc-200 hover:text-white hover:bg-white/[0.06] rounded-xl transition"
                     >
-                      <Store className="w-4 h-4 text-emerald-400" />
-                      <span>Marketplace Directory</span>
+                      <User className="w-4 h-4 text-zinc-400" />
+                      <span>My Profile</span>
                     </Link>
 
                     <Link
@@ -208,7 +200,7 @@ export default function SiteNav() {
                     <button
                       type="button"
                       onClick={handleSignOut}
-                      className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-xs font-semibold text-red-400 hover:bg-red-500/10 rounded-xl transition"
+                      className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-red-400 hover:bg-red-500/10 rounded-xl transition"
                     >
                       <LogOut className="w-4 h-4" />
                       <span>Sign Out</span>
@@ -220,18 +212,17 @@ export default function SiteNav() {
           ) : (
             <Link
               to="/login"
-              className="inline-flex items-center gap-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black px-5 py-2.5 text-sm font-bold shadow-lg shadow-emerald-500/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+              className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black px-5 py-2.5 text-xs sm:text-sm font-bold shadow-md shadow-emerald-500/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
             >
-              <User className="w-4 h-4" />
               <span>Login</span>
             </Link>
           )}
         </div>
 
-        {/* Mobile Menu Button */}
+        {/* Mobile Menu Toggle */}
         <div className="flex sm:hidden items-center gap-2">
           {user ? (
-            <Link to="/dashboard" className="p-1 rounded-xl">
+            <Link to="/dashboard" className="p-1">
               {avatarUrl && !imgErr ? (
                 <img src={avatarUrl} alt="" className="h-7 w-7 rounded-lg object-cover ring-1 ring-emerald-500/40" />
               ) : (
@@ -271,16 +262,17 @@ export default function SiteNav() {
             </Link>
           ))}
 
-          {user && (
-            <div className="pt-3 border-t border-white/[0.08] space-y-1">
-              <Link
-                to="/dashboard"
-                onClick={() => setOpen(false)}
-                className="flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl text-emerald-400 hover:bg-emerald-500/10 transition"
-              >
-                <LayoutDashboard className="w-4 h-4" />
-                <span>Creator Dashboard</span>
-              </Link>
+          <div className="pt-3 border-t border-white/[0.08] space-y-2">
+            <Link
+              to="/sell"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl text-emerald-400 hover:bg-emerald-500/10 transition"
+            >
+              <PlusCircle className="w-4 h-4" />
+              <span>Publish Asset</span>
+            </Link>
+
+            {user && (
               <button
                 type="button"
                 onClick={() => {
@@ -292,8 +284,8 @@ export default function SiteNav() {
                 <LogOut className="w-4 h-4" />
                 <span>Sign Out</span>
               </button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       )}
     </header>

@@ -296,11 +296,14 @@ export default function Marketplace() {
                   className="w-full rounded-2xl border border-white/[0.1] bg-[#07090E] px-4 py-3 text-xs sm:text-sm text-zinc-200 outline-none focus:border-emerald-500/50 transition"
                 >
                   <option value="">All Categories</option>
-                  {CATEGORIES.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
+                  {CATEGORIES.map((c) => {
+                    const catId = typeof c === "string" ? c : c.id;
+                    return (
+                      <option key={catId} value={catId}>
+                        {catId}
+                      </option>
+                    );
+                  })}
                 </select>
               </div>
 
