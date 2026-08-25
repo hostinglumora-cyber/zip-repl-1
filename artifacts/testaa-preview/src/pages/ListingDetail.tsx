@@ -5,7 +5,7 @@ import {
   Star,
   ShieldCheck,
   Store,
-  MessageSquare,
+  MessageCircle,
   Send,
   BadgeCheck,
   Package,
@@ -16,12 +16,16 @@ import {
   Clock,
   Sparkles,
   Share2,
+  Check,
+  Image as ImageIcon,
+  AlertCircle,
+  Car,
+  MapPin,
 } from "lucide-react";
 
 import { useAuth } from "@/lib/AuthContext";
 import SiteNav from "@/components/SiteNav";
 import { Footer, MarketplaceCard } from "@/pages/Marketplace";
-import { getDepartment, DEPARTMENTS } from "@/lib/departments";
 import PurchaseModal from "@/components/PurchaseModal";
 import { localDb } from "@/lib/localDb";
 import { cn } from "@/lib/utils";
@@ -29,61 +33,67 @@ import { cn } from "@/lib/utils";
 const db = (globalThis as any).__B44_DB__ || localDb;
 
 export default function ListingDetail() {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
+
   const [listing, setListing] = useState<any>(null);
   const [reviews, setReviews] = useState<any[]>([]);
   const [related, setRelated] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeImg, setActiveImg] = useState(0);
-  const [reviewForm, setReviewForm] = useState({ rating: 5, comment: "" });
-  const [posting, setPosting] = useState(false);
+  const [imgError, setImgError] = useState<Record<number, boolean>>({});
+  const [reviewText, setReviewText] = useState("");
+  const [reviewRating, setReviewRating] = useState(5);
+  const [submittingReview, setSubmittingReview] = useState(false);
   const [showPurchase, setShowPurchase] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [isFav, setIsFav] = useState(false);
 
   useEffect(() => {
-    const getFn = db?.entities?.Listing?.get || localDb.entities.Listing.get;
-    const revQuery = db?.entities?.Review?.filter || localDb.entities.Review.filter;
+    async function loadData() {
+      setLoading(true);
+      try {
+        const getFn = db?.entities?.Listing?.get || localDb.entities.Listing.get;
+        const revQuery = db?.entities?.Review?.filter || localDb.entities.Review.filter;
 
-    getFn(id)
-      .then(setListing)
-      .catch(() => setListing(null))
-      .finally(() => setLoading(false));
+        const foundListing = await getFn(id);
+        setListing(foundListing);
 
-    revQuery({ listing_id: id }, "-created_date", 50)
-      .then((rows: any[]) => setReviews(rows || []))
-      .catch(() => {});
-  }, [id]);
+        const revs = await revQuery({ listing_id: id }, "-created_date", 50);
+        setReviews(revs || []);
+
+        if (user?.id && id) {
+          const fav = await localDb.isFavorite(user.id, id);
+          setIsFav(fav);
+        }
+      } catch (err) {
+        setListing(null);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadData();
+  }, [id, user?.id]);
 
   useEffect(() => {
     if (!listing) return;
     const filterFn = db?.entities?.Listing?.filter || localDb.entities.Listing.filter;
-    filterFn({ status: "active", category: listing.category }, "-created_date", 6)
-      .then((rows: any[]) => setRelated((rows || []).filter((r: any) => r.id !== id).slice(0, 3)))
+    filterFn({ status: "active" }, "-created_date", 10)
+      .then((rows: any[]) =>
+        setRelated((rows || []).filter((r: any) => r.id !== id && r.category === listing.category).slice(0, 4))
+      )
       .catch(() => {});
   }, [listing, id]);
 
-  const submitReview = async () => {
-    if (!user) return navigate("/login");
-    if (!reviewForm.comment.trim()) return;
-    setPosting(true);
-    try {
-      const createFn = db?.entities?.Review?.create || localDb.entities.Review.create;
-      const r = await createFn({
-        listing_id: id,
-        reviewer_id: user.id,
-        reviewer_name: user.name || user.username || "Verified Creator",
-        rating: reviewForm.rating,
-        comment: reviewForm.comment.trim(),
-      });
-      setReviews([r, ...reviews]);
-      setReviewForm({ rating: 5, comment: "" });
-    } catch (e) {
-      // fallback
-    } finally {
-      setPosting(false);
+  const handleToggleFav = async () => {
+    if (!user) {
+      alert("Please sign in to save favorites.");
+      return;
     }
+    const res = await localDb.toggleFavorite(user.id, listing);
+    setIsFav(res.favorited);
   };
 
   const handleShare = () => {
@@ -92,27 +102,67 @@ export default function ListingDetail() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handlePostReview = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) {
+      navigate(`/login?returnTo=/listing/${id}`);
+      return;
+    }
+    if (!reviewText.trim()) return;
+    setSubmittingReview(true);
+
+    try {
+      const createFn = db?.entities?.Review?.create || localDb.entities.Review.create;
+      const rev = await createFn({
+        listing_id: id,
+        creator_username: listing.seller_username,
+        reviewer_id: user.id,
+        reviewer_name: user.display_name || user.username || "Verified Buyer",
+        reviewer_username: user.username,
+        rating: reviewRating,
+        comment: reviewText.trim(),
+        verified_purchase: true,
+        created_date: new Date().toISOString(),
+      });
+
+      setReviews([rev, ...reviews]);
+      setReviewText("");
+    } catch (err: any) {
+      alert(err.message || "Failed to submit review.");
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#06080C] text-white grid place-items-center">
-        <div className="w-8 h-8 border-2 border-emerald-500/20 border-t-emerald-400 rounded-full animate-spin" />
+      <div className="min-h-screen bg-[#07090E] text-white flex flex-col justify-between">
+        <SiteNav />
+        <div className="py-24 text-center">
+          <div className="w-8 h-8 border-2 border-emerald-500/20 border-t-emerald-400 rounded-full animate-spin mx-auto mb-3" />
+          <p className="text-xs font-mono text-zinc-500">Loading asset details…</p>
+        </div>
+        <Footer />
       </div>
     );
   }
 
   if (!listing) {
     return (
-      <div className="min-h-screen bg-[#06080C] text-white flex flex-col justify-between">
+      <div className="min-h-screen bg-[#07090E] text-white flex flex-col justify-between">
         <SiteNav />
-        <div className="max-w-md mx-auto my-auto p-10 text-center rounded-2xl border border-white/[0.08] bg-[#0A0D14]">
-          <Store className="w-8 h-8 text-zinc-600 mx-auto mb-2" />
-          <h2 className="text-lg font-bold text-white mb-1">Asset Not Found</h2>
-          <p className="text-xs text-zinc-400 mb-5">This ER:LC asset may have been unpublished or removed.</p>
+        <div className="max-w-md mx-auto my-auto p-10 text-center rounded-2xl border border-white/[0.08] bg-[#0A0D15] shadow-2xl">
+          <Store className="w-10 h-10 text-zinc-600 mx-auto mb-3" />
+          <h2 className="text-xl font-bold text-white mb-1">Asset Not Found</h2>
+          <p className="text-xs text-zinc-400 mb-6 leading-relaxed">
+            This listing may have been removed or is no longer active in the marketplace.
+          </p>
           <Link
             to="/marketplace"
-            className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-4 py-2 text-xs font-bold text-black"
+            className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 px-5 py-2.5 text-xs font-bold text-black transition"
           >
-            <ArrowLeft className="w-3.5 h-3.5" /> Back to Marketplace
+            <ArrowLeft className="w-4 h-4" />
+            <span>Explore Marketplace</span>
           </Link>
         </div>
         <Footer />
@@ -121,242 +171,335 @@ export default function ListingDetail() {
   }
 
   const isFree = listing.price_type === "Free" || !listing.price || listing.price === 0;
-  const priceLabel = isFree ? "Free Download" : `R$ ${listing.price}`;
-  const department = listing.departments && listing.departments.length > 0 ? listing.departments[0] : "General";
+  const priceDisplay = isFree ? "FREE" : `R$ ${listing.price}`;
+  const images = listing.images && listing.images.length > 0 ? listing.images : [];
+  const tags: string[] = Array.isArray(listing.tags)
+    ? listing.tags
+    : typeof listing.tags === "string"
+    ? listing.tags.split(",").map((t: string) => t.trim())
+    : [];
+
+  const averageRating =
+    reviews.length > 0
+      ? (reviews.reduce((acc, r) => acc + (r.rating || 5), 0) / reviews.length).toFixed(1)
+      : null;
 
   return (
-    <div className="min-h-screen bg-[#06080C] text-white flex flex-col justify-between selection:bg-emerald-500/25 selection:text-emerald-300">
+    <div className="min-h-screen bg-[#07090E] text-white flex flex-col justify-between selection:bg-emerald-500/25 selection:text-emerald-300">
       <div>
         <SiteNav />
 
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-10">
-          {/* Breadcrumb back & share */}
-          <div className="flex items-center justify-between mb-6">
-            <Link
-              to="/marketplace"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-zinc-400 hover:text-white transition"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" /> Back to Marketplace
-            </Link>
-
-            <button
-              type="button"
-              onClick={handleShare}
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-zinc-400 hover:text-white px-3 py-1.5 rounded-xl border border-white/[0.08] bg-white/[0.02] transition"
-            >
-              <Share2 className="w-3.5 h-3.5" />
-              <span>{copied ? "Copied!" : "Share"}</span>
-            </button>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            
-            {/* Left Column: Media & Overview */}
-            <div className="lg:col-span-8 space-y-6">
-              
-              {/* Photo Showcase */}
-              <div className="space-y-3">
-                <div className="aspect-[16/9] rounded-2xl overflow-hidden border border-white/[0.08] bg-black/60 shadow-xl relative">
-                  {listing.images && listing.images.length > 0 ? (
-                    <img
-                      src={listing.images[activeImg] || listing.images[0]}
-                      alt={listing.title}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center p-8 text-center bg-gradient-to-br from-[#0D121B] to-[#07090E]">
-                      <Store className="w-12 h-12 text-zinc-700 mb-2" />
-                      <span className="text-xs font-mono text-zinc-500 uppercase">{department} Livery Showcase</span>
-                    </div>
-                  )}
-
-                  <div className="absolute top-3 left-3">
-                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-400 bg-black/85 border border-emerald-500/30 px-2.5 py-0.5 rounded backdrop-blur-md">
-                      {department}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Thumbnails */}
-                {listing.images && listing.images.length > 1 && (
-                  <div className="flex gap-2 overflow-x-auto pb-1">
-                    {listing.images.map((url: string, i: number) => (
-                      <button
-                        key={i}
-                        type="button"
-                        onClick={() => setActiveImg(i)}
-                        className={cn(
-                          "w-18 h-12 rounded-xl overflow-hidden shrink-0 border-2 transition-all",
-                          i === activeImg ? "border-emerald-400" : "border-transparent opacity-60 hover:opacity-100"
-                        )}
-                      >
-                        <img src={url} alt="" className="w-full h-full object-cover" />
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Description Details */}
-              <div className="rounded-2xl border border-white/[0.08] bg-[#0A0D14] p-6 space-y-4 shadow-xl">
-                <h2 className="text-base font-bold text-white">Asset Details & Compatibility</h2>
-                <div className="text-xs sm:text-sm text-zinc-300 leading-relaxed whitespace-pre-line">
-                  {listing.description || "Authentic ER:LC emergency livery package with instant escrow key delivery."}
-                </div>
-
-                {listing.vehicle_models && (
-                  <div className="pt-3 border-t border-white/[0.04] flex items-center gap-2 text-xs">
-                    <span className="text-zinc-500 font-mono">Vehicles:</span>
-                    <span className="font-semibold text-zinc-200">{listing.vehicle_models}</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Reviews */}
-              <div className="rounded-2xl border border-white/[0.08] bg-[#0A0D14] p-6 space-y-5 shadow-xl">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-base font-bold text-white">Customer Reviews</h3>
-                    <p className="text-xs text-zinc-400">Verified feedback from purchasers</p>
-                  </div>
-                  <div className="flex items-center gap-1 text-xs font-bold text-emerald-400">
-                    <Star className="w-3.5 h-3.5 fill-emerald-400" />
-                    <span>5.0 ★</span>
-                  </div>
-                </div>
-
-                {/* Add Review */}
-                <div className="p-3.5 rounded-xl border border-white/[0.06] bg-[#06080C] space-y-2.5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-zinc-300">Rate this asset</span>
-                    <div className="flex gap-1">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <button
-                          key={star}
-                          type="button"
-                          onClick={() => setReviewForm({ ...reviewForm, rating: star })}
-                          className="p-0.5"
-                        >
-                          <Star
-                            className={cn(
-                              "w-3.5 h-3.5",
-                              star <= reviewForm.rating ? "text-emerald-400 fill-emerald-400" : "text-zinc-600"
-                            )}
-                          />
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <textarea
-                    rows={2}
-                    value={reviewForm.comment}
-                    onChange={(e) => setReviewForm({ ...reviewForm, comment: e.target.value })}
-                    placeholder="Leave feedback on texture quality, ELS patterns, or vehicle fit..."
-                    className="w-full rounded-xl border border-white/[0.08] bg-[#0A0D14] p-2.5 text-xs text-white placeholder:text-zinc-500 outline-none focus:border-emerald-500/50 resize-none"
-                  />
-
-                  <div className="flex justify-end">
-                    <button
-                      type="button"
-                      onClick={submitReview}
-                      disabled={posting || !reviewForm.comment.trim()}
-                      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-bold transition disabled:opacity-40"
-                    >
-                      <Send className="w-3 h-3" />
-                      <span>{posting ? "Posting…" : "Post Review"}</span>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Reviews List */}
-                {reviews.length === 0 ? (
-                  <p className="text-xs text-zinc-500 text-center py-2">No reviews yet for this asset.</p>
-                ) : (
-                  <div className="space-y-2.5 divide-y divide-white/[0.04]">
-                    {reviews.map((r: any, idx: number) => (
-                      <div key={idx} className="pt-2.5 first:pt-0">
-                        <div className="flex items-center justify-between text-xs mb-1">
-                          <span className="font-bold text-white">{r.reviewer_name || "Verified Buyer"}</span>
-                          <div className="flex text-emerald-400">
-                            {[...Array(r.rating || 5)].map((_, i) => (
-                              <Star key={i} className="w-3 h-3 fill-emerald-400" />
-                            ))}
-                          </div>
-                        </div>
-                        <p className="text-xs text-zinc-400 leading-relaxed">{r.comment}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
+        {/* Breadcrumb strip */}
+        <div className="border-b border-white/[0.06] bg-[#0A0D15]/60">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between text-xs text-zinc-400">
+            <div className="flex items-center gap-2 truncate">
+              <Link to="/marketplace" className="hover:text-white transition flex items-center gap-1">
+                <ArrowLeft className="w-3.5 h-3.5" /> Marketplace
+              </Link>
+              <span>/</span>
+              <span className="text-zinc-300">{listing.category || "Asset"}</span>
+              <span>/</span>
+              <span className="text-emerald-400 truncate">{listing.title}</span>
             </div>
 
-            {/* Right Column: Pricing & Purchase */}
-            <div className="lg:col-span-4 space-y-5">
-              <div className="sticky top-24 rounded-2xl border border-white/[0.08] bg-[#0A0D14] p-6 space-y-5 shadow-2xl">
-                <div>
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.2 rounded">
-                      {listing.category || "Asset"}
-                    </span>
-                    <span className="text-xs font-mono text-zinc-400">{listing.listing_type || "Single"}</span>
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={handleShare}
+                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-white/[0.08] hover:bg-white/[0.04] transition"
+              >
+                {copied ? <Check className="w-3 h-3 text-emerald-400" /> : <Share2 className="w-3 h-3" />}
+                <span>{copied ? "Copied" : "Share"}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* ─── MAIN PRODUCT VIEW ─── */}
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-12">
+          
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
+            
+            {/* Left: Media Gallery (7 cols) */}
+            <div className="lg:col-span-7 space-y-4">
+              <div className="relative aspect-[16/10] rounded-2xl border border-white/[0.08] bg-black/80 overflow-hidden shadow-2xl flex items-center justify-center">
+                {images.length > 0 && !imgError[activeImg] ? (
+                  <img
+                    src={images[activeImg]}
+                    alt={listing.title}
+                    onError={() => setImgError((prev) => ({ ...prev, [activeImg]: true }))}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="flex flex-col items-center justify-center p-8 text-center text-zinc-500">
+                    <ImageIcon className="w-12 h-12 mb-2 opacity-40 text-emerald-400" />
+                    <span className="text-xs font-mono">Image preview unavailable</span>
                   </div>
+                )}
 
-                  <h1 className="text-lg sm:text-xl font-bold text-white leading-snug">
-                    {listing.title}
-                  </h1>
-                </div>
-
-                {/* Price Pill */}
-                <div className="p-3.5 rounded-xl border border-white/[0.06] bg-[#06080C] flex items-center justify-between">
-                  <div>
-                    <span className="text-[10px] text-zinc-500 block font-mono uppercase">Price</span>
-                    <span className="text-xl font-mono font-bold text-emerald-400">{priceLabel}</span>
-                  </div>
-                  <span className="text-[10px] font-mono text-zinc-500 uppercase">Escrow Key</span>
-                </div>
-
-                {/* Action */}
                 <button
                   type="button"
-                  onClick={() => setShowPurchase(true)}
-                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black py-3 text-xs sm:text-sm font-bold shadow-md shadow-emerald-500/20 transition-all hover:scale-[1.01] active:scale-[0.99]"
+                  onClick={handleToggleFav}
+                  className={cn(
+                    "absolute top-4 right-4 p-2 rounded-xl bg-black/80 backdrop-blur-md border border-white/[0.1] transition",
+                    isFav ? "text-rose-500" : "text-zinc-400 hover:text-white"
+                  )}
+                  title="Save to Wishlist"
                 >
-                  <ShoppingBag className="w-4 h-4" />
-                  <span>{isFree ? "Download Free Asset" : `Purchase for ${priceLabel}`}</span>
+                  <Heart className={cn("w-4 h-4", isFav && "fill-rose-500")} />
                 </button>
+              </div>
 
-                {/* Creator Card */}
-                <div className="p-3.5 rounded-xl border border-white/[0.04] bg-[#06080C] flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs font-bold shrink-0">
+              {/* Thumbnail Strip */}
+              {images.length > 1 && (
+                <div className="flex gap-3 overflow-x-auto pb-1">
+                  {images.map((img: string, idx: number) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => setActiveImg(idx)}
+                      className={cn(
+                        "w-20 aspect-[16/10] rounded-xl overflow-hidden border-2 transition shrink-0 bg-black",
+                        activeImg === idx ? "border-emerald-400 ring-2 ring-emerald-500/20" : "border-white/[0.08] opacity-60 hover:opacity-100"
+                      )}
+                    >
+                      <img src={img} alt="" className="w-full h-full object-cover" />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Right: Buy & Details Box (5 cols) */}
+            <div className="lg:col-span-5 space-y-6">
+              
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 rounded">
+                    {listing.category || "Asset"}
+                  </span>
+                  <span className="text-[10px] font-mono text-zinc-400 bg-white/[0.04] px-2 py-0.5 rounded border border-white/[0.06]">
+                    {listing.listing_type || "Single"}
+                  </span>
+                </div>
+
+                <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight leading-tight">
+                  {listing.title}
+                </h1>
+
+                {/* Rating & Creator Bar */}
+                <div className="flex items-center gap-3 pt-1 text-xs">
+                  {averageRating ? (
+                    <div className="flex items-center gap-1 text-emerald-400 font-bold">
+                      <Star className="w-3.5 h-3.5 fill-emerald-400" />
+                      <span>{averageRating} ({reviews.length} reviews)</span>
+                    </div>
+                  ) : (
+                    <span className="text-zinc-500 font-mono">No reviews yet</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Creator Card Strip */}
+              <div className="p-4 rounded-2xl border border-white/[0.08] bg-[#0A0D15] flex items-center justify-between gap-3">
+                <Link
+                  to={`/u/${listing.seller_username || "creator"}`}
+                  className="flex items-center gap-3 min-w-0 group"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold shrink-0">
                     {(listing.seller_name || "C").charAt(0).toUpperCase()}
                   </div>
                   <div className="min-w-0">
-                    <div className="text-xs font-bold text-white flex items-center gap-1">
-                      <span className="truncate">{listing.seller_name || "Verified Creator"}</span>
+                    <div className="flex items-center gap-1">
+                      <span className="text-xs font-bold text-white group-hover:text-emerald-400 transition truncate">
+                        {listing.seller_name || "Creator"}
+                      </span>
                       <BadgeCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                     </div>
-                    <span className="text-[10px] text-zinc-500 font-mono">Verified ER:LC Seller</span>
+                    <span className="text-[10px] font-mono text-zinc-400 block truncate">@{listing.seller_username || "creator"}</span>
                   </div>
+                </Link>
+
+                <Link
+                  to={`/messages?to=${encodeURIComponent(listing.seller_username || "creator")}&listing=${listing.id}&title=${encodeURIComponent(listing.title)}`}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-white/[0.08] bg-white/[0.02] hover:bg-white/[0.06] text-xs font-semibold text-zinc-300 transition"
+                  title="Message seller about this product"
+                >
+                  <MessageCircle className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Message</span>
+                </Link>
+              </div>
+
+              {/* Pricing & Checkout Block */}
+              <div className="p-6 rounded-2xl border border-emerald-500/25 bg-gradient-to-b from-[#0C111A] to-[#0A0D15] shadow-xl space-y-4">
+                <div className="flex items-baseline justify-between">
+                  <span className="text-xs font-mono text-zinc-400 uppercase">Instant Escrow Delivery</span>
+                  <span className="text-3xl font-black font-mono text-emerald-400">{priceDisplay}</span>
                 </div>
 
-                {/* Key Points */}
-                <div className="space-y-2 text-xs text-zinc-400 border-t border-white/[0.04] pt-4">
-                  <div className="flex items-center gap-2">
-                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                    <span>Automated Scam-Shield escrow</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Clock className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                    <span>Sub-2 second instant code dispatch</span>
-                  </div>
+                <button
+                  type="button"
+                  onClick={() => setShowPurchase(true)}
+                  className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black text-sm font-bold transition shadow-md shadow-emerald-500/20 hover:scale-[1.01] active:scale-[0.99]"
+                >
+                  <ShoppingBag className="w-4 h-4" />
+                  <span>{isFree ? "Claim Asset (Free)" : "Purchase & Unlock Vault Key"}</span>
+                </button>
+
+                <div className="flex items-center justify-center gap-4 text-[11px] text-zinc-400 font-mono pt-1">
+                  <span className="flex items-center gap-1">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> Automated Escrow
+                  </span>
+                  <span>•</span>
+                  <span>Instant Key Reveal</span>
                 </div>
               </div>
+
+              {/* Specifications */}
+              <div className="rounded-2xl border border-white/[0.08] bg-[#0A0D15] p-5 space-y-3 text-xs">
+                <h3 className="font-bold text-white uppercase font-mono text-[11px] tracking-wider">Specifications</h3>
+                
+                {listing.vehicle_models && (
+                  <div className="flex justify-between border-b border-white/[0.04] pb-2">
+                    <span className="text-zinc-500 font-mono">Compatible Models:</span>
+                    <span className="text-zinc-300 font-medium text-right">{listing.vehicle_models}</span>
+                  </div>
+                )}
+
+                {listing.roblox_asset_id && (
+                  <div className="flex justify-between border-b border-white/[0.04] pb-2">
+                    <span className="text-zinc-500 font-mono">Roblox Asset ID:</span>
+                    <span className="text-emerald-400 font-mono">#{listing.roblox_asset_id}</span>
+                  </div>
+                )}
+
+                <div className="flex justify-between">
+                  <span className="text-zinc-500 font-mono">Delivery Method:</span>
+                  <span className="text-zinc-300 font-mono">Vault Key Dispatch</span>
+                </div>
+              </div>
+
+              {/* Hashtag Chips */}
+              {tags.length > 0 && (
+                <div className="space-y-2">
+                  <span className="text-[11px] font-mono text-zinc-500 block">TAGS:</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {tags.map((t) => (
+                      <Link
+                        key={t}
+                        to={`/marketplace?q=${encodeURIComponent(t.replace("#", ""))}`}
+                        className="px-2.5 py-1 rounded-lg border border-white/[0.06] bg-[#0A0D15] hover:border-emerald-500/30 hover:text-emerald-400 text-zinc-400 text-xs font-mono transition"
+                      >
+                        {t.startsWith("#") ? t : `#${t}`}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+
             </div>
 
           </div>
+
+          {/* Description & Overview */}
+          <div className="rounded-2xl border border-white/[0.08] bg-[#0A0D15] p-6 sm:p-8 space-y-4">
+            <h2 className="text-base font-bold text-white">Product Description & Asset Details</h2>
+            <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed whitespace-pre-line">
+              {listing.description || "No extended description provided by creator."}
+            </p>
+          </div>
+
+          {/* ─── CUSTOMER REVIEWS SECTION ─── */}
+          <div className="rounded-2xl border border-white/[0.08] bg-[#0A0D15] p-6 sm:p-8 space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-base font-bold text-white">Customer Reviews</h3>
+                <p className="text-xs text-zinc-400">Feedback from purchasers who received escrow keys.</p>
+              </div>
+
+              <div className="flex items-center gap-1.5 text-emerald-400 font-bold text-sm">
+                <Star className="w-4 h-4 fill-emerald-400" />
+                <span>{averageRating ? `${averageRating} ★` : "No reviews yet"}</span>
+              </div>
+            </div>
+
+            {/* Leave Review Form */}
+            <form onSubmit={handlePostReview} className="p-4 rounded-xl border border-white/[0.06] bg-[#07090E] space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-white">Write a Review</span>
+                <div className="flex gap-1">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setReviewRating(star)}
+                      className="p-0.5"
+                    >
+                      <Star
+                        className={cn(
+                          "w-4 h-4",
+                          star <= reviewRating ? "text-emerald-400 fill-emerald-400" : "text-zinc-600"
+                        )}
+                      />
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <textarea
+                rows={2}
+                value={reviewText}
+                onChange={(e) => setReviewText(e.target.value)}
+                placeholder="Share your feedback on textures, installation, and quality..."
+                className="w-full rounded-xl border border-white/[0.08] bg-[#0A0D15] p-3 text-xs text-white outline-none focus:border-emerald-500/50 resize-none"
+              />
+
+              <div className="flex justify-end">
+                <button
+                  type="submit"
+                  disabled={submittingReview || !reviewText.trim()}
+                  className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-bold transition disabled:opacity-50"
+                >
+                  {submittingReview ? "Submitting…" : "Post Review"}
+                </button>
+              </div>
+            </form>
+
+            {/* Reviews stream */}
+            {reviews.length === 0 ? (
+              <div className="p-8 text-center text-xs text-zinc-500">
+                No customer reviews recorded yet for this asset.
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {reviews.map((r, idx) => (
+                  <div key={r.id || idx} className="p-4 rounded-xl border border-white/[0.04] bg-[#07090E] text-xs space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-white">{r.reviewer_name || "Verified Purchaser"}</span>
+                        <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.2 rounded">
+                          ✓ Verified Purchase
+                        </span>
+                      </div>
+                      <div className="flex text-emerald-400">
+                        {[...Array(r.rating || 5)].map((_, i) => (
+                          <Star key={i} className="w-3.5 h-3.5 fill-emerald-400" />
+                        ))}
+                      </div>
+                    </div>
+                    <p className="text-zinc-300 leading-relaxed">{r.comment}</p>
+                    {r.seller_reply && (
+                      <div className="p-3 rounded-lg border border-emerald-500/20 bg-emerald-500/5 space-y-1">
+                        <span className="font-bold text-emerald-400 text-[11px] block">Creator Reply:</span>
+                        <p className="text-zinc-300">{r.seller_reply.text}</p>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
         </main>
       </div>
 

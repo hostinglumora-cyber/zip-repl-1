@@ -17,6 +17,7 @@ import Following from "@/pages/Following";
 import CreatorsDirectory from "@/pages/CreatorsDirectory";
 import Messages from "@/pages/Messages";
 import Favorites from "@/pages/Favorites";
+import Hosting from "@/pages/Hosting";
 import Status from "@/pages/Status";
 import Docs from "@/pages/Docs";
 import Privacy from "@/pages/Privacy";
@@ -72,6 +73,9 @@ const AuthenticatedApp = () => {
       <Route path="/dashboard/profile" element={<ProfileCustomization />} />
       <Route path="/dashboard/storefront" element={<StorefrontBuilder />} />
       
+      {/* Community Hosting */}
+      <Route path="/hosting" element={<Hosting />} />
+      
       {/* Infrastructure & Docs */}
       <Route path="/status" element={<Status />} />
       <Route path="/docs" element={<Docs />} />
@@ -85,7 +89,7 @@ const AuthenticatedApp = () => {
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       
-      {/* Admin */}
+      {/* Admin Panel (Owner & Staff) */}
       <Route path="/admin" element={<Admin />} />
 
       {/* Direct Creator Storefront Root Alias fallback */}

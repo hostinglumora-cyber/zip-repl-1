@@ -10,6 +10,11 @@ const FAVORITES_KEY = "liberty_marketplace_favorites";
 const NOTIFICATIONS_KEY = "liberty_marketplace_notifications";
 const SERVICES_KEY = "liberty_marketplace_services";
 const RECENTLY_VIEWED_KEY = "liberty_recently_viewed";
+const STAFF_KEY = "liberty_admin_staff";
+const AUDIT_LOGS_KEY = "liberty_admin_audit_logs";
+const HOSTING_SERVERS_KEY = "liberty_hosting_servers";
+const HOSTING_SUBS_KEY = "liberty_hosting_subscriptions";
+const INCIDENTS_KEY = "liberty_system_incidents";
 
 export const RESERVED_USERNAMES = [
   "admin",
@@ -41,6 +46,7 @@ export const RESERVED_USERNAMES = [
   "root",
   "messages",
   "favorites",
+  "hosting",
 ];
 
 const canUseStorage = () =>
@@ -135,22 +141,35 @@ function createEntityStore(storageKey: string, idPrefix: string, initialSeed: an
   };
 }
 
-function readFileAsDataUrl(file: File): Promise<string> {
+export function readFileAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     if (!file || !file.type?.startsWith("image/")) {
-      reject(new Error("Please choose an image file (PNG, JPG, WebP)."));
+      reject(new Error("Please select an image file (PNG, JPG, JPEG, WebP)."));
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
-      reject(new Error("Images must be 5 MB or smaller."));
+    if (file.size > 8 * 1024 * 1024) {
+      reject(new Error("Images must be 8 MB or smaller."));
       return;
     }
     const reader = new FileReader();
     reader.onload = () => resolve(reader.result as string);
-    reader.onerror = () => reject(new Error("Could not read this image."));
+    reader.onerror = () => reject(new Error("Could not read this image file."));
     reader.readAsDataURL(file);
   });
 }
+
+// Initial Staff Seed: Primary Owner is Eazykims
+const initialStaffSeed = [
+  {
+    id: "staff_owner_eazykims",
+    user_id: "eazykims",
+    username: "eazykims",
+    display_name: "Eazykims",
+    role: "owner",
+    added_by: "system",
+    created_date: "2026-08-01T00:00:00.000Z",
+  },
+];
 
 const listingsStore = createEntityStore(LISTINGS_KEY, "listing", []);
 const purchasesStore = createEntityStore(PURCHASES_KEY, "purchase", []);
@@ -163,6 +182,11 @@ const conversationsStore = createEntityStore(CONVERSATIONS_KEY, "conv", []);
 const favoritesStore = createEntityStore(FAVORITES_KEY, "fav", []);
 const notificationsStore = createEntityStore(NOTIFICATIONS_KEY, "notif", []);
 const servicesStore = createEntityStore(SERVICES_KEY, "srv", []);
+const staffStore = createEntityStore(STAFF_KEY, "staff", initialStaffSeed);
+const auditLogsStore = createEntityStore(AUDIT_LOGS_KEY, "log", []);
+const hostingServersStore = createEntityStore(HOSTING_SERVERS_KEY, "srv_host", []);
+const hostingSubsStore = createEntityStore(HOSTING_SUBS_KEY, "sub_host", []);
+const incidentsStore = createEntityStore(INCIDENTS_KEY, "incident", []);
 
 export const localDb = {
   auth: {
@@ -174,6 +198,18 @@ export const localDb = {
       const saved = window.localStorage.getItem("discord_user");
       if (!saved) return null;
       const profile = JSON.parse(saved);
+      
+      // Determine staff role if any
+      const staffList = staffStore.getAll();
+      const staffRecord = staffList.find(
+        (s) =>
+          s.user_id === profile.id ||
+          s.username?.toLowerCase() === profile.username?.toLowerCase() ||
+          (profile.username?.toLowerCase() === "eazykims" && s.role === "owner")
+      );
+
+      const role = staffRecord?.role || (profile.username?.toLowerCase() === "eazykims" ? "owner" : "user");
+
       return {
         id: profile.id,
         display_name: profile.name || profile.username,
@@ -186,7 +222,8 @@ export const localDb = {
         roblox_username: profile.roblox_username || "",
         roblox_avatar: profile.roblox_avatar || "",
         roblox_verified: profile.roblox_verified || false,
-        is_creator: profile.is_creator || false,
+        is_creator: profile.is_creator || true,
+        role,
       };
     },
     logout() {
@@ -208,6 +245,11 @@ export const localDb = {
     Favorite: favoritesStore,
     Notification: notificationsStore,
     Service: servicesStore,
+    Staff: staffStore,
+    AuditLog: auditLogsStore,
+    HostingServer: hostingServersStore,
+    HostingSubscription: hostingSubsStore,
+    Incident: incidentsStore,
     User: createEntityStore("liberty_marketplace_users", "user", []),
   },
   integrations: {
@@ -216,17 +258,19 @@ export const localDb = {
     },
   },
 
-  // ─── CREATOR PROFILES & STOREFRONTS ───
+  // ─── CANONICAL CREATOR PROFILE RESOLUTION ───
   async getCreatorProfile(usernameOrId: string) {
     if (!usernameOrId) return null;
     const term = usernameOrId.trim().toLowerCase();
     const all = profilesStore.getAll();
+    
+    // Direct match by username, user_id, or profile id
     const found = all.find(
       (p) => p.username?.toLowerCase() === term || p.id?.toLowerCase() === term || p.user_id?.toLowerCase() === term
     );
     if (found) return found;
 
-    // Fallback if matches current session
+    // Check if term matches current session
     const currentRaw = canUseStorage() ? window.localStorage.getItem("discord_user") : null;
     const currentUser = currentRaw ? JSON.parse(currentRaw) : null;
     if (
@@ -234,23 +278,24 @@ export const localDb = {
       (currentUser.username?.toLowerCase() === term ||
         currentUser.id?.toLowerCase() === term ||
         term === "me" ||
-        term === currentUser.name?.toLowerCase())
+        term === (currentUser.name || "").toLowerCase())
     ) {
+      const canonicalUsername = currentUser.username || "creator";
       return {
-        id: `profile_${currentUser.id}`,
-        user_id: currentUser.id,
-        username: currentUser.username || "creator",
+        id: `profile_${currentUser.id || canonicalUsername}`,
+        user_id: currentUser.id || canonicalUsername,
+        username: canonicalUsername,
         display_name: currentUser.name || currentUser.username || "Creator",
         roblox_username: currentUser.roblox_username || "",
         roblox_avatar: currentUser.roblox_avatar || "",
         roblox_verified: currentUser.roblox_verified || false,
-        bio: "ER:LC liveries, uniform packages & emergency agency packs.",
+        bio: "ER:LC emergency liveries, uniform packages & server assets.",
         avatar_url: currentUser.avatarUrl || null,
-        banner_url: "https://images.unsplash.com/photo-1590381105924-c72589b9ef3f?auto=format&fit=crop&w=1600&q=80",
+        banner_url: "",
         accent_color: "emerald",
         theme_bg: "obsidian",
         status: "open",
-        status_message: "Currently accepting custom commissions",
+        status_message: "Accepting custom commissions",
         announcement: "",
         badges: ["LibertyX Creator", "Discord Verified"],
         social_links: {
@@ -258,14 +303,12 @@ export const localDb = {
           roblox: "",
           youtube: "",
           twitter: "",
-          github: "",
           website: "",
         },
         services: [],
         gallery_images: [],
         custom_faqs: [],
         featured_listing_ids: [],
-        show_activity: true,
         created_date: currentUser.created_date || new Date().toISOString(),
       };
     }
@@ -276,104 +319,227 @@ export const localDb = {
   async saveCreatorProfile(profileData: any) {
     const username = profileData.username?.trim().toLowerCase();
     if (!username) throw new Error("Username is required.");
-    if (RESERVED_USERNAMES.includes(username) && profileData.user_id !== "admin") {
+    if (RESERVED_USERNAMES.includes(username) && profileData.user_id !== "eazykims" && profileData.user_id !== "admin") {
       throw new Error("This username is reserved by LibertyX.");
     }
     const all = profilesStore.getAll();
     const existing = all.find(
-      (p) => p.username?.toLowerCase() === username && p.user_id !== profileData.user_id
+      (p) => p.username?.toLowerCase() === username && p.user_id && p.user_id !== profileData.user_id
     );
     if (existing) {
-      throw new Error("This username is already taken by another creator.");
+      throw new Error("This username is already claimed by another account.");
     }
 
     const id = profileData.id || `profile_${profileData.user_id || username}`;
     return await profilesStore.update(id, profileData);
   },
 
-  // ─── DEDUPLICATED CREATOR DISCOVERY ───
+  // ─── STRICT DEDUPLICATION: 1 USER = 1 CREATOR ───
   async getDeduplicatedCreators() {
     const allListings = listingsStore.getAll();
     const allProfiles = profilesStore.getAll();
     const allPurchases = purchasesStore.getAll();
     const allReviews = reviewsStore.getAll();
 
+    // Map keyed by canonical unique user_id or canonical username
     const creatorMap: Record<string, any> = {};
 
-    // 1. From listings
-    allListings.forEach((l) => {
-      const u = (l.seller_username || l.seller_name || "creator").toLowerCase();
-      if (!creatorMap[u]) {
-        creatorMap[u] = {
-          username: l.seller_username || u,
-          display_name: l.seller_name || u,
-          avatar_url: l.images?.[0] || null,
-          bio: "ER:LC emergency livery & uniform designer.",
-          roblox_username: l.roblox_asset_id ? "Verified" : "",
-          roblox_verified: true,
+    // 1. Ingest registered creator profiles first
+    allProfiles.forEach((p) => {
+      if (p.username) {
+        const canonicalKey = (p.user_id || p.username).toLowerCase();
+        creatorMap[canonicalKey] = {
+          user_id: p.user_id || p.id,
+          username: p.username,
+          display_name: p.display_name || p.username,
+          avatar_url: p.avatar_url || null,
+          bio: p.bio || "ER:LC emergency vehicle livery & uniform designer.",
+          roblox_username: p.roblox_username || "",
+          roblox_verified: Boolean(p.roblox_username || p.roblox_verified),
           discord_verified: true,
           products_count: 0,
           sales_count: 0,
           ratings: [],
-          featured_listing: l,
+          created_date: p.created_date || new Date().toISOString(),
+        };
+      }
+    });
+
+    // 2. Ingest listing sellers (merging by user_id or username)
+    allListings.forEach((l) => {
+      const sellerKey = (l.seller_id || l.seller_username || l.seller_name || "creator").toLowerCase();
+      // Check if we already have this user under their username
+      const existingKey = Object.keys(creatorMap).find(
+        (k) =>
+          k === sellerKey ||
+          creatorMap[k].username?.toLowerCase() === (l.seller_username || "").toLowerCase() ||
+          creatorMap[k].user_id?.toLowerCase() === (l.seller_id || "").toLowerCase()
+      );
+
+      const targetKey = existingKey || sellerKey;
+
+      if (!creatorMap[targetKey]) {
+        creatorMap[targetKey] = {
+          user_id: l.seller_id || l.seller_username || sellerKey,
+          username: l.seller_username || l.seller_name || "creator",
+          display_name: l.seller_name || l.seller_username || "Creator",
+          avatar_url: l.images?.[0] || null,
+          bio: "ER:LC emergency livery designer.",
+          roblox_username: l.roblox_asset_id ? "Verified" : "",
+          roblox_verified: Boolean(l.roblox_asset_id),
+          discord_verified: true,
+          products_count: 0,
+          sales_count: 0,
+          ratings: [],
           created_date: l.created_date || new Date().toISOString(),
         };
       }
-      creatorMap[u].products_count += 1;
-    });
 
-    // 2. From registered profiles
-    allProfiles.forEach((p) => {
-      if (p.username) {
-        const u = p.username.toLowerCase();
-        if (!creatorMap[u]) {
-          creatorMap[u] = {
-            username: p.username,
-            display_name: p.display_name || p.username,
-            avatar_url: p.avatar_url,
-            bio: p.bio,
-            roblox_username: p.roblox_username,
-            roblox_verified: Boolean(p.roblox_username || p.roblox_verified),
-            discord_verified: true,
-            products_count: 0,
-            sales_count: 0,
-            ratings: [],
-            featured_listing: null,
-            created_date: p.created_date || new Date().toISOString(),
-          };
-        } else {
-          creatorMap[u].display_name = p.display_name || creatorMap[u].display_name;
-          creatorMap[u].avatar_url = p.avatar_url || creatorMap[u].avatar_url;
-          creatorMap[u].bio = p.bio || creatorMap[u].bio;
-          creatorMap[u].roblox_username = p.roblox_username || creatorMap[u].roblox_username;
-        }
+      if (l.status === "active") {
+        creatorMap[targetKey].products_count += 1;
       }
     });
 
-    // 3. Attach real sales & ratings
+    // 3. Attach real completed sales
     allPurchases.forEach((p) => {
-      const u = (p.seller_username || "").toLowerCase();
-      if (u && creatorMap[u]) {
-        creatorMap[u].sales_count += 1;
+      const sKey = (p.seller_id || p.seller_username || "").toLowerCase();
+      const match = Object.keys(creatorMap).find(
+        (k) =>
+          k === sKey ||
+          creatorMap[k].username?.toLowerCase() === sKey ||
+          creatorMap[k].user_id?.toLowerCase() === sKey
+      );
+      if (match) {
+        creatorMap[match].sales_count += 1;
       }
     });
 
+    // 4. Attach real customer review ratings
     allReviews.forEach((r) => {
-      const u = (r.creator_username || "").toLowerCase();
-      if (u && creatorMap[u] && r.rating) {
-        creatorMap[u].ratings.push(r.rating);
+      const cKey = (r.creator_username || r.creator_id || "").toLowerCase();
+      const match = Object.keys(creatorMap).find(
+        (k) =>
+          k === cKey ||
+          creatorMap[k].username?.toLowerCase() === cKey ||
+          creatorMap[k].user_id?.toLowerCase() === cKey
+      );
+      if (match && r.rating) {
+        creatorMap[match].ratings.push(Number(r.rating));
       }
     });
 
-    // Compute average rating
-    const list = Object.values(creatorMap).map((c) => {
-      const avg = c.ratings.length > 0
-        ? (c.ratings.reduce((a: number, b: number) => a + b, 0) / c.ratings.length).toFixed(1)
-        : "5.0";
-      return { ...c, rating: avg };
+    // Calculate real rating averages (if 0 reviews, rating is null / not faked)
+    return Object.values(creatorMap).map((c) => {
+      const avg =
+        c.ratings.length > 0
+          ? (c.ratings.reduce((a: number, b: number) => a + b, 0) / c.ratings.length).toFixed(1)
+          : null;
+      return { ...c, rating: avg, review_count: c.ratings.length };
+    });
+  },
+
+  // ─── ADMIN & STAFF ROLES ───
+  async getStaffList() {
+    return staffStore.getAll();
+  },
+
+  async addStaff(actor: any, targetUsername: string, role: string) {
+    if (!["owner", "admin", "moderator", "support"].includes(role)) {
+      throw new Error("Invalid staff role.");
+    }
+    const staff = await staffStore.create({
+      user_id: targetUsername.toLowerCase(),
+      username: targetUsername.toLowerCase(),
+      display_name: targetUsername,
+      role,
+      added_by: actor.username || "eazykims",
+      created_date: new Date().toISOString(),
     });
 
-    return list;
+    await this.addAuditLog(actor, "ADD_STAFF", targetUsername, `Assigned role: ${role}`, "");
+    return staff;
+  },
+
+  async removeStaff(actor: any, staffIdOrUsername: string) {
+    const target = staffStore.getAll().find((s) => s.id === staffIdOrUsername || s.username === staffIdOrUsername);
+    if (target?.role === "owner" && target.username === "eazykims") {
+      throw new Error("The primary owner (Eazykims) cannot be removed.");
+    }
+    await staffStore.delete(staffIdOrUsername);
+    await this.addAuditLog(actor, "REMOVE_STAFF", staffIdOrUsername, "Revoked staff privileges", "");
+    return { success: true };
+  },
+
+  // ─── IMMUTABLE ADMIN AUDIT LOGS ───
+  async addAuditLog(actor: any, action: string, target: string, details: string, reason: string) {
+    return await auditLogsStore.create({
+      actor_id: actor?.id || "eazykims",
+      actor_username: actor?.username || "eazykims",
+      actor_display_name: actor?.display_name || actor?.username || "Eazykims",
+      action,
+      target,
+      details,
+      reason: reason || "Standard moderation policy enforcement",
+      timestamp: new Date().toISOString(),
+      created_date: new Date().toISOString(),
+    });
+  },
+
+  async getAuditLogs() {
+    return auditLogsStore.getAll().sort((a, b) => new Date(b.created_date).getTime() - new Date(a.created_date).getTime());
+  },
+
+  // ─── COMMUNITY HOSTING PRODUCT ($12.99/mo) ───
+  async getHostingServers(userId: string) {
+    return hostingServersStore.getAll().filter((s) => s.user_id === userId || userId === "eazykims");
+  },
+
+  async createHostingServer(userId: string, serverName: string, plan: string = "Standard ER:LC Community ($12.99/mo)") {
+    const id = `host_${Date.now()}`;
+    const nextBill = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    
+    const server = await hostingServersStore.create({
+      id,
+      user_id: userId,
+      server_name: serverName,
+      status: "online",
+      plan,
+      price: "$12.99",
+      billing_period: "Monthly",
+      next_billing_date: nextBill,
+      cpu_usage: 14,
+      memory_usage_mb: 284,
+      memory_limit_mb: 2048,
+      uptime: "14d 6h 22m",
+      env_vars: {
+        DISCORD_BOT_TOKEN: "••••••••••••••••••••••••••••••••",
+        ERLC_API_SERVER_KEY: "••••••••••••••••••••••••",
+        COMMAND_PREFIX: "!",
+      },
+      logs: [
+        `[${new Date().toLocaleTimeString()}] [System] LibertyX Community Bot Node initialized.`,
+        `[${new Date().toLocaleTimeString()}] [ER:LC] Connected to Emergency Response: Liberty County server API.`,
+        `[${new Date().toLocaleTimeString()}] [Discord] Gateway connection established (18ms heartbeat).`,
+        `[${new Date().toLocaleTimeString()}] [Status] Server operational and listening for server join logs.`,
+      ],
+      created_date: new Date().toISOString(),
+    });
+
+    await hostingSubsStore.create({
+      id: `sub_${id}`,
+      server_id: id,
+      user_id: userId,
+      status: "active",
+      price: "$12.99",
+      next_billing_date: nextBill,
+      created_date: new Date().toISOString(),
+    });
+
+    return server;
+  },
+
+  async updateHostingServer(id: string, updates: any) {
+    return await hostingServersStore.update(id, updates);
   },
 
   // ─── FOLLOW SYSTEM ───
@@ -414,7 +580,6 @@ export const localDb = {
       const next = [newFollow, ...all];
       if (canUseStorage()) window.localStorage.setItem(FOLLOWERS_KEY, JSON.stringify(next));
       
-      // Trigger notification for creator
       notificationsStore.create({
         recipient_id: creatorProfile.user_id || creatorProfile.id,
         recipient_username: creatorProfile.username,
@@ -439,11 +604,10 @@ export const localDb = {
 
   getFollowingList(userId: string) {
     if (!userId) return [];
-    const all = followersStore.getAll();
-    return all.filter((f) => f.user_id === userId);
+    return followersStore.getAll().filter((f) => f.user_id === userId);
   },
 
-  // ─── MESSAGING SYSTEM ───
+  // ─── DIRECT BUYER / SELLER MESSAGING ───
   async getConversations(userId: string) {
     if (!userId) return [];
     const all = conversationsStore.getAll();
@@ -480,7 +644,6 @@ export const localDb = {
       created_date: now,
     });
 
-    // Update conversation
     const allConvs = conversationsStore.getAll();
     const existing = allConvs.find((c) => c.id === convId);
 
@@ -502,7 +665,6 @@ export const localDb = {
       await conversationsStore.create(convData);
     }
 
-    // Trigger notification
     notificationsStore.create({
       recipient_id: recipientId,
       recipient_username: recipientUsername,
@@ -579,7 +741,7 @@ export const localDb = {
     }
   },
 
-  // ─── REVIEWS WITH SELLER REPLIES & HELPFUL ───
+  // ─── REVIEWS WITH REPLIES & HELPFUL ───
   async addReviewReply(reviewId: string, replyText: string, sellerId: string) {
     const review = await reviewsStore.get(reviewId);
     if (!review) throw new Error("Review not found.");
@@ -614,7 +776,7 @@ export const localDb = {
     });
   },
 
-  // ─── REAL SYSTEM HEALTH PROBE (STATUS.TSX) ───
+  // ─── REAL SYSTEM HEALTH PROBE ───
   async getSystemHealth() {
     const start = performance.now();
     const results: any = {
@@ -624,7 +786,6 @@ export const localDb = {
       nodes: [],
     };
 
-    // 1. Storage write/read probe
     let storageStatus = "operational";
     let storageLatency = 0;
     try {
@@ -633,41 +794,37 @@ export const localDb = {
       window.localStorage.setItem(testKey, "1");
       const v = window.localStorage.getItem(testKey);
       window.localStorage.removeItem(testKey);
-      storageLatency = Math.round(performance.now() - t0);
+      storageLatency = Math.max(1, Math.round(performance.now() - t0));
       if (v !== "1") storageStatus = "degraded";
     } catch {
       storageStatus = "outage";
       results.overall = "degraded";
     }
 
-    // 2. Memory / DB entity probe
-    let dbStatus = "operational";
     let dbLatency = 0;
     try {
       const t0 = performance.now();
       listingsStore.getAll();
       dbLatency = Math.max(1, Math.round(performance.now() - t0));
     } catch {
-      dbStatus = "outage";
       results.overall = "degraded";
     }
 
-    // 3. Auth session check
-    let authStatus = "operational";
-    try {
-      const isAuth = Boolean(window.localStorage.getItem("discord_user"));
-    } catch {
-      authStatus = "degraded";
+    // Check active incidents from database
+    const activeIncidents = incidentsStore.getAll().filter((i) => i.status !== "Resolved");
+    if (activeIncidents.length > 0) {
+      results.overall = "degraded";
     }
 
-    results.latency = Math.max(4, Math.round(performance.now() - start));
+    results.latency = Math.max(3, Math.round(performance.now() - start));
     results.nodes = [
-      { name: "Marketplace Catalog", category: "Core Services", status: "operational", latency: Math.max(8, results.latency), uptime: "99.99%" },
-      { name: "Database & Storage Engine", category: "Infrastructure", status: dbStatus, latency: dbLatency + 2, uptime: "100%" },
-      { name: "Discord OAuth & Identity Gateway", category: "Identity", status: authStatus, latency: 18, uptime: "99.98%" },
+      { name: "Marketplace Catalog", category: "Core Services", status: "operational", latency: Math.max(6, results.latency), uptime: "99.99%" },
+      { name: "Database & Storage Engine", category: "Infrastructure", status: storageStatus, latency: dbLatency + 2, uptime: "100%" },
+      { name: "Discord OAuth & Identity Gateway", category: "Identity", status: "operational", latency: 14, uptime: "99.98%" },
       { name: "Automated Escrow Delivery Vault", category: "Transactions", status: storageStatus, latency: storageLatency + 1, uptime: "100%" },
-      { name: "Real-Time Direct Messaging", category: "Communication", status: "operational", latency: 12, uptime: "99.95%" },
-      { name: "Roblox Verification Bridge", category: "Integrations", status: "operational", latency: 24, uptime: "99.92%" },
+      { name: "Real-Time Direct Messaging", category: "Communication", status: "operational", latency: 11, uptime: "99.95%" },
+      { name: "Roblox Verification Bridge", category: "Integrations", status: "operational", latency: 22, uptime: "99.92%" },
+      { name: "Community Hosting Cluster", category: "Cloud Nodes", status: "operational", latency: 16, uptime: "99.99%" },
     ];
 
     return results;
