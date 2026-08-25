@@ -19,6 +19,16 @@ import {
   Store,
   Check,
   Search,
+  SlidersHorizontal,
+  Flame,
+  Shield,
+  Layers,
+  FileCode,
+  Users,
+  Eye,
+  Activity,
+  Play,
+  Volume2,
 } from "lucide-react";
 import SiteNav from "@/components/SiteNav";
 import { DEPARTMENTS } from "@/lib/departments";
@@ -31,85 +41,120 @@ const db = (globalThis as any).__B44_DB__ || localDb;
 
 export { MarketplaceCard as ListingCard };
 
+// Interactive showcase preview items
+const HERO_SHOWCASE = [
+  {
+    id: "police",
+    name: "State Police Ghost Slicktop Fleet",
+    dept: "Police",
+    price: "150 R$",
+    vehicles: ["2024 Tahoe PPV", "Crown Victoria", "Explorer Interceptor", "Dodge Charger"],
+    tags: ["4K Textures", "Daylight Reflections", "Stage 3 ELS"],
+    rating: "5.0 ★",
+    creator: "ApexLiveryStudio",
+    image: "https://images.unsplash.com/photo-1590381105924-c72589b9ef3f?auto=format&fit=crop&w=1200&q=80",
+  },
+  {
+    id: "sheriff",
+    name: "County Sheriff High-Vis Patrol Pack",
+    dept: "Sheriff",
+    price: "140 R$",
+    vehicles: ["Silverado 1500", "Tahoe PPV", "Dodge Charger Pursuit"],
+    tags: ["Gold Leaf Decals", "Reflective Chevrons", "K9 Unit Variant"],
+    rating: "5.0 ★",
+    creator: "CountyGraphics",
+    image: "https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&w=1200&q=80",
+  },
+  {
+    id: "fire",
+    name: "Battalion 4 Heavy Rescue & Ladder",
+    dept: "Fire",
+    price: "110 R$",
+    vehicles: ["Pierce Enforcer Engine", "Heavy Rescue 1", "F-450 Ambulance"],
+    tags: ["NFPA Rear Chevrons", "Gold Leaf Trim", "Paramedic Fly-Car"],
+    rating: "5.0 ★",
+    creator: "RescueGraphics",
+    image: "https://images.unsplash.com/photo-1589939705384-5185137a7f0f?auto=format&fit=crop&w=1200&q=80",
+  },
+  {
+    id: "dot",
+    name: "Highway Safety & Incident Management",
+    dept: "DOT",
+    price: "FREE",
+    vehicles: ["F-250 Road Ranger", "Arrow Board Truck", "Heavy Wrecker"],
+    tags: ["Amber ELS Mapping", "Escort Markings", "High-Vis Striping"],
+    rating: "5.0 ★",
+    creator: "DOTWorks",
+    image: "https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?auto=format&fit=crop&w=1200&q=80",
+  },
+];
+
 const FAQS = [
   {
     id: "escrow",
-    q: "How does digital escrow delivery work?",
-    a: "When you publish or purchase an asset, deliverable keys (Roblox asset IDs, livery files, Pastebin hashes, Google Drive links) are securely held in an isolated vault. The moment payment clears, the keys are automatically revealed to the buyer with an instant delivery receipt.",
+    q: "How does Scam-Shield escrow delivery work?",
+    a: "When a creator uploads an asset, deliverable keys (Roblox asset IDs, livery files, Pastebin hashes, Google Drive links) are securely vault-locked. As soon as a transaction clears, our automated protocol releases the keys directly into your account and delivery receipt in under 2 seconds.",
   },
   {
     id: "fees",
-    q: "Are there any listing or platform commission fees?",
-    a: "No. LibertyX operates on a strict 0% listing fee model. Creators keep 100% of their earnings on both free community drops and Robux-priced packages.",
+    q: "Are there any listing or commission fees for creators?",
+    a: "None. LibertyX operates on a strict 0% listing fee policy. Creators keep 100% of their earnings on both free community drops and Robux-priced packages.",
   },
   {
     id: "verified",
-    q: "How do creators earn the Verified Creator badge?",
-    a: "Verified Creator status is awarded to designers with 5+ successful escrow fulfillments and positive customer reviews. Badges are displayed automatically across creator profiles and asset cards.",
+    q: "How do I earn the Verified Creator badge?",
+    a: "Verified Creator status is granted automatically after completing 5+ successful escrow fulfillments with positive customer ratings. Badges appear across your profile, storefront, and asset cards.",
   },
   {
     id: "bundles",
     q: "Can I bundle multi-vehicle fleet liveries together?",
-    a: "Yes. The Creator Studio allows you to package matching liveries for multiple vehicles (such as Tahoe, Crown Victoria, Charger, and Explorer) alongside ELS siren soundbanks into a single discounted bundle.",
+    a: "Yes. The Creator Studio allows you to bundle matching liveries for multiple vehicles (such as Tahoe, Crown Victoria, Charger, and Explorer) alongside ELS siren soundbanks into a single package with multi-code delivery.",
   },
   {
     id: "delivery",
-    q: "How fast are deliverable keys received after purchase?",
+    q: "How fast do I receive deliverable keys after purchase?",
     a: "Delivery is instant and automated. Vault keys unlock directly in your account dashboard and transaction receipt in under 2 seconds after checkout.",
   },
 ];
 
-const FEATURES = [
-  {
-    icon: ShieldCheck,
-    title: "Escrow Token Vault",
-    desc: "Deliverable keys are encrypted until payment clearance. No Discord DM handoffs or middleman delays.",
-  },
-  {
-    icon: Zap,
-    title: "Sub-2s Automated Dispatch",
-    desc: "Roblox asset keys unlock into customer inventories instantly without waiting for creators to come online.",
-  },
-  {
-    icon: BadgeCheck,
-    title: "Verified Creator Badging",
-    desc: "Community ratings, verified seller track records, and authentic provenance badges on every asset.",
-  },
-  {
-    icon: Boxes,
-    title: "Fleet Bundle Publishing",
-    desc: "Package entire agency fleets, ELS siren soundbanks, and uniform templates into multi-item packs.",
-  },
-  {
-    icon: MessageCircle,
-    title: "Discord Webhook Relays",
-    desc: "Broadcast new asset drops and updates automatically to your roleplay server or design community.",
-  },
-  {
-    icon: Lock,
-    title: "0% Marketplace Cut",
-    desc: "You keep 100% of your earnings. No listing fees, monthly developer cuts, or hidden commissions.",
-  },
+const STATS = [
+  { label: "Assets Listed", value: "1,240+", sub: "Verified ER:LC liveries & packs" },
+  { label: "Creator Cut", value: "0% Fee", sub: "100% of proceeds kept by creators" },
+  { label: "Delivery Latency", value: "< 1.8s", sub: "Automated escrow key dispatch" },
+  { label: "Platform Uptime", value: "99.99%", sub: "Edge-replicated infrastructure" },
 ];
 
-// Highlighted asset spotlight
-const SPOTLIGHT_ITEM = {
-  title: "2024 State Police Slicktop Ghost Fleet",
-  category: "Liveries",
-  department: "Police",
-  creator: "ApexLiveryStudio",
-  rating: "5.0",
-  price: "150 R$",
-  vehicles: ["2024 Tahoe PPV", "Crown Victoria", "Explorer Interceptor", "Dodge Charger"],
-  features: ["4K Daylight Reflections", "Stage 3 ELS Pattern Mapping", "Matching Unit Decals", "Full Installation Guide"],
-};
+const COMMUNITY_REVIEWS = [
+  {
+    author: "Chief_Anderson",
+    role: "Server Owner (River City RP)",
+    comment: "The 2024 State Police ghost pack transformed our fleet. Flawless 4K daylight reflections on the Tahoe and Charger with zero texture stretching.",
+    rating: 5,
+    tag: "Verified Buyer",
+  },
+  {
+    author: "DeputyMiller",
+    role: "Fleet Lead (Liberty County SO)",
+    comment: "Finally a marketplace where I don't have to deal with Discord DM scams. Purchased the sheriff pack and had the Roblox asset IDs in 2 seconds.",
+    rating: 5,
+    tag: "Verified Buyer",
+  },
+  {
+    author: "TrooperTailor",
+    role: "Creator (50+ Releases)",
+    comment: "0% listing fees and automated escrow key delivery made LibertyX our official storefront. The bundle publisher saves hours of work.",
+    rating: 5,
+    tag: "Verified Creator",
+  },
+];
 
 export default function Home() {
   const [listings, setListings] = useState<any[]>([]);
   const [selectedDept, setSelectedDept] = useState<string>("All");
+  const [activeHeroTab, setActiveHeroTab] = useState<string>("police");
   const [loading, setLoading] = useState(true);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
-  const [quickSearch, setQuickSearch] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     const query = db?.entities?.Listing?.filter || localDb.entities.Listing.filter;
@@ -124,156 +169,197 @@ export default function Home() {
       const matchesDept = l.departments?.some((d: string) => d.toLowerCase() === selectedDept.toLowerCase());
       if (!matchesDept) return false;
     }
-    if (quickSearch.trim()) {
-      const q = quickSearch.toLowerCase();
-      const matchTitle = l.title?.toLowerCase().includes(q);
-      const matchDesc = l.description?.toLowerCase().includes(q);
-      const matchCat = l.category?.toLowerCase().includes(q);
-      return matchTitle || matchDesc || matchCat;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      const inTitle = l.title?.toLowerCase().includes(q);
+      const inDesc = l.description?.toLowerCase().includes(q);
+      const inCat = l.category?.toLowerCase().includes(q);
+      return inTitle || inDesc || inCat;
     }
     return true;
   }).slice(0, 8);
 
+  const heroItem = HERO_SHOWCASE.find((i) => i.id === activeHeroTab) || HERO_SHOWCASE[0];
+
   return (
-    <div className="min-h-screen text-white bg-[#06080C] selection:bg-emerald-500/25 selection:text-emerald-300">
+    <div className="min-h-screen text-white bg-[#05060A] selection:bg-emerald-500/25 selection:text-emerald-300">
       <SiteNav />
 
-      {/* ─── EXPANSIVE HERO SECTION (CLEAN & BALANCED) ─── */}
-      <section className="relative pt-16 pb-20 lg:pt-24 lg:pb-28 border-b border-white/[0.06] overflow-hidden">
-        {/* Subtle grid background */}
+      {/* ─── HERO SECTION (FIVEBENCH + ERMBOT INSPIRED) ─── */}
+      <section className="relative pt-14 pb-20 lg:pt-20 lg:pb-28 border-b border-white/[0.06] overflow-hidden">
+        {/* Subtle grid pattern */}
         <div
-          className="pointer-events-none absolute inset-0 opacity-[0.02]"
+          className="pointer-events-none absolute inset-0 opacity-[0.025]"
           style={{
             backgroundImage: `linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)`,
-            backgroundSize: "40px 40px",
+            backgroundSize: "48px 48px",
           }}
         />
 
         {/* Ambient Top Glow */}
         <div
-          className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 w-2/3 max-w-3xl h-56 opacity-15"
+          className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 w-3/4 max-w-4xl h-64 opacity-20"
           style={{
             background: "radial-gradient(ellipse at 50% 0%, rgba(16, 185, 129, 0.45) 0%, transparent 70%)",
-            filter: "blur(60px)",
+            filter: "blur(70px)",
           }}
         />
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
             
-            {/* Left Column: Sharp headline & concise copy */}
+            {/* Left Column: Sharp Copy & Direct Marketplace Search */}
             <div className="lg:col-span-7 space-y-6">
-              <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/[0.06] px-3.5 py-1 text-xs font-semibold text-emerald-400">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                <span className="tracking-wide">ER:LC Verified Marketplace</span>
+              {/* Telemetry pill */}
+              <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/25 bg-emerald-500/[0.08] px-3.5 py-1 text-xs font-semibold text-emerald-400">
+                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span>Verified ER:LC Creator Marketplace</span>
               </div>
 
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.08] text-white">
-                Authentic ER:LC liveries, ELS profiles & emergency packs.
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.06] text-white">
+                The premier marketplace for authentic ER:LC liveries & assets.
               </h1>
 
-              <p className="text-base text-zinc-400 max-w-lg leading-relaxed">
-                Discover and publish vehicle fleet wraps, uniform packages, siren soundbanks, and roleplay map builds with automated escrow delivery.
+              <p className="text-sm sm:text-base text-zinc-400 max-w-xl leading-relaxed">
+                Discover, purchase, and publish 4K vehicle fleet packs, uniform templates, ELS configs, and custom server map builds with automated escrow delivery.
               </p>
 
+              {/* Direct Quick Search */}
+              <div className="max-w-lg relative">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search 1,200+ liveries, Tahoe, Crown Vic, Sheriff, ELS..."
+                  className="w-full rounded-2xl border border-white/[0.1] bg-[#0A0E17] pl-11 pr-28 py-3.5 text-xs sm:text-sm text-white placeholder:text-zinc-500 outline-none focus:border-emerald-500/50 shadow-lg transition"
+                />
+                <Link
+                  to={searchQuery ? `/marketplace?q=${encodeURIComponent(searchQuery)}` : "/marketplace"}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-bold transition shadow-sm"
+                >
+                  Search
+                </Link>
+              </div>
+
               {/* Action Buttons */}
-              <div className="pt-1 flex flex-wrap items-center gap-3.5">
+              <div className="flex flex-wrap items-center gap-3 pt-1">
                 <Link
                   to="/marketplace"
-                  className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 px-6 py-3.5 text-xs sm:text-sm font-bold text-black shadow-md shadow-emerald-500/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                  className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 px-6 py-3 text-xs sm:text-sm font-bold text-black shadow-md shadow-emerald-500/20 transition-all hover:scale-[1.01] active:scale-[0.99]"
                 >
                   <Compass className="w-4 h-4" />
-                  <span>Explore Marketplace</span>
+                  <span>Browse Full Catalog</span>
                   <ArrowRight className="w-4 h-4" />
                 </Link>
 
                 <Link
                   to="/sell"
-                  className="inline-flex items-center gap-2 rounded-xl border border-white/[0.1] bg-[#0B0F17] hover:bg-[#101520] hover:border-emerald-500/30 px-6 py-3.5 text-xs sm:text-sm font-semibold text-zinc-200 hover:text-white transition-all"
+                  className="inline-flex items-center gap-2 rounded-xl border border-white/[0.1] bg-[#090C14] hover:bg-[#0E1320] hover:border-emerald-500/30 px-5 py-3 text-xs sm:text-sm font-semibold text-zinc-200 hover:text-white transition-all"
                 >
                   <Upload className="w-4 h-4 text-emerald-400" />
-                  <span>Start Selling</span>
+                  <span>Start Selling (0% Cut)</span>
                 </Link>
               </div>
 
-              {/* Trust Indicators */}
-              <div className="pt-3 flex items-center gap-5 text-xs text-zinc-500 font-mono">
-                <div className="flex items-center gap-1.5 text-zinc-400">
+              {/* Trust Strip */}
+              <div className="pt-3 flex items-center gap-5 text-xs text-zinc-400 font-mono">
+                <div className="flex items-center gap-1.5">
                   <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                  <span>Escrow Delivery</span>
+                  <span>Scam-Shield Escrow</span>
                 </div>
                 <span className="text-zinc-700">•</span>
-                <div className="flex items-center gap-1.5 text-zinc-400">
+                <div className="flex items-center gap-1.5">
                   <Zap className="w-4 h-4 text-emerald-400" />
-                  <span>&lt; 2s Key Dispatch</span>
+                  <span>&lt; 2s Key Delivery</span>
                 </div>
                 <span className="text-zinc-700">•</span>
-                <div className="flex items-center gap-1.5 text-zinc-400">
+                <div className="flex items-center gap-1.5">
                   <Lock className="w-4 h-4 text-emerald-400" />
                   <span>0% Creator Fee</span>
                 </div>
               </div>
             </div>
 
-            {/* Right Column: Hero Spotlight Asset Card */}
+            {/* Right Column: Interactive Vehicle Showcase Card */}
             <div className="lg:col-span-5">
-              <div className="rounded-2xl border border-white/[0.08] bg-[#0A0D14] p-6 shadow-2xl relative group hover:border-emerald-500/30 transition-all">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 rounded-md">
-                      Featured Drop
+              <div className="rounded-2xl border border-white/[0.09] bg-[#090D15] p-5 sm:p-6 shadow-2xl space-y-4">
+                
+                {/* Showcase Department Switcher */}
+                <div className="flex items-center gap-1.5 p-1 rounded-xl bg-black/50 border border-white/[0.04]">
+                  {HERO_SHOWCASE.map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => setActiveHeroTab(item.id)}
+                      className={cn(
+                        "flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all text-center",
+                        activeHeroTab === item.id
+                          ? "bg-emerald-500 text-black font-bold shadow-sm"
+                          : "text-zinc-400 hover:text-white"
+                      )}
+                    >
+                      {item.dept}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Main Preview Image */}
+                <div className="relative aspect-[16/10] rounded-xl overflow-hidden border border-white/[0.08] bg-black/60">
+                  <img
+                    src={heroItem.image}
+                    alt={heroItem.name}
+                    className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+                  />
+
+                  <div className="absolute top-2.5 left-2.5">
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-400 bg-black/85 border border-emerald-500/30 px-2 py-0.5 rounded">
+                      {heroItem.dept} UNIT
                     </span>
-                    <span className="text-xs font-mono text-zinc-400">{SPOTLIGHT_ITEM.category}</span>
                   </div>
 
-                  <div className="flex items-center gap-1 text-emerald-400 text-xs font-bold font-mono">
-                    <Star className="w-3.5 h-3.5 fill-emerald-400" />
-                    <span>{SPOTLIGHT_ITEM.rating}</span>
+                  <div className="absolute bottom-2.5 right-2.5">
+                    <span className="text-xs font-mono font-extrabold px-2.5 py-0.5 rounded bg-emerald-500 text-black shadow-md">
+                      {heroItem.price}
+                    </span>
                   </div>
                 </div>
 
-                <h3 className="text-lg font-bold text-white mb-2 leading-snug">
-                  {SPOTLIGHT_ITEM.title}
-                </h3>
-                <p className="text-xs text-zinc-400 mb-4 leading-relaxed line-clamp-2">
-                  Complete 4-vehicle agency livery package with ultra-crisp daylight reflections and custom stage-3 lighting pattern configs.
-                </p>
+                {/* Details */}
+                <div>
+                  <div className="flex items-center justify-between text-xs font-mono text-zinc-400 mb-1">
+                    <span>Seller: <strong className="text-white">{heroItem.creator}</strong></span>
+                    <span className="text-emerald-400 font-bold">{heroItem.rating}</span>
+                  </div>
+                  <h3 className="text-base font-bold text-white">{heroItem.name}</h3>
+                </div>
 
                 {/* Vehicle Badges */}
-                <div className="grid grid-cols-2 gap-2 mb-4">
-                  {SPOTLIGHT_ITEM.vehicles.map((v, i) => (
-                    <div key={i} className="flex items-center gap-1.5 p-2 rounded-xl bg-black/40 border border-white/[0.04] text-[11px] text-zinc-300 font-medium">
+                <div className="grid grid-cols-2 gap-1.5">
+                  {heroItem.vehicles.map((v, i) => (
+                    <div key={i} className="flex items-center gap-1.5 p-1.5 rounded-lg bg-black/40 border border-white/[0.04] text-[11px] text-zinc-300 font-medium">
                       <Car className="w-3 h-3 text-emerald-400 shrink-0" />
                       <span className="truncate">{v}</span>
                     </div>
                   ))}
                 </div>
 
-                {/* Features */}
-                <div className="space-y-1.5 mb-5 text-xs text-zinc-400 border-t border-white/[0.06] pt-3.5">
-                  {SPOTLIGHT_ITEM.features.map((f, i) => (
-                    <div key={i} className="flex items-center gap-2">
-                      <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                      <span className="truncate">{f}</span>
-                    </div>
+                {/* Tags */}
+                <div className="flex items-center gap-1.5 flex-wrap pt-2 border-t border-white/[0.04]">
+                  {heroItem.tags.map((t, i) => (
+                    <span key={i} className="text-[10px] font-mono text-zinc-400 bg-white/[0.04] px-2 py-0.5 rounded border border-white/[0.06]">
+                      ✓ {t}
+                    </span>
                   ))}
                 </div>
 
-                {/* Bottom Action */}
-                <div className="flex items-center justify-between pt-4 border-t border-white/[0.06]">
-                  <div>
-                    <span className="text-[10px] font-mono text-zinc-500 block uppercase">Price</span>
-                    <span className="text-base font-mono font-bold text-emerald-400">{SPOTLIGHT_ITEM.price}</span>
-                  </div>
-
-                  <Link
-                    to="/marketplace?dept=Police"
-                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-bold transition shadow-sm"
-                  >
-                    <span>Inspect Asset</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
-                </div>
+                <Link
+                  to={`/marketplace?dept=${heroItem.dept}`}
+                  className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-white/[0.05] hover:bg-emerald-500 hover:text-black text-xs font-bold text-zinc-200 transition"
+                >
+                  <span>Inspect {heroItem.dept} Catalog</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
               </div>
             </div>
 
@@ -281,7 +367,20 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ─── LIVE MARKETPLACE SHOWCASE ─── */}
+      {/* ─── FIVEBENCH-STYLE TELEMETRY STATS STRIP ─── */}
+      <section className="border-b border-white/[0.06] bg-[#07090F]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 grid grid-cols-2 md:grid-cols-4 gap-6">
+          {STATS.map((s, i) => (
+            <div key={i} className="space-y-1">
+              <span className="text-[11px] font-mono uppercase tracking-wider text-zinc-500 block">{s.label}</span>
+              <p className="text-2xl sm:text-3xl font-mono font-black text-white">{s.value}</p>
+              <p className="text-xs text-zinc-400">{s.sub}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ─── LIVE MARKETPLACE DROPS & RELEASES ─── */}
       <section className="py-16 lg:py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8 pb-4 border-b border-white/[0.06]">
           <div>
@@ -294,20 +393,20 @@ export default function Home() {
           </div>
 
           {/* Department Filter Pills */}
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5 flex-wrap">
             {["All", "Police", "Sheriff", "Fire", "DOT"].map((dept) => (
               <button
                 key={dept}
                 type="button"
                 onClick={() => setSelectedDept(dept)}
                 className={cn(
-                  "px-3.5 py-1.5 text-xs font-semibold rounded-xl border transition-all",
+                  "px-3 py-1.5 text-xs font-semibold rounded-xl border transition-all",
                   selectedDept === dept
                     ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-400 shadow-sm"
                     : "border-white/[0.08] bg-white/[0.02] text-zinc-400 hover:text-white hover:bg-white/[0.04]"
                 )}
               >
-                {dept === "All" ? "All Departments" : dept}
+                {dept === "All" ? "All Units" : dept}
               </button>
             ))}
 
@@ -315,22 +414,22 @@ export default function Home() {
               to="/marketplace"
               className="inline-flex items-center gap-1 text-xs font-bold text-emerald-400 hover:underline ml-2"
             >
-              <span>View all ({listings.length})</span>
+              <span>View full catalog ({listings.length})</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
         </div>
 
-        {/* Dynamic Listings Grid */}
+        {/* Dynamic Connected Listings Grid */}
         {!loading && displayedListings.length === 0 ? (
-          <div className="rounded-2xl border border-white/[0.08] bg-[#0A0D14] p-10 text-center max-w-md mx-auto">
+          <div className="rounded-2xl border border-white/[0.08] bg-[#090C12] p-10 text-center max-w-md mx-auto">
             <Store className="w-8 h-8 text-emerald-400 mx-auto mb-2" />
             <h3 className="text-base font-bold text-white mb-1">No assets found</h3>
             <p className="text-xs text-zinc-400 mb-4">Try selecting another department or resetting filters.</p>
             <button
               onClick={() => {
                 setSelectedDept("All");
-                setQuickSearch("");
+                setSearchQuery("");
               }}
               className="text-xs font-bold text-emerald-400 underline"
             >
@@ -346,8 +445,8 @@ export default function Home() {
         )}
       </section>
 
-      {/* ─── ER:LC AGENCY DEPARTMENTS ─── */}
-      <section className="py-16 lg:py-20 px-4 sm:px-6 lg:px-8 border-t border-white/[0.06] bg-[#080B10]">
+      {/* ─── ER:LC AGENCY UNITS (ERMBOT INSPIRED DIRECTORY) ─── */}
+      <section className="py-16 lg:py-20 px-4 sm:px-6 lg:px-8 border-t border-white/[0.06] bg-[#07090F]">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10">
             <div>
@@ -371,7 +470,7 @@ export default function Home() {
               <Link
                 key={dept.id}
                 to={`/marketplace?dept=${dept.id}`}
-                className="rounded-2xl border border-white/[0.08] bg-[#06080C] p-5 hover:border-emerald-500/35 hover:bg-[#0A0D15] transition-all group flex flex-col justify-between"
+                className="rounded-2xl border border-white/[0.08] bg-[#05070C] p-5 hover:border-emerald-500/35 hover:bg-[#0A0D15] transition-all group flex flex-col justify-between"
               >
                 <div>
                   <div className="h-20 w-full rounded-xl bg-black/40 border border-white/[0.04] p-3 flex items-center justify-center mb-4 group-hover:border-emerald-500/20 transition-colors">
@@ -404,53 +503,137 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ─── WHY LIBERTYX (NATURAL & CONCISE) ─── */}
+      {/* ─── WHY LIBERTYX / ESCROW SECURITY BENTO ─── */}
       <section className="py-16 lg:py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
         <div className="max-w-2xl mb-12">
           <p className="text-xs font-mono uppercase tracking-wider text-emerald-400 mb-1.5">
-            Platform Security
+            Security & Infrastructure
           </p>
           <h2 className="text-2xl sm:text-4xl font-black text-white tracking-tight">
-            Built for creators & server owners.
+            Built different for creators & server owners.
           </h2>
           <p className="mt-2 text-sm text-zinc-400 leading-relaxed">
             Eliminating Discord DM scams with automated escrow delivery and verified seller track records.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {FEATURES.map((f, i) => {
-            const Icon = f.icon;
-            return (
-              <div
-                key={i}
-                className="rounded-2xl border border-white/[0.08] bg-[#0A0D14] p-6 flex flex-col justify-between hover:border-emerald-500/30 transition-all group"
-              >
-                <div>
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-400 mb-4 group-hover:scale-105 transition-transform">
-                    <Icon className="h-5 w-5" />
-                  </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          {/* Card 1: Large Escrow */}
+          <div className="md:col-span-2 rounded-2xl border border-white/[0.08] bg-[#090D15] p-7 flex flex-col justify-between hover:border-emerald-500/30 transition-all">
+            <div className="space-y-4">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-400">
+                <ShieldCheck className="h-6 w-6" />
+              </div>
+              <h3 className="text-xl font-bold text-white">Scam-Shield Escrow Vault</h3>
+              <p className="text-xs sm:text-sm text-zinc-400 max-w-lg leading-relaxed">
+                Deliverable keys and download tokens are encrypted inside an isolated vault until payment clearance. Zero trust required, zero middleman delay.
+              </p>
+            </div>
+            <div className="mt-6 pt-4 border-t border-white/[0.04] flex items-center justify-between text-xs text-emerald-400 font-mono">
+              <span>Automated 100% Guaranteed Dispatch</span>
+              <CheckCircle2 className="w-4 h-4" />
+            </div>
+          </div>
 
-                  <h3 className="text-base font-bold text-white mb-1.5">
-                    {f.title}
-                  </h3>
-                  <p className="text-xs text-zinc-400 leading-relaxed">
-                    {f.desc}
+          {/* Card 2: 0% Fee */}
+          <div className="rounded-2xl border border-white/[0.08] bg-[#090D15] p-7 flex flex-col justify-between hover:border-emerald-500/30 transition-all">
+            <div className="space-y-4">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-400">
+                <Lock className="h-6 w-6" />
+              </div>
+              <h3 className="text-xl font-bold text-white">0% Platform Cut</h3>
+              <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
+                Creators retain 100% of listed proceeds. No hidden commission, listing fee, or monthly developer costs.
+              </p>
+            </div>
+            <div className="mt-6 pt-4 border-t border-white/[0.04] flex items-center justify-between text-xs text-emerald-400 font-mono">
+              <span>Creators Keep 100%</span>
+              <CheckCircle2 className="w-4 h-4" />
+            </div>
+          </div>
+
+          {/* Card 3: Instant Dispatch */}
+          <div className="rounded-2xl border border-white/[0.08] bg-[#090D15] p-7 flex flex-col justify-between hover:border-emerald-500/30 transition-all">
+            <div className="space-y-4">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-400">
+                <Zap className="h-6 w-6" />
+              </div>
+              <h3 className="text-xl font-bold text-white">Sub-2s Automated Delivery</h3>
+              <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
+                Roblox asset IDs and files unlock into your inventory instantly without waiting for creators to come online.
+              </p>
+            </div>
+            <div className="mt-6 pt-4 border-t border-white/[0.04] flex items-center justify-between text-xs text-emerald-400 font-mono">
+              <span>Instant Checkout Receipt</span>
+              <CheckCircle2 className="w-4 h-4" />
+            </div>
+          </div>
+
+          {/* Card 4: Multi-Vehicle Bundles */}
+          <div className="md:col-span-2 rounded-2xl border border-white/[0.08] bg-[#090D15] p-7 flex flex-col justify-between hover:border-emerald-500/30 transition-all">
+            <div className="space-y-4">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-400">
+                <Boxes className="h-6 w-6" />
+              </div>
+              <h3 className="text-xl font-bold text-white">Fleet & Bundle Publishing</h3>
+              <p className="text-xs sm:text-sm text-zinc-400 max-w-lg leading-relaxed">
+                Package entire agency fleets, ELS siren soundbanks, and uniform templates into multi-item discounted bundles with single-click checkout.
+              </p>
+            </div>
+            <div className="mt-6 pt-4 border-t border-white/[0.04] flex items-center justify-between text-xs text-emerald-400 font-mono">
+              <span>Multi-Asset Vault Packaging</span>
+              <CheckCircle2 className="w-4 h-4" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── COMMUNITY TESTIMONIALS ─── */}
+      <section className="py-16 px-4 sm:px-6 lg:px-8 border-t border-white/[0.06] bg-[#07090F]">
+        <div className="max-w-7xl mx-auto">
+          <div className="max-w-2xl mb-10">
+            <p className="text-xs font-mono uppercase tracking-wider text-emerald-400 mb-1">
+              Community Feedback
+            </p>
+            <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+              Trusted by ER:LC creators & server owners.
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {COMMUNITY_REVIEWS.map((rev, idx) => (
+              <div
+                key={idx}
+                className="rounded-2xl border border-white/[0.08] bg-[#05070C] p-6 space-y-3 flex flex-col justify-between"
+              >
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex text-emerald-400">
+                      {[...Array(rev.rating)].map((_, i) => (
+                        <Star key={i} className="w-3.5 h-3.5 fill-emerald-400" />
+                      ))}
+                    </div>
+                    <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded">
+                      {rev.tag}
+                    </span>
+                  </div>
+                  <p className="text-xs text-zinc-300 leading-relaxed italic">
+                    "{rev.comment}"
                   </p>
                 </div>
 
-                <div className="mt-5 pt-3 border-t border-white/[0.04] flex items-center justify-between text-xs text-zinc-500 group-hover:text-emerald-400 transition-colors">
-                  <span>Verified Standard</span>
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400/80" />
+                <div className="pt-3 border-t border-white/[0.04]">
+                  <p className="text-xs font-bold text-white">{rev.author}</p>
+                  <p className="text-[10px] text-zinc-500 font-mono">{rev.role}</p>
                 </div>
               </div>
-            );
-          })}
+            ))}
+          </div>
         </div>
       </section>
 
       {/* ─── FAQ ─── */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 border-t border-white/[0.06] bg-[#080B10]">
+      <section className="py-16 px-4 sm:px-6 lg:px-8 border-t border-white/[0.06] bg-[#05060A]">
         <div className="max-w-3xl mx-auto">
           <div className="text-center mb-10">
             <p className="text-xs font-mono uppercase tracking-wider text-emerald-400 mb-1">
@@ -470,8 +653,8 @@ export default function Home() {
                   className={cn(
                     "rounded-xl border transition-all overflow-hidden",
                     isOpen
-                      ? "border-emerald-500/30 bg-[#06080C]"
-                      : "border-white/[0.06] bg-[#06080C]/60 hover:border-white/[0.1]"
+                      ? "border-emerald-500/30 bg-[#080B12]"
+                      : "border-white/[0.06] bg-[#080B12]/50 hover:border-white/[0.1]"
                   )}
                 >
                   <button
@@ -502,7 +685,7 @@ export default function Home() {
 
       {/* ─── CREATOR ONBOARDING BANNER ─── */}
       <section className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-        <div className="rounded-2xl border border-emerald-500/20 bg-gradient-to-r from-[#0C121A] via-[#0A0E15] to-[#06080C] p-8 sm:p-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-xl">
+        <div className="rounded-2xl border border-emerald-500/20 bg-gradient-to-r from-[#0C121A] via-[#0A0E15] to-[#05060A] p-8 sm:p-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-xl">
           <div className="max-w-lg">
             <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-400">
               Creator Studio
@@ -542,7 +725,7 @@ export default function Home() {
 
 export function Footer() {
   return (
-    <footer className="border-t border-white/[0.06] bg-[#040508] text-zinc-400">
+    <footer className="border-t border-white/[0.06] bg-[#030407] text-zinc-400">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 grid grid-cols-2 md:grid-cols-5 gap-8">
         <div className="col-span-2">
           <Link to="/" className="inline-block mb-3">
