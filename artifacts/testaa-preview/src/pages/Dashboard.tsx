@@ -5,32 +5,22 @@ import {
   DollarSign,
   Star,
   Plus,
-  ArrowRight,
   ShoppingBag,
-  ShieldCheck,
-  Sparkles,
   ExternalLink,
   Trash2,
   CheckCircle2,
   MessageCircle,
   BarChart3,
-  Users,
+  Settings,
+  Sparkles,
   Palette,
-  Eye,
-  Heart,
   TrendingUp,
-  Clock,
-  Radio,
   Send,
   Globe,
-  Settings,
-  HelpCircle,
-  FileCheck,
-  Layers,
 } from "lucide-react";
 
-import SiteNav from "@/components/SiteNav";
-import { Footer } from "@/pages/Home";
+import PageShell from "@/components/PageShell";
+import EmptyState from "@/components/EmptyState";
 import { useAuth } from "@/lib/AuthContext";
 import { localDb } from "@/lib/localDb";
 import { cn } from "@/lib/utils";
@@ -43,7 +33,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
 
   const [activeTab, setActiveTab] = useState<
-    "overview" | "products" | "orders" | "reviews" | "analytics" | "settings"
+    "overview" | "products" | "orders" | "messages" | "reviews" | "storefront" | "settings"
   >("overview");
 
   const [listings, setListings] = useState<any[]>([]);
@@ -110,7 +100,6 @@ export default function Dashboard() {
   }, [user]);
 
   const activeListings = listings.filter((l) => l.status === "active");
-  const totalCatalogValue = activeListings.reduce((sum, l) => sum + (l.price_type === "Free" ? 0 : Number(l.price) || 0), 0);
   const totalSalesRevenue = orders.reduce((sum, o) => sum + (Number(o.price) || 0), 0);
 
   const handleDeleteListing = async (id: string) => {
@@ -142,491 +131,288 @@ export default function Dashboard() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-[#07090E] text-white flex flex-col justify-between">
-        <SiteNav />
-        <div className="max-w-md mx-auto my-auto p-10 text-center rounded-2xl border border-white/[0.08] bg-[#0A0D15] shadow-2xl">
-          <Store className="w-10 h-10 text-emerald-400 mx-auto mb-3" />
-          <h2 className="text-xl font-bold text-white mb-2">Creator Studio Authentication</h2>
-          <p className="text-xs text-zinc-400 mb-6 leading-relaxed">
-            Please sign in with Discord to access your creator inventory, sales, and storefront builder.
-          </p>
-          <Link
-            to="/login?returnTo=/dashboard"
-            className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 px-6 py-2.5 text-xs font-bold text-black transition"
-          >
-            Sign in with Discord
-          </Link>
+      <PageShell>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="max-w-sm w-full p-6 text-center rounded-xl bg-[#12151E] border border-white/[0.08]">
+            <Store className="w-8 h-8 text-emerald-400 mx-auto mb-3" />
+            <h2 className="text-sm font-semibold text-slate-50 mb-2">Creator Studio Authentication</h2>
+            <p className="text-xs text-slate-400 mb-6">
+              Sign in with Discord to access your creator inventory, sales, and storefront builder.
+            </p>
+            <Link
+              to="/login?returnTo=/dashboard"
+              className="inline-flex w-full justify-center items-center gap-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 px-4 py-2 text-sm font-semibold text-black active:scale-[0.98]"
+            >
+              Sign in with Discord
+            </Link>
+          </div>
         </div>
-        <Footer />
-      </div>
+      </PageShell>
     );
   }
 
+  const navItems = [
+    { id: "overview", label: "Overview", icon: TrendingUp },
+    { id: "products", label: "Products", count: activeListings.length, icon: Store },
+    { id: "orders", label: "Orders", count: orders.length, icon: ShoppingBag },
+    { id: "messages", label: "Messages", icon: MessageCircle },
+    { id: "reviews", label: "Reviews", count: reviews.length, icon: Star },
+    { id: "storefront", label: "Storefront", icon: Palette },
+    { id: "settings", label: "Settings", icon: Settings },
+  ] as const;
+
   return (
-    <div className="min-h-screen bg-[#07090E] text-white flex flex-col justify-between selection:bg-emerald-500/25 selection:text-emerald-300">
-      <div>
-        <SiteNav />
-
-        {/* ─── CREATOR STUDIO TOP BAR ─── */}
-        <div className="border-b border-white/[0.06] bg-[#0A0D15]">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/[0.06] px-3 py-0.5 text-xs font-semibold text-emerald-400 mb-2">
-                <Sparkles className="h-3 w-3" />
-                <span>Creator Studio Workspace</span>
-              </div>
-
-              <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white flex items-center gap-2">
-                <span>{activeUser.display_name || activeUser.username}</span>
-                {activeUser.roblox_verified && (
-                  <span className="text-[11px] font-mono text-blue-400 bg-blue-500/10 border border-blue-500/30 px-2 py-0.2 rounded font-bold">
-                    ✓ Roblox Verified
-                  </span>
-                )}
-              </h1>
-              <p className="text-xs sm:text-sm text-zinc-400 mt-1">
-                Manage your ER:LC asset catalog, customer deliveries, review replies, and personal storefront.
-              </p>
-            </div>
-
-            <div className="flex items-center gap-3 flex-wrap">
-              <Link
-                to={`/u/${activeUser.username || "me"}`}
-                target="_blank"
-                className="inline-flex items-center gap-1.5 border border-white/[0.08] bg-[#07090E] hover:bg-white/[0.04] text-zinc-300 px-4 py-2.5 rounded-xl text-xs font-semibold transition"
-              >
-                <Store className="w-4 h-4 text-emerald-400" />
-                <span>Public Storefront</span>
-                <ExternalLink className="w-3 h-3 text-zinc-500" />
-              </Link>
-
-              <Link
-                to="/dashboard/storefront"
-                className="inline-flex items-center gap-1.5 border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 px-4 py-2.5 rounded-xl text-xs font-semibold transition"
-              >
-                <Palette className="w-4 h-4" />
-                <span>Storefront Builder</span>
-              </Link>
-
-              <Link
-                to="/sell"
-                className="inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-black font-bold px-5 py-2.5 rounded-xl text-xs shadow-md shadow-emerald-500/15 transition-all hover:scale-[1.02] active:scale-[0.98]"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Publish Asset</span>
-              </Link>
-            </div>
+    <PageShell noPadding fullWidth>
+      <div className="flex min-h-[calc(100vh-56px)] bg-[#090A0F] text-slate-50">
+        {/* Left Sidebar */}
+        <aside className="w-56 shrink-0 bg-[#12151E] border-r border-white/[0.08] flex flex-col hidden md:flex">
+          <div className="p-4 border-b border-white/[0.08]">
+            <h2 className="text-sm font-semibold text-slate-50 truncate flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-emerald-400" />
+              Creator Studio
+            </h2>
           </div>
-        </div>
-
-        {/* ─── MAIN DASHBOARD BODY ─── */}
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-10 space-y-8">
-          
-          {/* TAB BAR */}
-          <div className="flex items-center gap-1.5 border-b border-white/[0.06] pb-3 overflow-x-auto">
-            {[
-              { id: "overview", label: "Overview", icon: TrendingUp },
-              { id: "products", label: "My Products", count: activeListings.length, icon: Store },
-              { id: "orders", label: "Orders & Sales", count: orders.length, icon: ShoppingBag },
-              { id: "reviews", label: "Reviews & Replies", count: reviews.length, icon: Star },
-              { id: "analytics", label: "Store Analytics", icon: BarChart3 },
-              { id: "settings", label: "Account Settings", icon: Settings },
-            ].map((tab) => {
-              const Icon = tab.icon;
+          <nav className="flex-1 overflow-y-auto p-3 space-y-1">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = activeTab === item.id;
               return (
                 <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => setActiveTab(tab.id as any)}
+                  key={item.id}
+                  onClick={() => {
+                    if (item.id === "storefront") navigate("/dashboard/storefront");
+                    else setActiveTab(item.id as any);
+                  }}
                   className={cn(
-                    "px-4 py-2 text-xs font-semibold rounded-xl transition-all flex items-center gap-2 shrink-0",
-                    activeTab === tab.id
-                      ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shadow-sm"
-                      : "text-zinc-400 hover:text-white hover:bg-white/[0.03] border border-transparent"
+                    "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                    isActive
+                      ? "bg-emerald-500/10 text-emerald-400"
+                      : "text-slate-400 hover:text-slate-50 hover:bg-white/[0.04]"
                   )}
                 >
-                  <Icon className="w-3.5 h-3.5" />
-                  <span>{tab.label}</span>
-                  {tab.count !== undefined && (
-                    <span className="text-[10px] font-mono font-bold bg-white/[0.08] px-1.5 py-0.2 rounded">
-                      {tab.count}
+                  <Icon className="w-4 h-4" />
+                  <span className="flex-1 text-left">{item.label}</span>
+                  {item.count !== undefined && (
+                    <span className="text-xs bg-white/[0.06] text-slate-300 px-1.5 py-0.5 rounded">
+                      {item.count}
                     </span>
                   )}
                 </button>
               );
             })}
+          </nav>
+          <div className="p-4 border-t border-white/[0.08]">
+            <Link
+              to="/sell"
+              className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 px-4 py-2 text-sm font-semibold text-black active:scale-[0.98]"
+            >
+              <Plus className="w-4 h-4" />
+              Publish Asset
+            </Link>
           </div>
+        </aside>
 
-          {/* 1. OVERVIEW TAB */}
-          {activeTab === "overview" && (
-            <div className="space-y-8">
-              {/* Stats HUD */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="rounded-2xl border border-white/[0.08] bg-[#0A0D15] p-5">
-                  <span className="text-[11px] font-mono font-bold text-zinc-500 uppercase tracking-wider block mb-1">Active Products</span>
-                  <p className="text-2xl font-mono font-black text-white">{activeListings.length}</p>
-                  <p className="text-[10px] text-zinc-500 mt-0.5">Live on marketplace</p>
-                </div>
-
-                <div className="rounded-2xl border border-white/[0.08] bg-[#0A0D15] p-5">
-                  <span className="text-[11px] font-mono font-bold text-zinc-500 uppercase tracking-wider block mb-1">Total Sales Revenue</span>
-                  <p className="text-2xl font-mono font-black text-emerald-400">R$ {totalSalesRevenue}</p>
-                  <p className="text-[10px] text-zinc-500 mt-0.5">100% Retained (0% cut)</p>
-                </div>
-
-                <div className="rounded-2xl border border-white/[0.08] bg-[#0A0D15] p-5">
-                  <span className="text-[11px] font-mono font-bold text-zinc-500 uppercase tracking-wider block mb-1">Completed Deliveries</span>
-                  <p className="text-2xl font-mono font-black text-white">{orders.length}</p>
-                  <p className="text-[10px] text-zinc-500 mt-0.5">Automated escrow keys</p>
-                </div>
-
-                <div className="rounded-2xl border border-white/[0.08] bg-[#0A0D15] p-5">
-                  <span className="text-[11px] font-mono font-bold text-zinc-500 uppercase tracking-wider block mb-1">Storefront Followers</span>
-                  <p className="text-2xl font-mono font-black text-white">{followersCount}</p>
-                  <p className="text-[10px] text-zinc-500 mt-0.5">Subscribed users</p>
-                </div>
+        {/* Main Content */}
+        <main className="flex-1 flex flex-col min-w-0">
+          <div className="p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto w-full space-y-6">
+            
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-xl font-bold tracking-tight text-slate-50">
+                  {navItems.find(n => n.id === activeTab)?.label}
+                </h1>
+                <p className="text-sm text-slate-400 mt-1">
+                  Welcome back, {activeUser.display_name || activeUser.username}.
+                </p>
               </div>
-
-              {/* Quick Actions Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Link
-                  to="/sell"
-                  className="p-5 rounded-2xl border border-white/[0.08] bg-[#0A0D15] hover:border-emerald-500/30 hover:bg-[#0E1320] transition group space-y-2"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-white group-hover:text-emerald-400">Publish New Livery</span>
-                    <Plus className="w-4 h-4 text-emerald-400" />
-                  </div>
-                  <p className="text-xs text-zinc-400 leading-relaxed">
-                    Upload ER:LC vehicle liveries, EUP uniforms, or ELS soundbanks with instant escrow delivery.
-                  </p>
-                </Link>
-
-                <Link
-                  to="/dashboard/storefront"
-                  className="p-5 rounded-2xl border border-white/[0.08] bg-[#0A0D15] hover:border-emerald-500/30 hover:bg-[#0E1320] transition group space-y-2"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-white group-hover:text-emerald-400">Customize Storefront</span>
-                    <Palette className="w-4 h-4 text-emerald-400" />
-                  </div>
-                  <p className="text-xs text-zinc-400 leading-relaxed">
-                    Update your commission status, announcement notice, custom services, and FAQ items.
-                  </p>
-                </Link>
-
-                <Link
-                  to="/messages"
-                  className="p-5 rounded-2xl border border-white/[0.08] bg-[#0A0D15] hover:border-emerald-500/30 hover:bg-[#0E1320] transition group space-y-2"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-white group-hover:text-emerald-400">Buyer Messages</span>
-                    <MessageCircle className="w-4 h-4 text-emerald-400" />
-                  </div>
-                  <p className="text-xs text-zinc-400 leading-relaxed">
-                    Answer questions from prospective buyers and manage custom commission requests.
-                  </p>
-                </Link>
-              </div>
+              <Link
+                to={`/u/${activeUser.username || "me"}`}
+                target="_blank"
+                className="inline-flex items-center gap-2 bg-white/[0.06] hover:bg-white/[0.1] text-slate-200 border border-white/[0.08] rounded-lg px-4 py-2 text-sm"
+              >
+                <span>View Store</span>
+                <ExternalLink className="w-4 h-4" />
+              </Link>
             </div>
-          )}
 
-          {/* 2. PRODUCTS TAB */}
-          {activeTab === "products" && (
-            <div className="rounded-2xl border border-white/[0.08] bg-[#0A0D15] overflow-hidden shadow-xl">
-              <div className="p-5 border-b border-white/[0.06] flex items-center justify-between">
-                <div>
-                  <h3 className="font-bold text-sm text-white">Active Product Listings</h3>
-                  <p className="text-xs text-zinc-400">Manage your published ER:LC liveries and packs.</p>
+            {/* OVERVIEW */}
+            {activeTab === "overview" && (
+              <div className="space-y-6">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="bg-[#12151E] border border-white/[0.08] rounded-xl p-4">
+                    <span className="text-xs font-medium text-slate-500 uppercase tracking-wider block mb-1">Products</span>
+                    <p className="text-xl font-bold text-slate-50">{activeListings.length}</p>
+                  </div>
+                  <div className="bg-[#12151E] border border-white/[0.08] rounded-xl p-4">
+                    <span className="text-xs font-medium text-slate-500 uppercase tracking-wider block mb-1">Revenue</span>
+                    <p className="text-xl font-bold text-emerald-400">R$ {totalSalesRevenue}</p>
+                  </div>
+                  <div className="bg-[#12151E] border border-white/[0.08] rounded-xl p-4">
+                    <span className="text-xs font-medium text-slate-500 uppercase tracking-wider block mb-1">Orders</span>
+                    <p className="text-xl font-bold text-slate-50">{orders.length}</p>
+                  </div>
+                  <div className="bg-[#12151E] border border-white/[0.08] rounded-xl p-4">
+                    <span className="text-xs font-medium text-slate-500 uppercase tracking-wider block mb-1">Followers</span>
+                    <p className="text-xl font-bold text-slate-50">{followersCount}</p>
+                  </div>
                 </div>
-                <Link
-                  to="/sell"
-                  className="text-xs font-bold text-emerald-400 hover:underline inline-flex items-center gap-1"
-                >
-                  <span>+ Publish New Asset</span>
-                </Link>
               </div>
+            )}
 
-              {activeListings.length === 0 ? (
-                <div className="p-14 text-center max-w-sm mx-auto">
-                  <Store className="w-10 h-10 text-zinc-600 mx-auto mb-3" />
-                  <h4 className="text-base font-bold text-white mb-1">No products listed yet</h4>
-                  <p className="text-xs text-zinc-400 mb-5 leading-relaxed">
-                    Publish your first ER:LC vehicle skin, ELS config, or uniform pack.
-                  </p>
-                  <Link
-                    to="/sell"
-                    className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-5 py-2.5 text-xs font-bold text-black"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>Create First Listing</span>
-                  </Link>
-                </div>
-              ) : (
-                <div className="divide-y divide-white/[0.04]">
-                  {activeListings.map((l) => {
-                    const isFree = l.price_type === "Free" || !l.price || l.price === 0;
-                    return (
-                      <div key={l.id} className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-white/[0.01] transition">
-                        <div className="flex items-center gap-3.5 min-w-0">
-                          <div className="w-14 h-14 rounded-xl bg-black/40 border border-white/[0.06] overflow-hidden shrink-0 flex items-center justify-center">
-                            {l.images && l.images.length > 0 ? (
+            {/* PRODUCTS */}
+            {activeTab === "products" && (
+              <div className="bg-[#12151E] border border-white/[0.08] rounded-xl overflow-hidden">
+                {activeListings.length === 0 ? (
+                  <EmptyState 
+                    icon={Store}
+                    title="No products yet"
+                    description="Publish your first asset to start selling."
+                    action={{ label: "Publish Asset", href: "/sell" }}
+                  />
+                ) : (
+                  <div className="divide-y divide-white/[0.08]">
+                    {activeListings.map((l) => (
+                      <div key={l.id} className="p-4 flex items-center justify-between hover:bg-white/[0.02]">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-lg bg-[#090A0F] border border-white/[0.08] flex items-center justify-center overflow-hidden shrink-0">
+                            {l.images?.[0] ? (
                               <img src={l.images[0]} alt="" className="w-full h-full object-cover" />
                             ) : (
-                              <Store className="w-5 h-5 text-zinc-600" />
+                              <Store className="w-4 h-4 text-slate-500" />
                             )}
                           </div>
-
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.2 rounded">
-                                {l.departments?.[0] || "Police"}
-                              </span>
-                              <span className="text-xs font-bold text-white truncate">{l.title}</span>
-                            </div>
-                            <p className="text-xs text-zinc-400 line-clamp-1">{l.description}</p>
+                          <div>
+                            <p className="text-sm font-semibold text-slate-50 truncate max-w-[200px] sm:max-w-xs">{l.title}</p>
+                            <p className="text-xs text-slate-400">{l.price_type === "Free" ? "Free" : `R$ ${l.price}`}</p>
                           </div>
                         </div>
-
-                        <div className="flex items-center gap-4 shrink-0 justify-between sm:justify-end">
-                          <div className="text-right">
-                            <span className="text-xs font-mono font-bold text-white block">
-                              {isFree ? "FREE" : `R$ ${l.price}`}
-                            </span>
-                            <span className="text-[10px] font-mono text-emerald-400">● Live</span>
-                          </div>
-
-                          <div className="flex items-center gap-2">
-                            <Link
-                              to={`/listing/${l.id}`}
-                              className="p-2 rounded-xl border border-white/[0.08] bg-white/[0.02] text-zinc-400 hover:text-white hover:bg-white/[0.06] transition"
-                              title="View in store"
-                            >
-                              <ExternalLink className="w-3.5 h-3.5" />
-                            </Link>
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteListing(l.id)}
-                              className="p-2 rounded-xl border border-red-500/20 bg-red-500/5 text-red-400 hover:bg-red-500/10 transition"
-                              title="Delete listing"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* 3. ORDERS TAB */}
-          {activeTab === "orders" && (
-            <div className="rounded-2xl border border-white/[0.08] bg-[#0A0D15] p-6 shadow-xl space-y-4">
-              <div>
-                <h3 className="font-bold text-sm text-white">Customer Escrow Deliveries</h3>
-                <p className="text-xs text-zinc-400">Automated deliverable keys dispatched to purchasers.</p>
-              </div>
-
-              {orders.length === 0 ? (
-                <div className="p-10 text-center text-zinc-500 text-xs">
-                  <ShoppingBag className="w-8 h-8 mx-auto mb-2 opacity-40 text-zinc-400" />
-                  <span>No customer orders recorded yet. Escrow ready.</span>
-                </div>
-              ) : (
-                <div className="space-y-2.5">
-                  {orders.map((o: any, idx: number) => (
-                    <div key={idx} className="p-3.5 rounded-xl border border-white/[0.04] bg-[#07090E] flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                        <div>
-                          <p className="text-xs font-bold text-white">{o.listing_title || "Asset Package"}</p>
-                          <p className="text-[10px] text-zinc-500 font-mono">Buyer: {o.buyer_name || "Customer"}</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <span className="text-xs font-mono font-bold text-emerald-400">
-                          {o.price ? `R$ ${o.price}` : "Free"}
-                        </span>
-                        <span className="block text-[10px] text-zinc-500 font-mono">Delivered</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* 4. REVIEWS & SELLER REPLIES TAB */}
-          {activeTab === "reviews" && (
-            <div className="rounded-2xl border border-white/[0.08] bg-[#0A0D15] p-6 shadow-xl space-y-6">
-              <div>
-                <h3 className="font-bold text-sm text-white">Customer Reviews & Seller Replies</h3>
-                <p className="text-xs text-zinc-400">Read customer feedback and reply directly to verified buyers.</p>
-              </div>
-
-              {reviews.length === 0 ? (
-                <div className="p-10 text-center text-zinc-500 text-xs">
-                  No customer reviews received yet.
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {reviews.map((r: any) => (
-                    <div key={r.id} className="p-4 rounded-xl border border-white/[0.06] bg-[#07090E] space-y-3">
-                      <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold text-white">{r.reviewer_name || "Verified Buyer"}</span>
-                          <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.2 rounded">
-                            ✓ Verified Purchase
-                          </span>
+                          <Link
+                            to={`/listing/${l.id}`}
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-50 hover:bg-white/[0.04]"
+                          >
+                            <ExternalLink className="w-4 h-4" />
+                          </Link>
+                          <button
+                            onClick={() => handleDeleteListing(l.id)}
+                            className="p-1.5 rounded-lg text-red-400 hover:bg-red-500/10"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
                         </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ORDERS */}
+            {activeTab === "orders" && (
+              <div className="bg-[#12151E] border border-white/[0.08] rounded-xl p-4">
+                {orders.length === 0 ? (
+                  <EmptyState icon={ShoppingBag} title="No orders yet" description="Sales will appear here." />
+                ) : (
+                  <div className="space-y-2">
+                    {orders.map((o: any, idx: number) => (
+                      <div key={idx} className="p-3 rounded-lg border border-white/[0.04] bg-[#090A0F] flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                          <div>
+                            <p className="text-sm font-semibold text-slate-50">{o.listing_title || "Asset"}</p>
+                            <p className="text-xs text-slate-500">Buyer: {o.buyer_name || "Customer"}</p>
+                          </div>
+                        </div>
+                        <div className="text-right text-sm font-semibold text-emerald-400">
+                          {o.price ? `R$ ${o.price}` : "Free"}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* REVIEWS */}
+            {activeTab === "reviews" && (
+              <div className="space-y-4">
+                {reviews.length === 0 ? (
+                  <EmptyState icon={Star} title="No reviews yet" description="Reviews will appear here." />
+                ) : (
+                  reviews.map((r: any) => (
+                    <div key={r.id} className="bg-[#12151E] border border-white/[0.08] rounded-xl p-4 space-y-3">
+                      <div className="flex justify-between">
+                        <span className="text-sm font-semibold text-slate-50">{r.reviewer_name}</span>
                         <div className="flex text-emerald-400">
                           {[...Array(r.rating || 5)].map((_, i) => (
                             <Star key={i} className="w-3.5 h-3.5 fill-emerald-400" />
                           ))}
                         </div>
                       </div>
-
-                      <p className="text-xs text-zinc-300 leading-relaxed">{r.comment}</p>
-
-                      {/* Existing Seller Reply */}
-                      {r.seller_reply && (
-                        <div className="p-3 rounded-lg border border-emerald-500/20 bg-emerald-500/[0.04] text-xs space-y-1">
-                          <span className="font-bold text-emerald-400 block">Creator Reply:</span>
-                          <p className="text-zinc-300">{r.seller_reply.text}</p>
+                      <p className="text-sm text-slate-400">{r.comment}</p>
+                      
+                      {r.seller_reply ? (
+                        <div className="p-3 rounded-lg border border-emerald-500/20 bg-emerald-500/[0.04]">
+                          <span className="text-xs font-semibold text-emerald-400 block mb-1">Your Reply:</span>
+                          <p className="text-sm text-slate-300">{r.seller_reply.text}</p>
                         </div>
-                      )}
-
-                      {/* Reply Box */}
-                      {!r.seller_reply && (
-                        <div className="flex gap-2 pt-2 border-t border-white/[0.04]">
+                      ) : (
+                        <div className="flex gap-2">
                           <input
                             type="text"
                             value={replyInputs[r.id] || ""}
                             onChange={(e) => setReplyInputs({ ...replyInputs, [r.id]: e.target.value })}
-                            placeholder="Write a reply to this customer..."
-                            className="flex-1 rounded-xl border border-white/[0.08] bg-[#0A0D15] px-3 py-1.5 text-xs text-white placeholder:text-zinc-500 outline-none focus:border-emerald-500/50"
+                            placeholder="Write a reply..."
+                            className="flex-1 rounded-lg border border-white/[0.08] bg-[#090A0F] px-3 py-1.5 text-sm text-slate-50 outline-none focus:border-emerald-500/50"
                           />
                           <button
-                            type="button"
                             onClick={() => handlePostReply(r.id)}
                             disabled={submittingReply === r.id || !replyInputs[r.id]?.trim()}
-                            className="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-bold transition disabled:opacity-50 flex items-center gap-1"
+                            className="bg-emerald-500 hover:bg-emerald-400 text-black px-3 py-1.5 rounded-lg text-sm font-semibold disabled:opacity-50"
                           >
-                            <Send className="w-3 h-3" />
-                            <span>Reply</span>
+                            Reply
                           </button>
                         </div>
                       )}
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* 5. STORE ANALYTICS TAB */}
-          {activeTab === "analytics" && (
-            <div className="rounded-2xl border border-white/[0.08] bg-[#0A0D15] p-6 shadow-xl space-y-6">
-              <div>
-                <h3 className="font-bold text-sm text-white">Product Performance & Metrics</h3>
-                <p className="text-xs text-zinc-400">Track views, favorites, and conversion rates across your inventory.</p>
+                  ))
+                )}
               </div>
+            )}
 
-              {activeListings.length === 0 ? (
-                <div className="p-8 text-center text-xs text-zinc-500">
-                  Publish assets to view real performance analytics.
-                </div>
-              ) : (
-                <div className="divide-y divide-white/[0.04]">
-                  {activeListings.map((l) => (
-                    <div key={l.id} className="py-3.5 flex items-center justify-between text-xs">
-                      <div>
-                        <span className="font-bold text-white block">{l.title}</span>
-                        <span className="text-[10px] text-zinc-500 font-mono">{l.category} • {l.listing_type}</span>
-                      </div>
-
-                      <div className="flex items-center gap-6 font-mono text-center">
-                        <div>
-                          <span className="text-white font-bold block">{orders.filter((o) => o.listing_id === l.id).length}</span>
-                          <span className="text-[9px] text-zinc-500">ORDERS</span>
-                        </div>
-                        <div>
-                          <span className="text-emerald-400 font-bold block">100%</span>
-                          <span className="text-[9px] text-zinc-500">FULFILLMENT</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* 6. SETTINGS TAB */}
-          {activeTab === "settings" && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div className="rounded-2xl border border-white/[0.08] bg-[#0A0D15] p-6 space-y-4">
-                <h3 className="font-bold text-sm text-white flex items-center gap-2">
+            {/* SETTINGS */}
+            {activeTab === "settings" && (
+              <div className="bg-[#12151E] border border-white/[0.08] rounded-xl p-5 space-y-4 max-w-lg">
+                <h3 className="text-sm font-semibold text-slate-50 flex items-center gap-2">
                   <Globe className="w-4 h-4 text-blue-400" />
-                  <span>Roblox Identity Verification</span>
+                  Roblox Verification
                 </h3>
-                <p className="text-xs text-zinc-400 leading-relaxed">
-                  Link your Roblox account to gain the verified badge on your liveries and storefront.
+                <p className="text-sm text-slate-400">
+                  Link your Roblox account for verified badges.
                 </p>
-
                 {activeUser.roblox_verified ? (
-                  <div className="p-3.5 rounded-xl border border-blue-500/30 bg-blue-500/10 flex items-center justify-between text-xs">
-                    <span className="text-blue-300 font-mono">Linked: @{activeUser.roblox_username}</span>
-                    <button
-                      type="button"
-                      onClick={() => setRobloxModalOpen(true)}
-                      className="text-xs font-bold text-blue-400 underline"
-                    >
+                  <div className="p-3 rounded-lg bg-[#090A0F] border border-white/[0.08] text-sm text-slate-300 flex justify-between items-center">
+                    <span>Linked: @{activeUser.roblox_username}</span>
+                    <button onClick={() => setRobloxModalOpen(true)} className="text-blue-400 text-xs font-semibold hover:underline">
                       Update
                     </button>
                   </div>
                 ) : (
                   <button
-                    type="button"
                     onClick={() => setRobloxModalOpen(true)}
-                    className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition shadow-sm"
+                    className="bg-blue-500 hover:bg-blue-400 text-white px-4 py-2 rounded-lg text-sm font-semibold"
                   >
-                    Verify Roblox Account
+                    Verify Account
                   </button>
                 )}
               </div>
-
-              <div className="rounded-2xl border border-white/[0.08] bg-[#0A0D15] p-6 space-y-4">
-                <h3 className="font-bold text-sm text-white">Creator Terms & Rate</h3>
-                <p className="text-xs text-zinc-400 leading-relaxed">
-                  Your creator account has 0% platform listing fees.
-                </p>
-                <div className="p-3.5 rounded-xl border border-emerald-500/20 bg-emerald-500/5 space-y-2 text-xs">
-                  <div className="flex justify-between">
-                    <span className="text-zinc-400">Platform Cut:</span>
-                    <span className="text-emerald-400 font-mono font-bold">0% Commission</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-zinc-400">Escrow Security:</span>
-                    <span className="text-emerald-400 font-mono font-bold">Automated</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
+            )}
+            
+          </div>
         </main>
       </div>
 
-      <RobloxConnectModal
-        open={robloxModalOpen}
-        onClose={() => setRobloxModalOpen(false)}
-      />
-
-      <Footer />
-    </div>
+      <RobloxConnectModal open={robloxModalOpen} onClose={() => setRobloxModalOpen(false)} />
+    </PageShell>
   );
 }

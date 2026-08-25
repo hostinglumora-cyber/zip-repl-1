@@ -1,36 +1,15 @@
 import React, { useEffect, useState, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
-  Menu,
-  X,
-  Store,
-  FileText,
-  Activity,
-  PlusCircle,
-  LogOut,
-  LayoutDashboard,
-  Sparkles,
-  ChevronDown,
-  User,
-  ShieldCheck,
-  House,
-  Compass,
-  SlidersHorizontal,
-  UserCheck,
-  Users,
-  Palette,
-  MessageCircle,
-  Heart,
-  Globe,
-  Plus,
-  Server,
+  Menu, X, Search, MessageCircle, Bell, ChevronDown, LogOut,
+  User, ShieldCheck, LayoutDashboard, Store, Palette, Server, Heart,
+  Package, Settings, ShoppingBag
 } from "lucide-react";
-import Logo from "@/components/Logo";
 import { cn } from "@/lib/utils";
 
 export default function SiteNav() {
-  const [open, setOpen] = useState(false);
-  const [userDropdown, setUserDropdown] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [userOpen, setUserOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [imgErr, setImgErr] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -40,13 +19,8 @@ export default function SiteNav() {
   const syncUser = () => {
     try {
       const raw = window.localStorage.getItem("discord_user");
-      if (raw) {
-        setUser(JSON.parse(raw));
-      } else {
-        setUser(null);
-      }
+      setUser(raw ? JSON.parse(raw) : null);
     } catch {
-      window.localStorage.removeItem("discord_user");
       setUser(null);
     }
   };
@@ -58,198 +32,150 @@ export default function SiteNav() {
   }, [location.pathname]);
 
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setUserDropdown(false);
+    const handleOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setUserOpen(false);
       }
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("mousedown", handleOutside);
+    return () => document.removeEventListener("mousedown", handleOutside);
   }, []);
 
-  const isOwnerOrStaff =
+  // Close mobile nav on route change
+  useEffect(() => {
+    setMobileOpen(false);
+    setUserOpen(false);
+  }, [location.pathname]);
+
+  const isStaff =
     user?.username?.toLowerCase() === "eazykims" ||
-    user?.id?.toLowerCase() === "eazykims" ||
     user?.is_owner ||
     ["owner", "admin", "moderator", "support"].includes(user?.role || "");
 
   const navLinks = [
     { to: "/marketplace", label: "Marketplace" },
     { to: "/creators", label: "Creators" },
-    { to: "/hosting", label: "Hosting", badge: "$12.99" },
-    { to: "/dashboard", label: "Creator Studio" },
+    { to: "/hosting", label: "Hosting" },
     { to: "/docs", label: "Docs" },
-    { to: "/status", label: "Status" },
   ];
 
   const handleSignOut = () => {
     window.localStorage.removeItem("discord_user");
     setUser(null);
-    setUserDropdown(false);
+    setUserOpen(false);
     navigate("/");
   };
 
-  const displayName = user?.name || user?.username || "Creator";
-  const displayHandle = user?.username ? `@${user.username}` : "";
-  const avatarUrl = user?.avatarUrl;
-  const initial = (displayName.charAt(0) || "C").toUpperCase();
+  const displayName = user?.name || user?.username || "User";
+  const avatarUrl = user?.avatarUrl || user?.avatar_url;
+  const initial = (displayName.charAt(0) || "U").toUpperCase();
 
   return (
-    <header className="sticky top-0 z-50 backdrop-blur-xl border-b border-white/[0.07] bg-[#07090E]/95 transition-all">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        
-        {/* Left: Brand */}
-        <Link to="/" className="shrink-0 flex items-center gap-2 group py-1">
-          <Logo textClass="text-2xl font-black tracking-tight" />
+    <header className="sticky top-0 z-50 h-14 border-b border-white/[0.08] bg-[#090A0F]/80 backdrop-blur-md">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between">
+
+        {/* Left: Logo */}
+        <Link to="/" className="shrink-0 text-sm font-bold text-slate-100 hover:text-white transition-colors">
+          Liberty<span className="text-emerald-400">X</span>
         </Link>
 
-        {/* Center: Global Nav Links */}
+        {/* Center: Nav Links */}
         <nav className="hidden md:flex items-center gap-1">
           {navLinks.map((link) => {
-            const active = location.pathname === link.to;
+            const active = location.pathname === link.to || location.pathname.startsWith(link.to + "/");
             return (
               <Link
                 key={link.to}
                 to={link.to}
                 className={cn(
-                  "px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5",
+                  "px-3 py-1.5 rounded-lg text-sm font-medium transition-colors",
                   active
-                    ? "text-emerald-400 bg-emerald-500/10 shadow-sm"
-                    : "text-zinc-400 hover:text-white hover:bg-white/[0.04]"
+                    ? "text-slate-50 bg-white/[0.06]"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-white/[0.04]"
                 )}
               >
-                <span>{link.label}</span>
-                {link.badge && (
-                  <span className="text-[9px] font-mono font-bold text-blue-400 bg-blue-500/15 px-1.5 py-0.2 rounded border border-blue-500/30">
-                    {link.badge}
-                  </span>
-                )}
+                {link.label}
               </Link>
             );
           })}
         </nav>
 
-        {/* Right: Actions & User Dropdown */}
-        <div className="hidden md:flex items-center gap-2.5">
-          {/* Direct Messages Shortcut */}
+        {/* Right: Actions */}
+        <div className="hidden md:flex items-center gap-1.5">
           <Link
-            to="/messages"
-            className="p-2 rounded-xl border border-white/[0.08] bg-[#0A0D15] hover:bg-white/[0.04] text-zinc-400 hover:text-white transition relative"
-            title="Messages"
+            to="/marketplace"
+            className="p-2 rounded-lg text-slate-500 hover:text-slate-300 hover:bg-white/[0.04] transition-colors"
+            title="Search"
           >
-            <MessageCircle className="w-4 h-4 text-zinc-300" />
+            <Search className="w-4 h-4" />
           </Link>
 
-          {/* Favorites Wishlist Shortcut */}
-          <Link
-            to="/favorites"
-            className="p-2 rounded-xl border border-white/[0.08] bg-[#0A0D15] hover:bg-white/[0.04] text-zinc-400 hover:text-white transition"
-            title="Saved Wishlist"
-          >
-            <Heart className="w-4 h-4 text-zinc-300" />
-          </Link>
-
-          {/* Admin shortcut for staff */}
-          {isOwnerOrStaff && (
-            <Link
-              to="/admin"
-              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 text-xs font-bold text-red-400 transition"
-              title="Admin Operations"
-            >
-              <ShieldCheck className="w-3.5 h-3.5" />
-              <span>Admin</span>
-            </Link>
+          {user && (
+            <>
+              <Link
+                to="/messages"
+                className="p-2 rounded-lg text-slate-500 hover:text-slate-300 hover:bg-white/[0.04] transition-colors"
+                title="Messages"
+              >
+                <MessageCircle className="w-4 h-4" />
+              </Link>
+              <Link
+                to="/favorites"
+                className="p-2 rounded-lg text-slate-500 hover:text-slate-300 hover:bg-white/[0.04] transition-colors"
+                title="Favorites"
+              >
+                <Heart className="w-4 h-4" />
+              </Link>
+            </>
           )}
 
-          {/* Publish Asset button */}
-          <Link
-            to="/sell"
-            className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black px-4 py-2 text-xs font-bold transition shadow-sm hover:scale-[1.02] active:scale-[0.98]"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>Publish Asset</span>
-          </Link>
-
-          {/* User Account Avatar / Dropdown */}
+          {/* User dropdown or Login */}
           {user ? (
-            <div className="relative" ref={dropdownRef}>
+            <div className="relative ml-1" ref={dropdownRef}>
               <button
                 type="button"
-                onClick={() => setUserDropdown(!userDropdown)}
-                className="flex items-center gap-2 pl-2 pr-2.5 py-1.5 rounded-xl border border-white/[0.08] hover:border-emerald-500/40 bg-[#0A0D15] transition"
+                onClick={() => setUserOpen(!userOpen)}
+                className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-white/[0.04] transition-colors"
               >
-                <div className="w-6 h-6 rounded-lg overflow-hidden border border-emerald-500/30 bg-black flex items-center justify-center text-[10px] font-bold text-white">
+                <div className="w-6 h-6 rounded-md overflow-hidden bg-[#1C212E] border border-white/[0.08] flex items-center justify-center text-[10px] font-semibold text-slate-400">
                   {avatarUrl && !imgErr ? (
                     <img src={avatarUrl} alt="" onError={() => setImgErr(true)} className="w-full h-full object-cover" />
                   ) : (
                     initial
                   )}
                 </div>
-                <span className="text-xs font-semibold text-zinc-200 max-w-[90px] truncate">{displayName}</span>
-                <ChevronDown className="w-3 h-3 text-zinc-500" />
+                <ChevronDown className="w-3 h-3 text-slate-500" />
               </button>
 
-              {userDropdown && (
-                <div className="absolute right-0 mt-2 w-56 rounded-2xl border border-white/[0.1] bg-[#0A0D15] p-2 shadow-2xl space-y-1 text-xs">
-                  <div className="p-2.5 border-b border-white/[0.06] mb-1">
-                    <span className="font-bold text-white block truncate">{displayName}</span>
-                    <span className="text-[10px] text-zinc-500 font-mono block truncate">{displayHandle}</span>
+              {userOpen && (
+                <div className="absolute right-0 mt-1.5 w-52 rounded-xl border border-white/[0.08] bg-[#12151E] p-1.5 shadow-2xl shadow-black/50 text-sm">
+                  {/* User info */}
+                  <div className="px-2.5 py-2 border-b border-white/[0.06] mb-1">
+                    <span className="font-semibold text-slate-100 block text-sm truncate">{displayName}</span>
+                    <span className="text-xs text-slate-500 block truncate">@{user.username || "user"}</span>
                   </div>
 
-                  <Link
-                    to={`/u/${user.username || "me"}`}
-                    onClick={() => setUserDropdown(false)}
-                    className="flex items-center gap-2 p-2 rounded-xl hover:bg-white/[0.04] text-zinc-300 hover:text-white"
-                  >
-                    <Store className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>My Public Storefront</span>
-                  </Link>
+                  <DropdownLink to={`/u/${user.username || "me"}`} icon={Store} label="My Storefront" onClick={() => setUserOpen(false)} />
+                  <DropdownLink to="/dashboard" icon={LayoutDashboard} label="Dashboard" onClick={() => setUserOpen(false)} />
+                  <DropdownLink to="/messages" icon={MessageCircle} label="Messages" onClick={() => setUserOpen(false)} />
+                  <DropdownLink to="/sell" icon={Package} label="Publish Asset" onClick={() => setUserOpen(false)} />
+                  <DropdownLink to="/dashboard/storefront" icon={Palette} label="Storefront" onClick={() => setUserOpen(false)} />
 
-                  <Link
-                    to="/dashboard"
-                    onClick={() => setUserDropdown(false)}
-                    className="flex items-center gap-2 p-2 rounded-xl hover:bg-white/[0.04] text-zinc-300 hover:text-white"
-                  >
-                    <LayoutDashboard className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>Creator Studio</span>
-                  </Link>
-
-                  <Link
-                    to="/dashboard/storefront"
-                    onClick={() => setUserDropdown(false)}
-                    className="flex items-center gap-2 p-2 rounded-xl hover:bg-white/[0.04] text-zinc-300 hover:text-white"
-                  >
-                    <Palette className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>Storefront Builder</span>
-                  </Link>
-
-                  <Link
-                    to="/hosting"
-                    onClick={() => setUserDropdown(false)}
-                    className="flex items-center gap-2 p-2 rounded-xl hover:bg-white/[0.04] text-zinc-300 hover:text-white"
-                  >
-                    <Server className="w-3.5 h-3.5 text-blue-400" />
-                    <span>Community Hosting</span>
-                  </Link>
-
-                  {isOwnerOrStaff && (
-                    <Link
-                      to="/admin"
-                      onClick={() => setUserDropdown(false)}
-                      className="flex items-center gap-2 p-2 rounded-xl hover:bg-red-500/10 text-red-400"
-                    >
-                      <ShieldCheck className="w-3.5 h-3.5" />
-                      <span>Admin Operations</span>
-                    </Link>
+                  {isStaff && (
+                    <>
+                      <div className="my-1 border-t border-white/[0.06]" />
+                      <DropdownLink to="/admin" icon={ShieldCheck} label="Admin" onClick={() => setUserOpen(false)} className="text-rose-400 hover:bg-rose-500/10" />
+                    </>
                   )}
 
+                  <div className="my-1 border-t border-white/[0.06]" />
                   <button
                     type="button"
                     onClick={handleSignOut}
-                    className="w-full flex items-center gap-2 p-2 rounded-xl hover:bg-red-500/10 text-red-400 text-left"
+                    className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
                   >
                     <LogOut className="w-3.5 h-3.5" />
-                    <span>Sign Out</span>
+                    <span>Sign out</span>
                   </button>
                 </div>
               )}
@@ -257,71 +183,71 @@ export default function SiteNav() {
           ) : (
             <Link
               to="/login"
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-white/[0.08] hover:bg-white/[0.04] text-xs font-semibold text-zinc-200 transition"
+              className="ml-1 px-3.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-black text-sm font-semibold transition active:scale-[0.98]"
             >
-              <User className="w-3.5 h-3.5" />
-              <span>Login</span>
+              Sign in
             </Link>
           )}
         </div>
 
-        {/* Mobile menu toggle */}
+        {/* Mobile toggle */}
         <button
           type="button"
-          onClick={() => setOpen(!open)}
-          className="md:hidden p-2 rounded-xl border border-white/[0.08] text-zinc-400 hover:text-white"
+          onClick={() => setMobileOpen(!mobileOpen)}
+          className="md:hidden p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.04] transition-colors"
         >
-          {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>
       </div>
 
-      {/* Mobile Drawer */}
-      {open && (
-        <div className="md:hidden border-t border-white/[0.06] bg-[#07090E] p-4 space-y-3">
-          <div className="space-y-1">
-            {navLinks.map((l) => (
-              <Link
-                key={l.to}
-                to={l.to}
-                onClick={() => setOpen(false)}
-                className="block px-3 py-2 rounded-xl text-xs font-semibold text-zinc-300 hover:bg-white/[0.04]"
-              >
-                {l.label}
-              </Link>
-            ))}
-          </div>
-
-          <div className="pt-2 border-t border-white/[0.06] space-y-2">
+      {/* Mobile drawer */}
+      {mobileOpen && (
+        <div className="md:hidden border-t border-white/[0.06] bg-[#090A0F] px-4 py-3 space-y-1">
+          {navLinks.map((l) => (
             <Link
-              to="/sell"
-              onClick={() => setOpen(false)}
-              className="block w-full text-center py-2.5 rounded-xl bg-emerald-500 text-black text-xs font-bold"
+              key={l.to}
+              to={l.to}
+              className="block px-3 py-2 rounded-lg text-sm text-slate-300 hover:bg-white/[0.04]"
             >
-              Publish Asset
+              {l.label}
             </Link>
+          ))}
+          <div className="pt-2 border-t border-white/[0.06] space-y-1.5 mt-2">
             {user ? (
-              <button
-                type="button"
-                onClick={() => {
-                  handleSignOut();
-                  setOpen(false);
-                }}
-                className="block w-full text-center py-2 rounded-xl border border-white/[0.08] text-xs text-red-400"
-              >
-                Sign Out
-              </button>
+              <>
+                <Link to="/dashboard" className="block px-3 py-2 rounded-lg text-sm text-slate-300 hover:bg-white/[0.04]">Dashboard</Link>
+                <Link to="/messages" className="block px-3 py-2 rounded-lg text-sm text-slate-300 hover:bg-white/[0.04]">Messages</Link>
+                <Link to="/sell" className="block w-full text-center py-2 rounded-lg bg-emerald-500 text-black text-sm font-semibold">Publish Asset</Link>
+                <button
+                  type="button"
+                  onClick={handleSignOut}
+                  className="block w-full text-center py-2 rounded-lg text-sm text-rose-400 hover:bg-rose-500/10"
+                >
+                  Sign out
+                </button>
+              </>
             ) : (
-              <Link
-                to="/login"
-                onClick={() => setOpen(false)}
-                className="block w-full text-center py-2 rounded-xl border border-white/[0.08] text-xs text-zinc-300"
-              >
-                Login
-              </Link>
+              <Link to="/login" className="block w-full text-center py-2 rounded-lg bg-emerald-500 text-black text-sm font-semibold">Sign in</Link>
             )}
           </div>
         </div>
       )}
     </header>
+  );
+}
+
+function DropdownLink({ to, icon: Icon, label, onClick, className }: { to: string; icon: any; label: string; onClick?: () => void; className?: string }) {
+  return (
+    <Link
+      to={to}
+      onClick={onClick}
+      className={cn(
+        "flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm text-slate-400 hover:text-slate-100 hover:bg-white/[0.04] transition-colors",
+        className
+      )}
+    >
+      <Icon className="w-3.5 h-3.5" />
+      <span>{label}</span>
+    </Link>
   );
 }

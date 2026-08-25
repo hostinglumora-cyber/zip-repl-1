@@ -10,31 +10,10 @@ import {
   ShoppingBag,
   UploadCloud,
   ShieldCheck,
-  Code2,
   Boxes,
-  Gift,
-  KeyRound,
-  Terminal,
-  Zap,
-  CheckCircle,
-  ArrowRight,
-  ExternalLink,
   Layers,
-  FileCheck,
   Lock,
-  Radio,
-  UserCheck,
-  Webhook,
-  Database,
-  Cpu,
-  BadgeAlert,
-  HelpCircle,
-  Clock,
-  Compass,
   Server,
-  Palette,
-  Tag,
-  MessageCircle,
 } from "lucide-react";
 
 export default function Docs() {
@@ -73,9 +52,9 @@ export default function Docs() {
             { id: "step-4", label: "4. Automated Code Delivery" },
           ]}
         >
-          <section id="intro" className="scroll-mt-24">
-            <p>
-              Welcome to <strong>LibertyX Marketplace</strong> — the modern, scam-protected marketplace built for Emergency Response: Liberty County (ER:LC) creators and communities. Whether you are searching for state police liveries or selling custom uniform packs, this guide gets you started immediately.
+          <section id="intro" className="scroll-mt-24 text-slate-400">
+            <p className="mb-4">
+              Welcome to <strong className="text-slate-50">LibertyX Marketplace</strong> — the modern, scam-protected marketplace built for Emergency Response: Liberty County (ER:LC) creators and communities. Whether you are searching for state police liveries or selling custom uniform packs, this guide gets you started immediately.
             </p>
 
             <MintCardGroup cols={2}>
@@ -103,19 +82,19 @@ export default function Docs() {
           <section id="step-1" className="scroll-mt-24">
             <MintSteps>
               <MintStep stepNumber={1} title="Sign in with Discord & Connect Roblox">
-                <p>
-                  Click <strong>Login</strong> in the top navigation. Authenticate through Discord to verify your identity, then search and confirm your authentic Roblox username.
+                <p className="text-slate-400">
+                  Click <strong className="text-slate-50">Login</strong> in the top navigation. Authenticate through Discord to verify your identity, then search and confirm your authentic Roblox username.
                 </p>
               </MintStep>
 
               <MintStep stepNumber={2} title="Browse or Search by Hashtag">
-                <p>
-                  Filter by <strong>Law Enforcement</strong>, <strong>Sheriff</strong>, <strong>Fire & Rescue</strong>, <strong>DOT</strong>, or <strong>Map Templates</strong>. Use hashtags like <code>#Tahoe</code> or <code>#CrownVic</code> for instant vehicle model matches.
+                <p className="text-slate-400">
+                  Filter by <strong className="text-slate-50">Law Enforcement</strong>, <strong className="text-slate-50">Sheriff</strong>, <strong className="text-slate-50">Fire & Rescue</strong>, <strong className="text-slate-50">DOT</strong>, or <strong className="text-slate-50">Map Templates</strong>. Use hashtags like <code>#Tahoe</code> or <code>#CrownVic</code> for instant vehicle model matches.
                 </p>
               </MintStep>
 
               <MintStep stepNumber={3} title="Instant Deliverable Key Unlock">
-                <p>
+                <p className="text-slate-400">
                   Purchases immediately reveal deliverable Roblox Asset IDs, Pastebin hashes, or direct image template files directly on your receipt and order history.
                 </p>
               </MintStep>
@@ -140,8 +119,8 @@ export default function Docs() {
             { id: "publishing", label: "Listing Formats" },
           ]}
         >
-          <section id="overview" className="scroll-mt-24">
-            <p>
+          <section id="overview" className="scroll-mt-24 text-slate-400">
+            <p className="mb-4">
               LibertyX empowers ER:LC livery designers and uniform creators by eliminating transaction cuts. You retain 100% of listed proceeds.
             </p>
 
@@ -191,16 +170,16 @@ export default function Docs() {
             { id: "services", label: "Custom Commission Slots" },
           ]}
         >
-          <section id="urls" className="scroll-mt-24">
-            <p>
+          <section id="urls" className="scroll-mt-24 text-slate-400">
+            <p className="mb-4">
               Every creator gets a dedicated, shareable website inside LibertyX:
             </p>
-            <div className="p-3.5 rounded-xl bg-black/60 border border-white/[0.08] font-mono text-emerald-400 text-xs">
+            <div className="p-3.5 rounded-lg bg-[#12151E] border border-white/[0.08] font-mono text-emerald-400 text-xs">
               libertyx.com/u/yourname &nbsp;·&nbsp; libertyx.com/yourname
             </div>
           </section>
 
-          <section id="services" className="scroll-mt-24">
+          <section id="services" className="scroll-mt-24 text-slate-400 mt-6">
             <p>
               Offer custom services (e.g. Custom Livery Design, Discord Server Setup) with turnaround estimates and direct internal messaging integration.
             </p>
@@ -224,9 +203,9 @@ export default function Docs() {
             { id: "deploy", label: "1-Click Deployment" },
           ]}
         >
-          <section id="features" className="scroll-mt-24">
-            <p>
-              LibertyX Community Hosting provides cloud nodes optimized for ER:LC roleplay servers at <strong>$12.99 USD / month</strong>.
+          <section id="features" className="scroll-mt-24 text-slate-400">
+            <p className="mb-4">
+              LibertyX Community Hosting provides cloud nodes optimized for ER:LC roleplay servers at <strong className="text-slate-50">$12.99 USD / month</strong>.
             </p>
 
             <MintCardGroup cols={2}>
@@ -247,19 +226,19 @@ export default function Docs() {
             </MintCardGroup>
           </section>
 
-          <section id="specs" className="scroll-mt-24">
-            <div className="rounded-xl border border-white/[0.08] bg-[#0A0D15] p-4 space-y-2 font-mono text-xs">
+          <section id="specs" className="scroll-mt-24 mt-6">
+            <div className="rounded-lg border border-white/[0.08] bg-[#12151E] p-4 space-y-2 text-xs">
               <div className="flex justify-between border-b border-white/[0.04] pb-1.5">
-                <span className="text-zinc-500">Memory Allocation:</span>
-                <span className="text-white font-bold">2,048 MB DDR4</span>
+                <span className="text-slate-500">Memory Allocation:</span>
+                <span className="text-slate-50 font-semibold">2,048 MB DDR4</span>
               </div>
               <div className="flex justify-between border-b border-white/[0.04] pb-1.5">
-                <span className="text-zinc-500">Network Gateway:</span>
-                <span className="text-emerald-400 font-bold">&lt; 18ms Discord ping</span>
+                <span className="text-slate-500">Network Gateway:</span>
+                <span className="text-emerald-400 font-semibold">&lt; 18ms Discord ping</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-zinc-500">Pricing Model:</span>
-                <span className="text-white font-bold">$12.99 USD / month</span>
+                <span className="text-slate-500">Pricing Model:</span>
+                <span className="text-slate-50 font-semibold">$12.99 USD / month</span>
               </div>
             </div>
           </section>
@@ -311,8 +290,8 @@ console.log(data.listings);`,
           currentPageId={currentPage}
           onSelectPage={handleSelectPage}
         >
-          <p>
-            Documentation section for <strong>{currentPage}</strong>. Refer to the Quickstart and API guide for complete developer workflows.
+          <p className="text-slate-400 mb-4">
+            Documentation section for <strong className="text-slate-50">{currentPage}</strong>. Refer to the Quickstart and API guide for complete developer workflows.
           </p>
           <MintCard
             title="Return to Quickstart"

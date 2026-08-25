@@ -20,7 +20,7 @@ import {
   UploadCloud,
 } from "lucide-react";
 import Logo from "@/components/Logo";
-import { Footer } from "@/pages/Home";
+import Footer from "@/components/Footer";
 import { MintSearchDialog } from "@/components/docs/MintSearchDialog";
 import { MintFeedback } from "@/components/docs/MintFeedback";
 import { BRAND } from "@/lib/brand";

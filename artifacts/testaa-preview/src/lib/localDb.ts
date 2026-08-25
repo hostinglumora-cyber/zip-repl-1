@@ -863,4 +863,91 @@ export const localDb = {
 
     return results;
   },
+
+  // ─── LISTING SHARING (CROSS-BROWSER) ───
+  exportListing(listing: any): string {
+    try {
+      // Create a shareable version without large base64 images to keep URL short
+      const shareable = {
+        ...listing,
+        _shared: true,
+        _shared_date: new Date().toISOString(),
+        // Keep first image only, truncate if too large for URL
+        images: listing.images?.map((img: string) => {
+          if (img.startsWith("data:") && img.length > 50000) {
+            return img.slice(0, 50000); // Truncate very large base64
+          }
+          return img;
+        }) || [],
+      };
+      return btoa(encodeURIComponent(JSON.stringify(shareable)));
+    } catch {
+      return "";
+    }
+  },
+
+  importListing(encodedData: string): any | null {
+    try {
+      const json = JSON.parse(decodeURIComponent(atob(encodedData)));
+      if (!json?.id || !json?.title) return null;
+
+      // Check if we already have this listing
+      const existing = listingsStore.getAll().find((l) => l.id === json.id);
+      if (existing) return existing;
+
+      // Import it into our local store
+      const imported = {
+        ...json,
+        _imported: true,
+        _imported_date: new Date().toISOString(),
+        status: json.status || "active",
+      };
+
+      const items = listingsStore.getAll();
+      items.push(imported);
+      if (canUseStorage()) {
+        window.localStorage.setItem(LISTINGS_KEY, JSON.stringify(items));
+      }
+
+      // Also import the creator profile if we don't have it
+      if (json.seller_username) {
+        const profiles = profilesStore.getAll();
+        const hasProfile = profiles.some(
+          (p) => p.username?.toLowerCase() === json.seller_username?.toLowerCase()
+        );
+        if (!hasProfile) {
+          const newProf = {
+            id: `profile_${json.seller_id || json.seller_username}`,
+            user_id: json.seller_id || json.seller_username,
+            username: json.seller_username,
+            display_name: json.seller_name || json.seller_username,
+            bio: "ER:LC creator",
+            avatar_url: null,
+            roblox_verified: false,
+            badges: ["LibertyX Creator"],
+            social_links: {},
+            services: [],
+            gallery_images: [],
+            custom_faqs: [],
+            featured_listing_ids: [],
+            created_date: json.created_date || new Date().toISOString(),
+          };
+          profiles.push(newProf);
+          if (canUseStorage()) {
+            window.localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles));
+          }
+        }
+      }
+
+      return imported;
+    } catch {
+      return null;
+    }
+  },
+
+  getShareableUrl(listing: any): string {
+    const data = localDb.exportListing(listing);
+    if (!data) return window.location.href;
+    return `${window.location.origin}/listing/${listing.id}?share=${data}`;
+  },
 };

@@ -1,7 +1,7 @@
 import React from "react";
 import { Outlet } from "react-router-dom";
 import SiteNav from "@/components/SiteNav";
-import { Footer } from "@/pages/Home";
+import Footer from "@/components/Footer";
 
 export default function DashboardLayout() {
   return (
