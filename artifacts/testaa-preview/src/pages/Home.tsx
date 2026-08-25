@@ -59,7 +59,7 @@ export default function Home() {
   const { user } = useAuth();
   const [listings, setListings] = useState<any[]>([]);
   const [creators, setCreators] = useState<any[]>([]);
-  const [creatorTab, setCreatorTab] = useState<"trending" | "new" | "top" | "rising">("trending");
+  const [creatorTab, setCreatorTab] = useState<"trending" | "new" | "top">("trending");
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [followedMap, setFollowedMap] = useState<Record<string, boolean>>({});
@@ -110,58 +110,64 @@ export default function Home() {
   })().slice(0, 6);
 
   return (
-    <div className="min-h-screen text-white bg-[#06080C] selection:bg-emerald-500/25 selection:text-emerald-300">
+    <div className="min-h-screen text-white bg-[#070709] selection:bg-emerald-500/25 selection:text-emerald-300">
       <SiteNav />
 
-      {/* ─── TIGHT COMPACT HERO ─── */}
-      <section className="relative pt-12 pb-14 sm:pt-16 sm:pb-18 border-b border-white/[0.06] overflow-hidden">
+      {/* ─── TIGHT COMPACT ERM HERO ─── */}
+      <section className="relative pt-10 pb-12 sm:pt-14 sm:pb-16 border-b border-white/[0.07] overflow-hidden">
         <div
-          className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 w-3/4 max-w-4xl h-48 opacity-15"
+          className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 w-3/4 max-w-4xl h-44 opacity-20"
           style={{
-            background: "radial-gradient(ellipse at 50% 0%, rgba(16, 185, 129, 0.4) 0%, transparent 70%)",
-            filter: "blur(50px)",
+            background: "radial-gradient(ellipse at 50% 0%, rgba(16, 185, 129, 0.35) 0%, transparent 70%)",
+            filter: "blur(45px)",
           }}
         />
 
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative text-center space-y-5">
-          <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/[0.06] px-3 py-1 text-xs font-semibold text-emerald-400">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative text-center space-y-4">
+          
+          {/* Sleek pill release badge */}
+          <Link
+            to="/marketplace"
+            className="inline-flex items-center gap-2 rounded-full border border-emerald-500/25 bg-[#111215] px-3.5 py-1 text-xs font-semibold text-emerald-400 hover:border-emerald-500/40 transition shadow-sm"
+          >
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span>ER:LC Marketplace & Creator Platform</span>
-          </div>
+            <span>✨ Introducing Verified Community Drops</span>
+            <span className="text-zinc-500 text-[10px]">→</span>
+          </Link>
 
-          <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-white max-w-3xl mx-auto leading-tight">
+          <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white max-w-3xl mx-auto leading-tight">
             Discover ER:LC creations from the community.
           </h1>
 
           <p className="text-xs sm:text-sm text-zinc-400 max-w-xl mx-auto leading-relaxed">
-            Browse verified vehicle liveries, uniform packages, ELS siren soundbanks, and map templates with instant escrow delivery.
+            Browse verified emergency vehicle liveries, uniform packages, ELS profiles, and map templates with instant automated escrow release.
           </p>
 
           {/* Search Bar */}
-          <div className="max-w-xl mx-auto relative pt-1">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+          <div className="max-w-lg mx-auto relative pt-1">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-500" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search liveries, uniforms, vehicles, maps, creators..."
-              className="w-full rounded-2xl border border-white/[0.08] bg-[#0A0D14] pl-11 pr-28 py-3 text-xs sm:text-sm text-white placeholder:text-zinc-500 outline-none focus:border-emerald-500/50 shadow-xl transition"
+              className="w-full rounded-xl border border-white/[0.08] bg-[#111215] pl-9 pr-24 py-2.5 text-xs sm:text-sm text-white placeholder:text-zinc-500 outline-none focus:border-emerald-500/50 shadow-xl transition"
             />
             <Link
               to={searchQuery ? `/marketplace?q=${encodeURIComponent(searchQuery)}` : "/marketplace"}
-              className="absolute right-2 top-1/2 -translate-y-1/2 px-4 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-bold transition"
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 px-3.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-bold transition"
             >
               Search
             </Link>
           </div>
 
           {/* Category Chips Bar */}
-          <div className="flex items-center justify-center gap-2 flex-wrap pt-3 max-w-4xl mx-auto">
+          <div className="flex items-center justify-center gap-1.5 flex-wrap pt-2 max-w-3xl mx-auto">
             {CATEGORIES_LIST.map((c) => (
               <Link
                 key={c.id}
                 to={c.to}
-                className="px-3 py-1.5 rounded-xl border border-white/[0.06] bg-[#090C12] hover:border-emerald-500/30 hover:text-white text-zinc-300 text-xs font-medium transition"
+                className="px-2.5 py-1 rounded-lg border border-white/[0.06] bg-[#111215] hover:border-emerald-500/30 hover:text-white text-zinc-400 text-xs font-medium transition"
               >
                 {c.label}
               </Link>
@@ -172,17 +178,17 @@ export default function Home() {
 
       {/* ─── DEDUPLICATED CREATOR DISCOVERY ─── */}
       {creators.length > 0 && (
-        <section className="py-12 px-4 sm:px-6 lg:px-8 border-b border-white/[0.06] bg-[#05070B]">
+        <section className="py-10 px-4 sm:px-6 lg:px-8 border-b border-white/[0.07] bg-[#0A0B0E]">
           <div className="max-w-7xl mx-auto">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
               <div>
-                <h2 className="text-lg sm:text-xl font-black text-white tracking-tight">
+                <h2 className="text-base sm:text-lg font-black text-white tracking-tight">
                   Featured ER:LC Creators
                 </h2>
                 <p className="text-xs text-zinc-400">Discover verified design studios and emergency asset creators.</p>
               </div>
 
-              <div className="flex items-center gap-1 bg-[#0A0D14] p-1 rounded-xl border border-white/[0.06]">
+              <div className="flex items-center gap-1 bg-[#111215] p-1 rounded-xl border border-white/[0.06]">
                 {[
                   { id: "trending", label: "🔥 Trending" },
                   { id: "top", label: "🏆 Top Sellers" },
@@ -205,18 +211,18 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
               {tabCreators.map((c) => {
                 const isF = followedMap[c.username] || false;
                 return (
                   <div
                     key={c.username}
-                    className="rounded-2xl border border-white/[0.08] bg-[#0A0D14] p-4 space-y-3 hover:border-emerald-500/35 transition-all flex flex-col justify-between shadow-lg"
+                    className="rounded-xl border border-white/[0.07] bg-[#111215] p-3.5 space-y-2.5 hover:border-emerald-500/35 transition-all flex flex-col justify-between shadow-lg"
                   >
                     <div>
                       <div className="flex items-start justify-between gap-3 mb-2">
                         <Link to={`/u/${c.username}`} className="flex items-center gap-2.5 min-w-0">
-                          <div className="w-10 h-10 rounded-xl overflow-hidden border border-emerald-500/30 bg-black shrink-0">
+                          <div className="w-9 h-9 rounded-xl overflow-hidden border border-emerald-500/30 bg-black shrink-0">
                             {c.avatar_url ? (
                               <img src={c.avatar_url} alt="" className="w-full h-full object-cover" />
                             ) : (
@@ -248,16 +254,16 @@ export default function Home() {
                         </button>
                       </div>
 
-                      <div className="pt-2 border-t border-white/[0.04] grid grid-cols-3 gap-1.5 text-center text-[10px] font-mono">
-                        <div className="p-1 rounded bg-[#06080C]">
+                      <div className="pt-2 border-t border-white/[0.04] grid grid-cols-3 gap-1 text-center text-[10px] font-mono">
+                        <div className="p-1 rounded bg-[#070709]">
                           <span className="text-zinc-500 block text-[9px]">PRODUCTS</span>
                           <span className="font-bold text-white">{c.products_count}</span>
                         </div>
-                        <div className="p-1 rounded bg-[#06080C]">
+                        <div className="p-1 rounded bg-[#070709]">
                           <span className="text-zinc-500 block text-[9px]">RATING</span>
                           <span className="font-bold text-emerald-400">{c.rating ? `${c.rating} ★` : "—"}</span>
                         </div>
-                        <div className="p-1 rounded bg-[#06080C]">
+                        <div className="p-1 rounded bg-[#070709]">
                           <span className="text-zinc-500 block text-[9px]">SALES</span>
                           <span className="font-bold text-white">{c.sales_count}</span>
                         </div>
@@ -266,7 +272,7 @@ export default function Home() {
 
                     <Link
                       to={`/u/${c.username}`}
-                      className="w-full flex items-center justify-center gap-1 py-1.5 rounded-xl bg-white/[0.04] hover:bg-emerald-500 hover:text-black text-xs font-bold text-zinc-300 transition"
+                      className="w-full flex items-center justify-center gap-1 py-1.5 rounded-lg bg-white/[0.04] hover:bg-emerald-500 hover:text-black text-xs font-bold text-zinc-300 transition"
                     >
                       <span>View Storefront</span>
                     </Link>
@@ -279,10 +285,10 @@ export default function Home() {
       )}
 
       {/* ─── LIVE MARKETPLACE CATALOG ─── */}
-      <section className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-6">
+      <section className="py-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-5">
         <div className="flex items-center justify-between border-b border-white/[0.06] pb-3">
           <div>
-            <h2 className="text-lg sm:text-xl font-black text-white tracking-tight">
+            <h2 className="text-base sm:text-lg font-black text-white tracking-tight">
               Community Releases & Drops
             </h2>
             <p className="text-xs text-zinc-400">Verified ER:LC emergency vehicle liveries, uniform packages, and maps.</p>
@@ -299,7 +305,7 @@ export default function Home() {
 
         {/* Dynamic Connected Listings Grid */}
         {!loading && displayedListings.length === 0 ? (
-          <div className="rounded-2xl border border-white/[0.08] bg-[#0A0D14] p-10 text-center max-w-md mx-auto shadow-xl space-y-2">
+          <div className="rounded-2xl border border-white/[0.07] bg-[#111215] p-8 text-center max-w-md mx-auto shadow-xl space-y-2">
             <Store className="w-8 h-8 text-emerald-400 mx-auto" />
             <h3 className="text-sm font-bold text-white">No listings yet</h3>
             <p className="text-xs text-zinc-400 leading-relaxed">
@@ -325,15 +331,15 @@ export default function Home() {
       </section>
 
       {/* ─── COMPACT PROMOTIONAL STRIP ─── */}
-      <section className="py-10 px-4 sm:px-6 lg:px-8 border-t border-white/[0.06] bg-[#05070B]">
+      <section className="py-8 px-4 sm:px-6 lg:px-8 border-t border-white/[0.07] bg-[#0A0B0E]">
         <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-4">
           
-          <div className="p-6 rounded-2xl border border-white/[0.08] bg-[#0A0D14] space-y-2 flex flex-col justify-between">
+          <div className="p-5 rounded-xl border border-white/[0.07] bg-[#111215] space-y-2 flex flex-col justify-between">
             <div>
               <span className="text-[10px] font-mono font-bold uppercase text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded">
                 0% Commission
               </span>
-              <h3 className="text-base font-bold text-white mt-2">Publish on LibertyX</h3>
+              <h3 className="text-sm font-bold text-white mt-1.5">Publish on LibertyX</h3>
               <p className="text-xs text-zinc-400 leading-relaxed">
                 Retain 100% of proceeds on your liveries and packs with automated vault escrow delivery.
               </p>
@@ -345,12 +351,12 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="p-6 rounded-2xl border border-white/[0.08] bg-[#0A0D14] space-y-2 flex flex-col justify-between">
+          <div className="p-5 rounded-xl border border-white/[0.07] bg-[#111215] space-y-2 flex flex-col justify-between">
             <div>
               <span className="text-[10px] font-mono font-bold uppercase text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 rounded">
                 $12.99 / mo
               </span>
-              <h3 className="text-base font-bold text-white mt-2">LibertyX Community Hosting</h3>
+              <h3 className="text-sm font-bold text-white mt-1.5">LibertyX Community Hosting</h3>
               <p className="text-xs text-zinc-400 leading-relaxed">
                 Dedicated high-performance cloud nodes for ER:LC bot hosting and community servers.
               </p>
@@ -372,8 +378,8 @@ export default function Home() {
 
 export function Footer() {
   return (
-    <footer className="border-t border-white/[0.06] bg-[#040508] text-zinc-400 text-xs">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col md:flex-row items-center justify-between gap-4">
+    <footer className="border-t border-white/[0.07] bg-[#050507] text-zinc-400 text-xs">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-2">
           <Link to="/" className="font-black text-sm text-white">
             Liberty<span className="text-emerald-400">X</span>
@@ -382,7 +388,7 @@ export function Footer() {
           <span className="text-[11px] text-zinc-500 font-mono">ER:LC Marketplace & Platform</span>
         </div>
 
-        <div className="flex items-center gap-5 flex-wrap text-xs text-zinc-400">
+        <div className="flex items-center gap-4 flex-wrap text-xs text-zinc-400">
           <Link to="/marketplace" className="hover:text-white transition">Marketplace</Link>
           <Link to="/creators" className="hover:text-white transition">Creators</Link>
           <Link to="/hosting" className="hover:text-white transition">Hosting</Link>

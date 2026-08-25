@@ -29,6 +29,7 @@ import SiteNav from "@/components/SiteNav";
 import { Footer } from "@/pages/Home";
 import { localDb, readFileAsDataUrl } from "@/lib/localDb";
 import { DEPARTMENTS } from "@/lib/departments";
+import { cn } from "@/lib/utils";
 
 const STEPS = [
   { num: "01", label: "Asset Type" },
@@ -215,9 +216,9 @@ export default function CreateListing() {
 
   if (!savedUser) {
     return (
-      <div className="min-h-screen bg-[#07090E] text-white flex flex-col justify-between">
+      <div className="min-h-screen bg-[#070709] text-white flex flex-col justify-between">
         <SiteNav />
-        <div className="max-w-md mx-auto my-auto p-10 text-center rounded-2xl border border-white/[0.08] bg-[#0A0D15] shadow-2xl">
+        <div className="max-w-md mx-auto my-auto p-8 text-center rounded-2xl border border-white/[0.07] bg-[#111215] shadow-2xl">
           <Store className="w-10 h-10 text-emerald-400 mx-auto mb-3" />
           <h2 className="text-xl font-bold text-white mb-2">Creator Authentication Required</h2>
           <p className="text-xs text-zinc-400 mb-6 leading-relaxed">
@@ -236,14 +237,14 @@ export default function CreateListing() {
   }
 
   return (
-    <div className="min-h-screen bg-[#07090E] text-white flex flex-col justify-between selection:bg-emerald-500/25 selection:text-emerald-300">
+    <div className="min-h-screen bg-[#070709] text-white flex flex-col justify-between selection:bg-emerald-500/25 selection:text-emerald-300">
       <div>
         <SiteNav />
 
         {/* ─── PUBLISH HEADER & STEPPER ─── */}
-        <div className="border-b border-white/[0.06] bg-[#0A0D15]">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div className="flex items-center justify-between mb-6">
+        <div className="border-b border-white/[0.07] bg-[#0C0D10]">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div className="flex items-center justify-between mb-5">
               <div>
                 <div className="flex items-center gap-2 text-xs text-zinc-400 mb-1">
                   <Link to="/dashboard" className="hover:text-white transition flex items-center gap-1">
@@ -252,7 +253,7 @@ export default function CreateListing() {
                   <span>/</span>
                   <span className="text-emerald-400 font-mono">Publish Asset</span>
                 </div>
-                <h1 className="text-2xl font-black text-white tracking-tight">
+                <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">
                   Publish ER:LC Marketplace Asset
                 </h1>
               </div>
@@ -272,7 +273,7 @@ export default function CreateListing() {
                   type="button"
                   onClick={() => setStep(idx)}
                   className={cn(
-                    "p-2.5 rounded-xl border text-left transition-all",
+                    "p-2 rounded-xl border text-left transition-all",
                     step === idx
                       ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-400"
                       : idx < step
@@ -292,7 +293,7 @@ export default function CreateListing() {
         <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           
           {err && (
-            <div className="flex items-center gap-3 p-4 rounded-xl border border-red-500/30 bg-red-500/10 text-red-300 text-xs mb-6">
+            <div className="flex items-center gap-3 p-3.5 rounded-xl border border-red-500/30 bg-red-500/10 text-red-300 text-xs mb-6">
               <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
               <p className="flex-1">{err}</p>
             </div>
@@ -300,13 +301,13 @@ export default function CreateListing() {
 
           {/* STEP 1: FORMAT & TYPE */}
           {step === 0 && (
-            <div className="rounded-2xl border border-white/[0.08] bg-[#0A0D15] p-6 sm:p-8 space-y-6 shadow-xl">
+            <div className="rounded-2xl border border-white/[0.07] bg-[#111215] p-6 sm:p-7 space-y-6 shadow-xl">
               <div>
-                <h2 className="text-base font-bold text-white">Select Asset Category & Format</h2>
-                <p className="text-xs text-zinc-400 mt-1">Choose how your asset package is structured for buyers.</p>
+                <h2 className="text-sm sm:text-base font-bold text-white">Select Asset Category & Format</h2>
+                <p className="text-xs text-zinc-400 mt-0.5">Choose how your asset package is structured for buyers.</p>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {FORMAT_TYPES.map((fmt) => (
                   <button
                     key={fmt.id}
@@ -317,10 +318,10 @@ export default function CreateListing() {
                       if (fmt.id === "Uniforms") set("category", "Uniforms");
                     }}
                     className={cn(
-                      "p-4 rounded-xl border text-left transition-all space-y-1",
+                      "p-3.5 rounded-xl border text-left transition-all space-y-1",
                       form.listing_type === fmt.id
                         ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-400"
-                        : "border-white/[0.06] bg-[#07090E] text-zinc-400 hover:text-white"
+                        : "border-white/[0.06] bg-[#0A0D14] text-zinc-400 hover:text-white"
                     )}
                   >
                     <span className="text-xs font-bold text-white block">{fmt.label}</span>
@@ -329,14 +330,14 @@ export default function CreateListing() {
                 ))}
               </div>
 
-              <div className="space-y-2 pt-4 border-t border-white/[0.06]">
-                <label className="block text-xs font-bold text-zinc-300 uppercase tracking-wider font-mono">
+              <div className="space-y-1.5 pt-3 border-t border-white/[0.06]">
+                <label className="block text-[11px] font-bold text-zinc-300 uppercase tracking-wider font-mono">
                   Primary Category
                 </label>
                 <select
                   value={form.category}
                   onChange={(e) => set("category", e.target.value)}
-                  className="w-full rounded-xl border border-white/[0.08] bg-[#07090E] px-3.5 py-2.5 text-xs text-white outline-none focus:border-emerald-500/50"
+                  className="w-full rounded-xl border border-white/[0.08] bg-[#0A0D14] px-3 py-2 text-xs text-white outline-none focus:border-emerald-500/50"
                 >
                   <option value="Law Enforcement">Law Enforcement (Police, Sheriff, Highway Patrol)</option>
                   <option value="Fire & Rescue">Fire & Rescue / EMS</option>
@@ -350,11 +351,11 @@ export default function CreateListing() {
                 </select>
               </div>
 
-              <div className="flex justify-end pt-4">
+              <div className="flex justify-end pt-3">
                 <button
                   type="button"
                   onClick={() => setStep(1)}
-                  className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-bold transition shadow-sm"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-bold transition shadow-sm"
                 >
                   <span>Next: Details & Tags</span>
                   <ArrowRight className="w-4 h-4" />
@@ -365,15 +366,15 @@ export default function CreateListing() {
 
           {/* STEP 2: DETAILS & TAGS */}
           {step === 1 && (
-            <div className="rounded-2xl border border-white/[0.08] bg-[#0A0D15] p-6 sm:p-8 space-y-6 shadow-xl">
+            <div className="rounded-2xl border border-white/[0.07] bg-[#111215] p-6 sm:p-7 space-y-6 shadow-xl">
               <div>
-                <h2 className="text-base font-bold text-white">Asset Details & Tags</h2>
-                <p className="text-xs text-zinc-400 mt-1">Provide clear specifications and search hashtags.</p>
+                <h2 className="text-sm sm:text-base font-bold text-white">Asset Details & Tags</h2>
+                <p className="text-xs text-zinc-400 mt-0.5">Provide clear specifications and search hashtags.</p>
               </div>
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-xs font-bold text-zinc-300 uppercase tracking-wider mb-1.5 font-mono">
+                  <label className="block text-[11px] font-bold text-zinc-300 uppercase tracking-wider mb-1 font-mono">
                     Product Title *
                   </label>
                   <input
@@ -381,26 +382,26 @@ export default function CreateListing() {
                     value={form.title}
                     onChange={(e) => set("title", e.target.value)}
                     placeholder="e.g. 2024 State Police Ghost Tahoe & Explorer Livery Pack"
-                    className="w-full rounded-xl border border-white/[0.08] bg-[#07090E] px-3.5 py-2.5 text-xs text-white placeholder:text-zinc-500 outline-none focus:border-emerald-500/50"
+                    className="w-full rounded-xl border border-white/[0.08] bg-[#0A0D14] px-3.5 py-2 text-xs text-white placeholder:text-zinc-500 outline-none focus:border-emerald-500/50"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-zinc-300 uppercase tracking-wider mb-1.5 font-mono">
+                  <label className="block text-[11px] font-bold text-zinc-300 uppercase tracking-wider mb-1 font-mono">
                     Description & Features
                   </label>
                   <textarea
-                    rows={4}
+                    rows={3}
                     value={form.description}
                     onChange={(e) => set("description", e.target.value)}
                     placeholder="Describe livery textures, 4K quality, template compatibility, and unit variants included..."
-                    className="w-full rounded-xl border border-white/[0.08] bg-[#07090E] p-3 text-xs text-white placeholder:text-zinc-500 outline-none focus:border-emerald-500/50 resize-none leading-relaxed"
+                    className="w-full rounded-xl border border-white/[0.08] bg-[#0A0D14] p-3 text-xs text-white placeholder:text-zinc-500 outline-none focus:border-emerald-500/50 resize-none leading-relaxed"
                   />
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-zinc-300 uppercase tracking-wider mb-1.5 font-mono">
+                    <label className="block text-[11px] font-bold text-zinc-300 uppercase tracking-wider mb-1 font-mono">
                       Compatible Vehicle / Map Models
                     </label>
                     <input
@@ -408,12 +409,12 @@ export default function CreateListing() {
                       value={form.vehicle_models}
                       onChange={(e) => set("vehicle_models", e.target.value)}
                       placeholder="e.g. 2024 Tahoe PPV, Crown Victoria, Dodge Charger"
-                      className="w-full rounded-xl border border-white/[0.08] bg-[#07090E] px-3.5 py-2.5 text-xs text-white placeholder:text-zinc-500 outline-none focus:border-emerald-500/50"
+                      className="w-full rounded-xl border border-white/[0.08] bg-[#0A0D14] px-3.5 py-2 text-xs text-white placeholder:text-zinc-500 outline-none focus:border-emerald-500/50"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-zinc-300 uppercase tracking-wider mb-1.5 font-mono">
+                    <label className="block text-[11px] font-bold text-zinc-300 uppercase tracking-wider mb-1 font-mono">
                       Roblox Asset / Template ID (Optional)
                     </label>
                     <input
@@ -421,14 +422,14 @@ export default function CreateListing() {
                       value={form.roblox_asset_id}
                       onChange={(e) => set("roblox_asset_id", e.target.value)}
                       placeholder="e.g. 1827492819"
-                      className="w-full rounded-xl border border-white/[0.08] bg-[#07090E] px-3.5 py-2.5 text-xs text-white placeholder:text-zinc-500 outline-none focus:border-emerald-500/50 font-mono"
+                      className="w-full rounded-xl border border-white/[0.08] bg-[#0A0D14] px-3.5 py-2 text-xs text-white placeholder:text-zinc-500 outline-none focus:border-emerald-500/50 font-mono"
                     />
                   </div>
                 </div>
 
                 {/* Hashtag System */}
                 <div>
-                  <label className="block text-xs font-bold text-zinc-300 uppercase tracking-wider mb-1.5 font-mono">
+                  <label className="block text-[11px] font-bold text-zinc-300 uppercase tracking-wider mb-1 font-mono">
                     Search Hashtags (Max 8)
                   </label>
                   <div className="flex gap-2 mb-2">
@@ -443,23 +444,23 @@ export default function CreateListing() {
                         }
                       }}
                       placeholder="Type a tag and press enter (e.g. #Sheriff)..."
-                      className="flex-1 rounded-xl border border-white/[0.08] bg-[#07090E] px-3.5 py-2 text-xs text-white placeholder:text-zinc-500 outline-none focus:border-emerald-500/50 font-mono"
+                      className="flex-1 rounded-xl border border-white/[0.08] bg-[#0A0D14] px-3.5 py-2 text-xs text-white placeholder:text-zinc-500 outline-none focus:border-emerald-500/50 font-mono"
                     />
                     <button
                       type="button"
                       onClick={() => handleAddTag()}
-                      className="px-4 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-xs font-bold text-white transition"
+                      className="px-3.5 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-xs font-bold text-white transition"
                     >
                       Add Tag
                     </button>
                   </div>
 
                   {/* Selected Tags */}
-                  <div className="flex flex-wrap gap-1.5 mb-3">
+                  <div className="flex flex-wrap gap-1.5 mb-2.5">
                     {form.tags.map((t) => (
                       <span
                         key={t}
-                        className="inline-flex items-center gap-1 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-2 py-1 text-[11px] font-mono text-emerald-400 font-bold"
+                        className="inline-flex items-center gap-1 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-mono text-emerald-400 font-bold"
                       >
                         {t}
                         <button type="button" onClick={() => removeTag(t)} className="hover:text-white">
@@ -477,7 +478,7 @@ export default function CreateListing() {
                         key={st}
                         type="button"
                         onClick={() => handleAddTag(st)}
-                        className="text-[10px] font-mono text-zinc-400 hover:text-emerald-400 bg-[#07090E] border border-white/[0.04] px-2 py-0.5 rounded transition"
+                        className="text-[10px] font-mono text-zinc-400 hover:text-emerald-400 bg-[#0A0D14] border border-white/[0.04] px-2 py-0.5 rounded transition"
                       >
                         {st}
                       </button>
@@ -486,18 +487,18 @@ export default function CreateListing() {
                 </div>
               </div>
 
-              <div className="flex justify-between pt-4 border-t border-white/[0.06]">
+              <div className="flex justify-between pt-3 border-t border-white/[0.06]">
                 <button
                   type="button"
                   onClick={() => setStep(0)}
-                  className="px-5 py-2.5 rounded-xl border border-white/[0.08] text-xs font-bold text-zinc-300 hover:text-white"
+                  className="px-4 py-2 rounded-xl border border-white/[0.08] text-xs font-bold text-zinc-300 hover:text-white"
                 >
                   Back
                 </button>
                 <button
                   type="button"
                   onClick={() => setStep(2)}
-                  className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-bold transition shadow-sm"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-bold transition shadow-sm"
                 >
                   <span>Next: Media Upload</span>
                   <ArrowRight className="w-4 h-4" />
@@ -506,12 +507,12 @@ export default function CreateListing() {
             </div>
           )}
 
-          {/* STEP 3: MEDIA UPLOADS (FIXED PERSISTENCE) */}
+          {/* STEP 3: MEDIA UPLOADS */}
           {step === 2 && (
-            <div className="rounded-2xl border border-white/[0.08] bg-[#0A0D15] p-6 sm:p-8 space-y-6 shadow-xl">
+            <div className="rounded-2xl border border-white/[0.07] bg-[#111215] p-6 sm:p-7 space-y-6 shadow-xl">
               <div>
-                <h2 className="text-base font-bold text-white">Product Images & Showcase</h2>
-                <p className="text-xs text-zinc-400 mt-1">
+                <h2 className="text-sm sm:text-base font-bold text-white">Product Images & Showcase</h2>
+                <p className="text-xs text-zinc-400 mt-0.5">
                   Upload screenshot renders of your vehicle livery, uniform, or map template (PNG, JPG, WebP supported).
                 </p>
               </div>
@@ -519,7 +520,7 @@ export default function CreateListing() {
               {/* Upload Drop Area */}
               <div
                 onClick={() => fileRef.current?.click()}
-                className="border-2 border-dashed border-white/[0.1] hover:border-emerald-500/40 rounded-2xl p-8 text-center bg-[#07090E] hover:bg-[#0A0D15] cursor-pointer transition group space-y-2"
+                className="border-2 border-dashed border-white/[0.1] hover:border-emerald-500/40 rounded-2xl p-7 text-center bg-[#0A0D14] hover:bg-[#111215] cursor-pointer transition group space-y-1.5"
               >
                 <input
                   type="file"
@@ -529,9 +530,9 @@ export default function CreateListing() {
                   className="hidden"
                 />
                 {uploadingImage ? (
-                  <Loader2 className="w-8 h-8 text-emerald-400 animate-spin mx-auto" />
+                  <Loader2 className="w-7 h-7 text-emerald-400 animate-spin mx-auto" />
                 ) : (
-                  <Upload className="w-8 h-8 text-emerald-400 mx-auto group-hover:scale-110 transition-transform" />
+                  <Upload className="w-7 h-7 text-emerald-400 mx-auto group-hover:scale-110 transition-transform" />
                 )}
                 <h4 className="text-xs font-bold text-white">Click to browse or drag & drop images</h4>
                 <p className="text-[11px] text-zinc-500">Supports PNG, JPG, WEBP up to 8 MB</p>
@@ -544,12 +545,12 @@ export default function CreateListing() {
                   value={form.imageUrlInput}
                   onChange={(e) => set("imageUrlInput", e.target.value)}
                   placeholder="Or paste direct image URL (https://...)"
-                  className="flex-1 rounded-xl border border-white/[0.08] bg-[#07090E] px-3.5 py-2 text-xs text-white placeholder:text-zinc-500 outline-none focus:border-emerald-500/50 font-mono"
+                  className="flex-1 rounded-xl border border-white/[0.08] bg-[#0A0D14] px-3.5 py-2 text-xs text-white placeholder:text-zinc-500 outline-none focus:border-emerald-500/50 font-mono"
                 />
                 <button
                   type="button"
                   onClick={handleAddImageUrl}
-                  className="px-4 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-xs font-bold text-white transition"
+                  className="px-3.5 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-xs font-bold text-white transition"
                 >
                   Add URL
                 </button>
@@ -557,7 +558,7 @@ export default function CreateListing() {
 
               {/* Uploaded Images List */}
               {form.images.length > 0 && (
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-white/[0.06]">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 border-t border-white/[0.06]">
                   {form.images.map((img, idx) => (
                     <div key={idx} className="relative aspect-[16/10] rounded-xl overflow-hidden bg-black border border-white/[0.08] group">
                       <img src={img} alt={`Preview ${idx + 1}`} className="w-full h-full object-cover" />
@@ -573,18 +574,18 @@ export default function CreateListing() {
                 </div>
               )}
 
-              <div className="flex justify-between pt-4 border-t border-white/[0.06]">
+              <div className="flex justify-between pt-3 border-t border-white/[0.06]">
                 <button
                   type="button"
                   onClick={() => setStep(1)}
-                  className="px-5 py-2.5 rounded-xl border border-white/[0.08] text-xs font-bold text-zinc-300 hover:text-white"
+                  className="px-4 py-2 rounded-xl border border-white/[0.08] text-xs font-bold text-zinc-300 hover:text-white"
                 >
                   Back
                 </button>
                 <button
                   type="button"
                   onClick={() => setStep(3)}
-                  className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-bold transition shadow-sm"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-bold transition shadow-sm"
                 >
                   <span>Next: Pricing & Escrow</span>
                   <ArrowRight className="w-4 h-4" />
@@ -595,10 +596,10 @@ export default function CreateListing() {
 
           {/* STEP 4: PRICING & ESCROW CODES */}
           {step === 3 && (
-            <div className="rounded-2xl border border-white/[0.08] bg-[#0A0D15] p-6 sm:p-8 space-y-6 shadow-xl">
+            <div className="rounded-2xl border border-white/[0.07] bg-[#111215] p-6 sm:p-7 space-y-6 shadow-xl">
               <div>
-                <h2 className="text-base font-bold text-white">Pricing & Vault Escrow Delivery</h2>
-                <p className="text-xs text-zinc-400 mt-1">Set Robux price and enter the deliverable code/link that unlocks upon purchase.</p>
+                <h2 className="text-sm sm:text-base font-bold text-white">Pricing & Vault Escrow Delivery</h2>
+                <p className="text-xs text-zinc-400 mt-0.5">Set Robux price and enter the deliverable code/link that unlocks upon purchase.</p>
               </div>
 
               {/* Price Type */}
@@ -612,10 +613,10 @@ export default function CreateListing() {
                     type="button"
                     onClick={() => set("price_type", pt.id)}
                     className={cn(
-                      "p-4 rounded-xl border text-left transition-all",
+                      "p-3.5 rounded-xl border text-left transition-all",
                       form.price_type === pt.id
                         ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-400"
-                        : "border-white/[0.06] bg-[#07090E] text-zinc-400 hover:text-white"
+                        : "border-white/[0.06] bg-[#0A0D14] text-zinc-400 hover:text-white"
                     )}
                   >
                     <span className="text-xs font-bold text-white block">{pt.label}</span>
@@ -626,7 +627,7 @@ export default function CreateListing() {
 
               {form.price_type === "Robux" && (
                 <div>
-                  <label className="block text-xs font-bold text-zinc-300 uppercase tracking-wider mb-1.5 font-mono">
+                  <label className="block text-[11px] font-bold text-zinc-300 uppercase tracking-wider mb-1 font-mono">
                     Robux Price (R$)
                   </label>
                   <input
@@ -634,18 +635,18 @@ export default function CreateListing() {
                     value={form.price}
                     onChange={(e) => set("price", e.target.value)}
                     placeholder="150"
-                    className="w-full rounded-xl border border-white/[0.08] bg-[#07090E] px-3.5 py-2.5 text-xs text-white font-mono outline-none focus:border-emerald-500/50"
+                    className="w-full rounded-xl border border-white/[0.08] bg-[#0A0D14] px-3.5 py-2 text-xs text-white font-mono outline-none focus:border-emerald-500/50"
                   />
                 </div>
               )}
 
               {/* Vault Deliverable Codes */}
-              <div className="space-y-3 pt-3 border-t border-white/[0.06]">
+              <div className="space-y-2.5 pt-2 border-t border-white/[0.06]">
                 <div>
-                  <label className="block text-xs font-bold text-zinc-300 uppercase tracking-wider mb-1 font-mono">
+                  <label className="block text-[11px] font-bold text-zinc-300 uppercase tracking-wider mb-0.5 font-mono">
                     Vault Escrow Deliverable Codes / Links *
                   </label>
-                  <p className="text-[11px] text-zinc-500 mb-2">
+                  <p className="text-[11px] text-zinc-500 mb-1.5">
                     Enter the Roblox Asset ID, direct download URL, or Google Drive / Pastebin template link. Locked until purchase.
                   </p>
                 </div>
@@ -661,13 +662,13 @@ export default function CreateListing() {
                         set("codes", next);
                       }}
                       placeholder="e.g. Asset ID: 1827491829 or https://drive.google.com/..."
-                      className="flex-1 rounded-xl border border-white/[0.08] bg-[#07090E] px-3.5 py-2.5 text-xs text-white font-mono outline-none focus:border-emerald-500/50"
+                      className="flex-1 rounded-xl border border-white/[0.08] bg-[#0A0D14] px-3.5 py-2 text-xs text-white font-mono outline-none focus:border-emerald-500/50"
                     />
                     {form.codes.length > 1 && (
                       <button
                         type="button"
                         onClick={() => set("codes", form.codes.filter((_, i) => i !== idx))}
-                        className="p-2.5 rounded-xl border border-red-500/20 bg-red-500/5 text-red-400 hover:bg-red-500/10"
+                        className="p-2 rounded-xl border border-red-500/20 bg-red-500/5 text-red-400 hover:bg-red-500/10"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -685,18 +686,18 @@ export default function CreateListing() {
                 </button>
               </div>
 
-              <div className="flex justify-between pt-4 border-t border-white/[0.06]">
+              <div className="flex justify-between pt-3 border-t border-white/[0.06]">
                 <button
                   type="button"
                   onClick={() => setStep(2)}
-                  className="px-5 py-2.5 rounded-xl border border-white/[0.08] text-xs font-bold text-zinc-300 hover:text-white"
+                  className="px-4 py-2 rounded-xl border border-white/[0.08] text-xs font-bold text-zinc-300 hover:text-white"
                 >
                   Back
                 </button>
                 <button
                   type="button"
                   onClick={() => setStep(4)}
-                  className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-bold transition shadow-sm"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-bold transition shadow-sm"
                 >
                   <span>Next: Review & Publish</span>
                   <ArrowRight className="w-4 h-4" />
@@ -707,13 +708,13 @@ export default function CreateListing() {
 
           {/* STEP 5: REVIEW & PUBLISH */}
           {step === 4 && (
-            <div className="rounded-2xl border border-white/[0.08] bg-[#0A0D15] p-6 sm:p-8 space-y-6 shadow-xl">
+            <div className="rounded-2xl border border-white/[0.07] bg-[#111215] p-6 sm:p-7 space-y-6 shadow-xl">
               <div>
-                <h2 className="text-base font-bold text-white">Review & Publish Asset</h2>
-                <p className="text-xs text-zinc-400 mt-1">Verify all details before publishing live to the marketplace catalog.</p>
+                <h2 className="text-sm sm:text-base font-bold text-white">Review & Publish Asset</h2>
+                <p className="text-xs text-zinc-400 mt-0.5">Verify all details before publishing live to the marketplace catalog.</p>
               </div>
 
-              <div className="rounded-xl border border-white/[0.06] bg-[#07090E] p-4 space-y-3 text-xs">
+              <div className="rounded-xl border border-white/[0.06] bg-[#0A0D14] p-4 space-y-2.5 text-xs">
                 <div className="flex justify-between border-b border-white/[0.04] pb-2">
                   <span className="text-zinc-500 font-mono">Title:</span>
                   <span className="font-bold text-white">{form.title || "Untitled"}</span>
@@ -736,11 +737,11 @@ export default function CreateListing() {
                 </div>
               </div>
 
-              <div className="flex justify-between pt-4 border-t border-white/[0.06]">
+              <div className="flex justify-between pt-3 border-t border-white/[0.06]">
                 <button
                   type="button"
                   onClick={() => setStep(3)}
-                  className="px-5 py-2.5 rounded-xl border border-white/[0.08] text-xs font-bold text-zinc-300 hover:text-white"
+                  className="px-4 py-2 rounded-xl border border-white/[0.08] text-xs font-bold text-zinc-300 hover:text-white"
                 >
                   Back
                 </button>
@@ -748,7 +749,7 @@ export default function CreateListing() {
                   type="button"
                   onClick={handlePublish}
                   disabled={busy}
-                  className="inline-flex items-center gap-2 px-8 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black text-xs sm:text-sm font-bold transition shadow-md shadow-emerald-500/20 disabled:opacity-50"
+                  className="inline-flex items-center gap-2 px-7 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-bold transition shadow-md shadow-emerald-500/20 disabled:opacity-50"
                 >
                   <CheckCircle2 className="w-4 h-4" />
                   <span>{busy ? "Publishing Asset…" : "Publish Asset to Marketplace"}</span>
