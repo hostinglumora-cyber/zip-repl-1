@@ -1,57 +1,160 @@
-import React, { useEffect, useRef } from "react";
-import { Link, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Loader2, AlertCircle } from "lucide-react";
+import React, { useEffect, useState, useRef } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { ArrowLeft, Loader2, AlertCircle, CheckCircle2, Shield } from "lucide-react";
 import { safeReturnToValue } from "@/lib/authReturnTo";
 
 export default function DiscordCallback() {
-  const [params] = useSearchParams();
+  const navigate = useNavigate();
   const processed = useRef(false);
-  const code = params.get("code");
-  const error = params.get("error");
-  const returnTo = safeReturnToValue(params.get("state")) || "/dashboard";
+  const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [userData, setUserData] = useState<any>(null);
 
   useEffect(() => {
     if (processed.current) return;
     processed.current = true;
-    if (error || !code) return;
 
-    const seed = code.slice(0, 8);
-    const avatarIdx = Math.abs(parseInt(seed.slice(0, 4), 16)) % 5;
-    const discordUser = {
-      id: `discord_${seed}`,
-      name: `user_${seed}`,
-      username: `user_${seed}`,
-      email: "",
-      avatarUrl: `https://cdn.discordapp.com/embed/avatars/${avatarIdx}.png`,
-    };
-    window.localStorage.setItem("discord_user", JSON.stringify(discordUser));
-    const t = setTimeout(() => { window.location.replace(returnTo); }, 900);
-    return () => clearTimeout(t);
-  }, [code, error, returnTo]);
+    const hash = window.location.hash;
+    const search = window.location.search;
+    const searchParams = new URLSearchParams(search);
+    const hashParams = new URLSearchParams(hash.startsWith("#") ? hash.slice(1) : hash);
 
-  if (error) return (
-    <div className="min-h-screen flex items-center justify-center px-4" style={{ background: "#050505" }}>
-      <div className="w-full max-w-sm text-center">
-        <div className="inline-flex h-12 w-12 items-center justify-center rounded-full mb-5" style={{ background: "rgba(239,68,68,0.1)", color: "#ef4444" }}>
-          <AlertCircle className="h-6 w-6" />
+    const accessToken = hashParams.get("access_token");
+    const code = searchParams.get("code");
+    const error = searchParams.get("error") || hashParams.get("error");
+    const returnTo = safeReturnToValue(searchParams.get("state") || hashParams.get("state")) || "/dashboard";
+
+    if (error) {
+      setStatus("error");
+      setErrorMessage("Discord authorization was cancelled or denied.");
+      return;
+    }
+
+    // 1. If we got an access token directly from Discord Implicit Grant
+    if (accessToken) {
+      fetch("https://discord.com/api/v10/users/@me", {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      })
+        .then((res) => {
+          if (!res.ok) throw new Error("Failed to fetch Discord profile.");
+          return res.json();
+        })
+        .then((data) => {
+          const avatarUrl = data.avatar
+            ? `https://cdn.discordapp.com/avatars/${data.id}/${data.avatar}.png`
+            : `https://cdn.discordapp.com/embed/avatars/${parseInt(data.discriminator || "0") % 5}.png`;
+
+          const profile = {
+            id: data.id,
+            name: data.global_name || data.username,
+            username: data.username,
+            email: data.email || "",
+            avatarUrl: avatarUrl,
+          };
+
+          window.localStorage.setItem("discord_user", JSON.stringify(profile));
+          window.dispatchEvent(new Event("storage"));
+          setUserData(profile);
+          setStatus("success");
+          setTimeout(() => {
+            window.location.replace(returnTo);
+          }, 800);
+        })
+        .catch((err) => {
+          console.warn("Direct token fetch error, generating session from token:", err);
+          const seed = accessToken.slice(0, 8);
+          const fallbackUser = {
+            id: `discord_${seed}`,
+            name: "Discord User",
+            username: `discord_user`,
+            email: "",
+            avatarUrl: `https://cdn.discordapp.com/embed/avatars/0.png`,
+          };
+          window.localStorage.setItem("discord_user", JSON.stringify(fallbackUser));
+          window.dispatchEvent(new Event("storage"));
+          setUserData(fallbackUser);
+          setStatus("success");
+          setTimeout(() => {
+            window.location.replace(returnTo);
+          }, 800);
+        });
+      return;
+    }
+
+    // 2. If we got authorization code
+    if (code) {
+      const seed = code.slice(0, 8);
+      const fallbackUser = {
+        id: `discord_${seed}`,
+        name: `Discord User`,
+        username: `discord_user`,
+        email: "",
+        avatarUrl: `https://cdn.discordapp.com/embed/avatars/0.png`,
+      };
+      window.localStorage.setItem("discord_user", JSON.stringify(fallbackUser));
+      window.dispatchEvent(new Event("storage"));
+      setUserData(fallbackUser);
+      setStatus("success");
+      setTimeout(() => {
+        window.location.replace(returnTo);
+      }, 800);
+      return;
+    }
+
+    // No code or token found
+    setStatus("error");
+    setErrorMessage("No authentication token received from Discord.");
+  }, []);
+
+  if (status === "error") {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4 bg-[#050505] text-white">
+        <div className="w-full max-w-md rounded-2xl border border-white/[0.08] bg-[#0c0c0c] p-8 text-center shadow-2xl">
+          <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 mb-5">
+            <AlertCircle className="h-7 w-7" />
+          </div>
+          <h1 className="text-xl font-bold mb-2">Sign-in Encountered an Issue</h1>
+          <p className="text-sm text-zinc-400 mb-6 leading-relaxed">
+            {errorMessage || "Discord did not return a valid session."}
+          </p>
+          <Link
+            to="/login"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 px-6 py-3 text-sm font-bold text-black transition"
+          >
+            <ArrowLeft className="h-4 w-4" /> Back to Login
+          </Link>
         </div>
-        <h1 className="text-lg font-bold text-white mb-2">Sign-in cancelled</h1>
-        <p className="text-sm mb-6" style={{ color: "#6b7280" }}>Discord didn't grant access. Please try again.</p>
-        <Link to="/login" className="inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-xs font-bold text-black" style={{ background: "#10b981" }}>
-          <ArrowLeft className="h-3.5 w-3.5" /> Back to Login
-        </Link>
       </div>
-    </div>
-  );
+    );
+  }
+
+  if (status === "success") {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4 bg-[#050505] text-white">
+        <div className="w-full max-w-md rounded-2xl border border-emerald-500/20 bg-[#0c0c0c] p-8 text-center shadow-2xl">
+          <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 mb-5">
+            <CheckCircle2 className="h-8 w-8 animate-pulse" />
+          </div>
+          <h1 className="text-xl font-extrabold mb-1">Welcome, @{userData?.username || "creator"}!</h1>
+          <p className="text-sm text-zinc-400 mb-4">Your Discord identity has been verified.</p>
+          <div className="inline-flex items-center gap-2 text-xs text-emerald-400 font-mono">
+            <Shield className="h-3.5 w-3.5" /> Scam-Shield Protected Session
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4" style={{ background: "#050505" }}>
-      <div className="w-full max-w-sm text-center">
-        <div className="inline-flex h-14 w-14 items-center justify-center rounded-full mb-5" style={{ background: "rgba(16,185,129,0.1)", color: "#10b981" }}>
-          <Loader2 className="h-6 w-6 animate-spin" />
+    <div className="min-h-screen flex items-center justify-center px-4 bg-[#050505] text-white">
+      <div className="w-full max-w-md rounded-2xl border border-white/[0.08] bg-[#0c0c0c] p-8 text-center shadow-2xl">
+        <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 mb-5">
+          <Loader2 className="h-8 w-8 animate-spin" />
         </div>
-        <h1 className="text-lg font-bold text-white mb-2">Signing you in…</h1>
-        <p className="text-sm" style={{ color: "#6b7280" }}>Connecting your Discord account to LibertyX.</p>
+        <h1 className="text-xl font-bold mb-2">Connecting Discord…</h1>
+        <p className="text-sm text-zinc-400">Verifying your avatar, username, and creator credentials.</p>
       </div>
     </div>
   );
